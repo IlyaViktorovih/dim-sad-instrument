@@ -1,2 +1,679 @@
-# dim-sad-instrument
-Інтернет-магазин товарів для дому, саду та інструментів
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="description" content="Дім Сад Інструмент — товари для дому, саду та інструменти. Практичні товари за доступними цінами.">
+
+<title>Дім Сад Інструмент — товари для дому, саду та інструменти</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #17352a;
+  background: #ffffff;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  border-bottom: 1px solid #e5eee9;
+}
+
+.nav {
+  max-width: 1180px;
+  margin: auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.logo span {
+  color: #168a4a;
+}
+
+.cart {
+  border: 0;
+  background: #168a4a;
+  color: white;
+  padding: 11px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.hero {
+  background: linear-gradient(135deg, #e8f7ee, #fff8ed);
+  padding: 55px 18px;
+}
+
+.hero-inner {
+  max-width: 1180px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 30px;
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: 46px;
+  line-height: 1.05;
+  margin: 0 0 18px;
+}
+
+.hero p {
+  font-size: 19px;
+  color: #68766f;
+}
+
+.cta {
+  display: inline-block;
+  background: #ff8a00;
+  color: white;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-weight: 800;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.hero-card {
+  background: white;
+  border-radius: 24px;
+  padding: 35px;
+  box-shadow: 0 15px 40px #173b2b18;
+  text-align: center;
+  font-size: 70px;
+}
+
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 35px 18px;
+}
+
+.section-title {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.cat {
+  padding: 22px;
+  background: #f4f8f5;
+  border-radius: 18px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.cat b {
+  display: block;
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.search {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #dbe5df;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.product {
+  border: 1px solid #e3ebe6;
+  border-radius: 18px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 5px 20px #15352a0b;
+}
+
+.pic {
+  height: 150px;
+  background: #eef7f1;
+  display: grid;
+  place-items: center;
+  font-size: 58px;
+}
+
+.info {
+  padding: 15px;
+}
+
+.info h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+
+.price {
+  font-size: 21px;
+  font-weight: 900;
+  margin: 10px 0;
+}
+
+.buy {
+  width: 100%;
+  border: 0;
+  background: #168a4a;
+  color: white;
+  padding: 11px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.about {
+  margin-top: 45px;
+  background: #f4f8f5;
+  border-radius: 22px;
+  padding: 28px;
+}
+
+.contact {
+  margin-top: 25px;
+  padding: 28px;
+  border-radius: 22px;
+  background: #15352a;
+  color: white;
+}
+
+.contact a {
+  color: white;
+}
+
+.footer {
+  text-align: center;
+  color: #7a8881;
+  padding: 30px 18px;
+  border-top: 1px solid #e7eee9;
+  margin-top: 40px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0008;
+  z-index: 20;
+  padding: 20px;
+}
+
+.box {
+  max-width: 520px;
+  margin: 8vh auto;
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.box input,
+.box textarea {
+  width: 100%;
+  padding: 13px;
+  margin: 7px 0 12px;
+  border: 1px solid #dbe5df;
+  border-radius: 10px;
+}
+
+.close {
+  float: right;
+  border: 0;
+  background: none;
+  font-size: 25px;
+}
+
+.submit {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 11px;
+  background: #ff8a00;
+  color: white;
+  font-weight: 800;
+}
+
+@media(max-width:800px) {
+
+  .hero-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .products {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media(max-width:480px) {
+
+  .products {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pic {
+    height: 120px;
+    font-size: 45px;
+  }
+
+  .logo {
+    font-size: 17px;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="nav">
+
+<div class="logo">
+🏠 <span>Дім Сад Інструмент</span>
+</div>
+
+<button class="cart" onclick="openCart()">
+🛒 Кошик (<span id="count">0</span>)
+</button>
+
+</div>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-inner">
+
+<div>
+
+<h1>
+Товари для дому, саду та інструменти
+</h1>
+
+<p>
+Практичні товари для щоденних справ, ремонту,
+саду та господарства. Обирайте потрібне —
+замовляйте просто.
+</p>
+
+<a class="cta" href="#products">
+Переглянути товари
+</a>
+
+</div>
+
+<div class="hero-card">
+🛠️
+<br>
+<small style="font-size:18px">
+Все потрібне — в одному місці
+</small>
+</div>
+
+</div>
+
+</section>
+
+<main>
+
+<h2 class="section-title">
+Категорії
+</h2>
+
+<div class="categories">
+
+<div class="cat">
+<b>🏠</b>
+Для дому
+</div>
+
+<div class="cat">
+<b>🌱</b>
+Для саду
+</div>
+
+<div class="cat">
+<b>🛠️</b>
+Інструменти
+</div>
+
+<div class="cat">
+<b>✨</b>
+Корисні товари
+</div>
+
+</div>
+
+<h2 class="section-title" id="products">
+Популярні товари
+</h2>
+
+<div class="toolbar">
+
+<input
+class="search"
+id="search"
+placeholder="🔎 Пошук товару..."
+oninput="render()"
+>
+
+</div>
+
+<div class="products" id="grid"></div>
+
+<div class="about">
+
+<h2>
+Чому обирають нас?
+</h2>
+
+<p>
+Ми підбираємо корисні товари для дому,
+саду та роботи, щоб зробити покупки
+простими та зручними.
+</p>
+
+</div>
+
+<div class="contact">
+
+<h2>
+Є питання?
+</h2>
+
+<p>
+Напишіть нам, щоб уточнити наявність,
+характеристики та умови доставки.
+</p>
+
+<p>
+📞 +38 (000) 000-00-00
+</p>
+
+</div>
+
+</main>
+
+<div class="footer">
+
+© 2026 Дім Сад Інструмент ·
+Товари для дому, саду та інструменти
+
+</div>
+
+<div class="modal" id="modal">
+
+<div class="box">
+
+<button class="close" onclick="closeCart()">×</button>
+
+<h2>
+Ваше замовлення
+</h2>
+
+<div id="order"></div>
+
+<input
+id="name"
+placeholder="Ваше ім'я"
+>
+
+<input
+id="phone"
+placeholder="Номер телефону"
+>
+
+<textarea
+id="comment"
+placeholder="Коментар"
+></textarea>
+
+<button
+class="submit"
+onclick="sendOrder()"
+>
+Оформити замовлення
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const products = [
+
+{
+name:"Електросекатор Domotec 8500",
+price:1499,
+icon:"✂️",
+cat:"Сад"
+},
+
+{
+name:"Акумуляторна повітродувка",
+price:1299,
+icon:"🍃",
+cat:"Сад"
+},
+
+{
+name:"Кавоварка",
+price:899,
+icon:"☕",
+cat:"Дім"
+},
+
+{
+name:"Автомобільний пилосос",
+price:699,
+icon:"🚗",
+cat:"Дім"
+},
+
+{
+name:"Набір інструментів",
+price:1199,
+icon:"🧰",
+cat:"Інструменти"
+},
+
+{
+name:"Садові ножиці",
+price:349,
+icon:"🌿",
+cat:"Сад"
+},
+
+{
+name:"Акумуляторний шуруповерт",
+price:1399,
+icon:"🔩",
+cat:"Інструменти"
+},
+
+{
+name:"Корисний товар для дому",
+price:499,
+icon:"🏠",
+cat:"Дім"
+}
+
+];
+
+let cart = [];
+
+function render(){
+
+let q =
+document.getElementById("search")
+.value
+.toLowerCase();
+
+let list =
+products.filter(
+p =>
+(p.name+" "+p.cat)
+.toLowerCase()
+.includes(q)
+);
+
+document.getElementById("grid").innerHTML =
+list.map(
+p => `
+
+<article class="product">
+
+<div class="pic">
+${p.icon}
+</div>
+
+<div class="info">
+
+<h3>
+${p.name}
+</h3>
+
+<small>
+${p.cat}
+</small>
+
+<div class="price">
+${p.price.toLocaleString("uk-UA")} грн
+</div>
+
+<button
+class="buy"
+onclick="add(${products.indexOf(p)})"
+>
+Додати в кошик
+</button>
+
+</div>
+
+</article>
+
+`
+).join("");
+
+}
+
+function add(i){
+
+cart.push(products[i]);
+
+document.getElementById("count")
+.textContent = cart.length;
+
+}
+
+function openCart(){
+
+document.getElementById("modal")
+.style.display = "block";
+
+document.getElementById("order")
+.innerHTML = cart.length
+
+? cart.map(
+p =>
+"• "+p.name+" — "+p.price+" грн"
+).join("<br>")
++
+"<hr><b>Разом: "+
+cart.reduce(
+(s,p)=>s+p.price,0
+)
++" грн</b>"
+
+: "Кошик порожній.";
+
+}
+
+function closeCart(){
+
+document.getElementById("modal")
+.style.display = "none";
+
+}
+
+function sendOrder(){
+
+if(!cart.length){
+
+alert(
+"Спочатку додайте товар у кошик."
+);
+
+return;
+
+}
+
+let n =
+document.getElementById("name").value;
+
+let p =
+document.getElementById("phone").value;
+
+if(!n || !p){
+
+alert(
+"Вкажіть імʼя та номер телефону."
+);
+
+return;
+
+}
+
+alert(
+"Дякуємо! Ваше замовлення прийнято."
+);
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
