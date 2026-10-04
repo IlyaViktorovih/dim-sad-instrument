@@ -4,519 +4,868 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Адмін-панель — Дім Сад Інструмент</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * {
       box-sizing: border-box;
     }
+
     body {
       margin: 0;
-      padding: 20px;
-      background: #f3f4f6;
       font-family: Arial, sans-serif;
+      background: #f3f5f4;
       color: #222;
     }
-    .box {
-      width: 100%;
-      max-width: 600px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 22px;
-      border-radius: 16px;
-      box-shadow: 0 5px 25px rgba(0,0,0,.10);
-    }
-    h1 {
+
+    header {
+      background: #176b38;
+      color: white;
+      padding: 18px;
       text-align: center;
-      margin-top: 0;
     }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
     h2 {
-      margin-top: 25px;
+      margin-top: 0;
+      color: #176b38;
     }
+
     input,
     textarea,
-    button {
+    select {
       width: 100%;
       padding: 13px;
       margin: 7px 0;
-      border-radius: 9px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       font-size: 16px;
     }
-    input,
+
     textarea {
-      border: 1px solid #ccc;
-      background: #fff;
-    }
-    textarea {
-      min-height: 110px;
+      min-height: 100px;
       resize: vertical;
     }
+
     button {
+      width: 100%;
+      padding: 14px;
       border: 0;
-      background: #16803c;
+      border-radius: 8px;
+      background: #176b38;
       color: white;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 8px;
     }
+
     button:hover {
-      background: #10652f;
+      background: #0f542b;
     }
+
+    .danger {
+      background: #c62828;
+    }
+
+    .danger:hover {
+      background: #a51f1f;
+    }
+
     .logout {
-      background: #d93636;
+      background: #555;
     }
-    .logout:hover {
-      background: #b92727;
-    }
-    .delete {
-      background: #d93636;
-    }
+
     .product {
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 15px;
-      margin-top: 15px;
+      margin-top: 12px;
       background: #fafafa;
     }
-    .product img {
-      width: 100%;
-      max-height: 250px;
-      object-fit: contain;
-      border-radius: 10px;
-      margin-top: 10px;
+
+    .product h3 {
+      margin: 0 0 8px;
     }
-    .message {
+
+    .price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #176b38;
+    }
+
+    .status {
       margin-top: 10px;
       padding: 10px;
       border-radius: 8px;
-      font-weight: bold;
+      background: #f0f0f0;
     }
-    .error {
-      color: #c00;
-      background: #ffe5e5;
-    }
-    .success {
-      color: #08752d;
-      background: #e5f8eb;
-    }
-    .loading {
-      text-align: center;
-      padding: 20px;
-    }
-    #admin {
+
+    .hidden {
       display: none;
     }
-    hr {
-      margin: 25px 0;
-      border: 0;
-      border-top: 1px solid #ddd;
+
+    .small {
+      font-size: 13px;
+      color: #666;
     }
   </style>
 </head>
+
 <body>
+
+<header>
+  <h1>🏠 Дім Сад Інструмент</h1>
+  <div>Адмін-панель магазину</div>
+</header>
+
+<div class="container">
+
   <!-- ВХІД -->
   <div class="box" id="loginBox">
-    <h1>🔐 Адмін-панель</h1>
+    <h2>🔐 Вхід адміністратора</h2>
+
     <input
-      id="email"
       type="email"
+      id="email"
       placeholder="Email"
       autocomplete="email"
     >
+
     <input
-      id="password"
       type="password"
+      id="password"
       placeholder="Пароль"
       autocomplete="current-password"
     >
-    <button type="button" id="loginButton">
+
+    <button id="loginButton">
       Увійти
     </button>
-    <div id="loginMessage"></div>
-  </div>
-  <!-- АДМІНКА -->
-  <div class="box" id="admin">
-    <h1>🛒 Дім Сад Інструмент</h1>
-    <button type="button" class="logout" id="logoutButton">
-      Вийти
-    </button>
-    <hr>
-    <h2>➕ Додати товар</h2>
-    <input
-      id="name"
-      type="text"
-      placeholder="Назва товару"
-    >
-    <input
-      id="price"
-      type="number"
-      placeholder="Ціна, грн"
-    >
-    <textarea
-      id="description"
-      placeholder="Опис товару"
-    ></textarea>
-    <input
-      id="image"
-      type="text"
-      placeholder="Посилання на фото"
-    >
-    <input
-      id="category"
-      type="text"
-      placeholder="Категорія"
-    >
-    <button type="button" id="addButton">
-      ➕ Додати товар
-    </button>
-    <div id="addMessage"></div>
-    <hr>
-    <h2>📦 Товари</h2>
-    <div id="products">
-      <div class="loading">Завантаження...</div>
+
+    <div id="loginStatus" class="status">
+      Введи дані адміністратора.
     </div>
   </div>
+
+
+  <!-- АДМІНКА -->
+  <div id="adminPanel" class="hidden">
+
+    <div class="box">
+      <h2>👤 Адміністратор</h2>
+
+      <div id="userEmail" class="small"></div>
+
+      <button class="logout" id="logoutButton">
+        Вийти
+      </button>
+    </div>
+
+
+    <!-- ДОДАВАННЯ ТОВАРУ -->
+    <div class="box">
+
+      <h2>➕ Додати товар</h2>
+
+      <input
+        type="text"
+        id="productName"
+        placeholder="Назва товару"
+      >
+
+      <input
+        type="number"
+        id="productPrice"
+        placeholder="Ціна, грн"
+        min="0"
+      >
+
+      <textarea
+        id="productDescription"
+        placeholder="Опис товару"
+      ></textarea>
+
+      <input
+        type="text"
+        id="productImage"
+        placeholder="Посилання на фото товару"
+      >
+
+      <select id="productCategory">
+        <option value="Для дому">Для дому</option>
+        <option value="Для саду">Для саду</option>
+        <option value="Інструменти">Інструменти</option>
+        <option value="Корисні товари">Корисні товари</option>
+      </select>
+
+      <select id="productAvailable">
+        <option value="true">Є в наявності</option>
+        <option value="false">Немає в наявності</option>
+      </select>
+
+      <select id="productHit">
+        <option value="false">Звичайний товар</option>
+        <option value="true">🔥 Хіт продажу</option>
+      </select>
+
+      <button id="addProductButton">
+        Додати товар
+      </button>
+
+      <div id="addStatus" class="status">
+        Заповни дані товару.
+      </div>
+
+    </div>
+
+
+    <!-- ТОВАРИ -->
+    <div class="box">
+
+      <h2>📦 Товари магазину</h2>
+
+      <button id="refreshButton">
+        🔄 Оновити список
+      </button>
+
+      <div id="productsList">
+        Завантаження товарів...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
-  /* =========================================
+
+  /* =====================================================
      SUPABASE
-     ========================================= */
+     ===================================================== */
+
   const SUPABASE_URL =
     "https://rzdqohedzsgcmhcdhlri.supabase.co";
+
+  /*
+    СЮДИ ВСТАВ СВІЙ СПРАВЖНІЙ
+    sb_publishable_... КЛЮЧ
+  */
+
   const SUPABASE_KEY =
-    "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
-  const db = supabase.createClient(
+    "ВСТАВ_СЮДИ_СВІЙ_SB_PUBLISHABLE_КЛЮЧ";
+
+  const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
   );
-  /* =========================================
+
+
+  /* =====================================================
      ЕЛЕМЕНТИ
-     ========================================= */
+     ===================================================== */
+
   const loginBox =
     document.getElementById("loginBox");
-  const admin =
-    document.getElementById("admin");
+
+  const adminPanel =
+    document.getElementById("adminPanel");
+
   const loginButton =
     document.getElementById("loginButton");
+
   const logoutButton =
     document.getElementById("logoutButton");
-  const addButton =
-    document.getElementById("addButton");
-  const loginMessage =
-    document.getElementById("loginMessage");
-  const addMessage =
-    document.getElementById("addMessage");
-  const productsContainer =
-    document.getElementById("products");
-  /* =========================================
-     ПОКАЗ ПОМИЛКИ
-     ========================================= */
-  function showLoginError(message) {
-    loginMessage.className = "message error";
-    loginMessage.innerText =
-      "❌ " + message;
+
+  const refreshButton =
+    document.getElementById("refreshButton");
+
+  const addProductButton =
+    document.getElementById("addProductButton");
+
+  const loginStatus =
+    document.getElementById("loginStatus");
+
+  const addStatus =
+    document.getElementById("addStatus");
+
+  const productsList =
+    document.getElementById("productsList");
+
+  const userEmail =
+    document.getElementById("userEmail");
+
+
+  /* =====================================================
+     ПЕРЕВІРКА СЕСІЇ
+     ===================================================== */
+
+  async function checkSession() {
+
+    const {
+      data: {
+        session
+      }
+    } = await db.auth.getSession();
+
+    if (session) {
+
+      showAdmin(session);
+
+    } else {
+
+      showLogin();
+
+    }
   }
-  function showAddError(message) {
-    addMessage.className = "message error";
-    addMessage.innerText =
-      "❌ " + message;
+
+
+  /* =====================================================
+     ПОКАЗАТИ ВХІД
+     ===================================================== */
+
+  function showLogin() {
+
+    loginBox.classList.remove("hidden");
+    adminPanel.classList.add("hidden");
+
   }
-  function showAddSuccess(message) {
-    addMessage.className = "message success";
-    addMessage.innerText =
-      "✅ " + message;
+
+
+  /* =====================================================
+     ПОКАЗАТИ АДМІНКУ
+     ===================================================== */
+
+  function showAdmin(session) {
+
+    loginBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+
+    userEmail.textContent =
+      "Ви увійшли як: " + session.user.email;
+
+    loadProducts();
+
   }
-  /* =========================================
+
+
+  /* =====================================================
      ВХІД
-     ========================================= */
+     ===================================================== */
+
   async function login() {
-    loginMessage.innerText = "";
-    loginMessage.className = "";
+
     const email =
       document.getElementById("email").value.trim();
+
     const password =
       document.getElementById("password").value;
+
     if (!email || !password) {
-      showLoginError(
-        "Введи email та пароль."
-      );
+
+      loginStatus.textContent =
+        "❌ Введи email та пароль.";
+
       return;
     }
+
     loginButton.disabled = true;
-    loginButton.innerText =
-      "Вхід...";
+    loginButton.textContent = "Вхід...";
+
+    loginStatus.textContent =
+      "Перевіряємо дані...";
+
     try {
-      const { data, error } =
-        await db.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
+
+      const {
+        data,
+        error
+      } = await db.auth.signInWithPassword({
+
+        email: email,
+        password: password
+
+      });
+
       if (error) {
-        showLoginError(
-          error.message
-        );
+
+        console.error(error);
+
+        loginStatus.textContent =
+          "❌ " + error.message;
+
         return;
       }
+
       if (!data.session) {
-        showLoginError(
-          "Сесію не створено."
-        );
+
+        loginStatus.textContent =
+          "❌ Сесію не створено.";
+
         return;
       }
-      showAdmin();
+
+      loginStatus.textContent =
+        "✅ Успішний вхід!";
+
+      showAdmin(data.session);
+
     } catch (error) {
-      showLoginError(
-        error.message ||
-        "Невідома помилка."
-      );
+
+      console.error(error);
+
+      loginStatus.textContent =
+        "❌ Помилка: " + error.message;
+
     } finally {
+
       loginButton.disabled = false;
-      loginButton.innerText =
-        "Увійти";
+      loginButton.textContent = "Увійти";
+
     }
+
   }
-  /* =========================================
-     ПОКАЗ АДМІНКИ
-     ========================================= */
-  function showAdmin() {
-    loginBox.style.display =
-      "none";
-    admin.style.display =
-      "block";
-    loadProducts();
-  }
-  /* =========================================
+
+
+  /* =====================================================
      ВИХІД
-     ========================================= */
+     ===================================================== */
+
   async function logout() {
+
     await db.auth.signOut();
-    admin.style.display =
-      "none";
-    loginBox.style.display =
-      "block";
-    document.getElementById("password").value =
-      "";
+
+    showLogin();
+
   }
-  /* =========================================
+
+
+  /* =====================================================
      ДОДАТИ ТОВАР
-     ========================================= */
+     ===================================================== */
+
   async function addProduct() {
-    addMessage.innerText = "";
-    addMessage.className = "";
+
     const name =
-      document.getElementById("name").value.trim();
+      document.getElementById("productName")
+        .value.trim();
+
     const price =
       Number(
-        document.getElementById("price").value
+        document.getElementById("productPrice")
+          .value
       );
+
     const description =
-      document.getElementById("description").value.trim();
+      document.getElementById("productDescription")
+        .value.trim();
+
     const image =
-      document.getElementById("image").value.trim();
+      document.getElementById("productImage")
+        .value.trim();
+
     const category =
-      document.getElementById("category").value.trim();
+      document.getElementById("productCategory")
+        .value;
+
+    const available =
+      document.getElementById("productAvailable")
+        .value === "true";
+
+    const is_hit =
+      document.getElementById("productHit")
+        .value === "true";
+
+
     if (!name) {
-      showAddError(
-        "Введи назву товару."
-      );
+
+      addStatus.textContent =
+        "❌ Вкажи назву товару.";
+
       return;
     }
-    if (!price || price < 0) {
-      showAddError(
-        "Введи правильну ціну."
-      );
+
+    if (!price || price <= 0) {
+
+      addStatus.textContent =
+        "❌ Вкажи правильну ціну.";
+
       return;
     }
-    addButton.disabled = true;
-    addButton.innerText =
-      "Додавання...";
+
+
+    addProductButton.disabled = true;
+    addProductButton.textContent =
+      "Додаємо...";
+
+    addStatus.textContent =
+      "Зберігаємо товар...";
+
+
     try {
-      const { error } =
-        await db
-          .from("products")
-          .insert({
-            name: name,
-            price: price,
-            description: description,
-            image: image,
-            category: category,
-            available: true,
-            is_hit: false
-          });
+
+      const {
+        data,
+        error
+      } = await db
+        .from("products")
+        .insert([{
+
+          name: name,
+          price: price,
+          description: description,
+          image: image,
+          category: category,
+          available: available,
+          is_hit: is_hit
+
+        }])
+        .select();
+
+
       if (error) {
-        showAddError(
-          error.message
-        );
+
+        console.error(error);
+
+        addStatus.textContent =
+          "❌ " + error.message;
+
         return;
       }
-      showAddSuccess(
-        "Товар успішно додано!"
-      );
-      document.getElementById("name").value =
-        "";
-      document.getElementById("price").value =
-        "";
-      document.getElementById("description").value =
-        "";
-      document.getElementById("image").value =
-        "";
-      document.getElementById("category").value =
-        "";
+
+
+      addStatus.textContent =
+        "✅ Товар успішно додано!";
+
+
+      document.getElementById("productName")
+        .value = "";
+
+      document.getElementById("productPrice")
+        .value = "";
+
+      document.getElementById("productDescription")
+        .value = "";
+
+      document.getElementById("productImage")
+        .value = "";
+
+      document.getElementById("productCategory")
+        .value = "Для дому";
+
+      document.getElementById("productAvailable")
+        .value = "true";
+
+      document.getElementById("productHit")
+        .value = "false";
+
+
       loadProducts();
+
+
     } catch (error) {
-      showAddError(
-        error.message ||
-        "Помилка додавання."
-      );
+
+      console.error(error);
+
+      addStatus.textContent =
+        "❌ Помилка: " + error.message;
+
     } finally {
-      addButton.disabled = false;
-      addButton.innerText =
-        "➕ Додати товар";
+
+      addProductButton.disabled = false;
+      addProductButton.textContent =
+        "Додати товар";
+
     }
+
   }
-  /* =========================================
+
+
+  /* =====================================================
      ЗАВАНТАЖИТИ ТОВАРИ
-     ========================================= */
+     ===================================================== */
+
   async function loadProducts() {
-    productsContainer.innerHTML =
-      '<div class="loading">Завантаження товарів...</div>';
-    const { data, error } =
-      await db
+
+    productsList.innerHTML =
+      "⏳ Завантаження...";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } = await db
         .from("products")
         .select("*")
         .order("id", {
           ascending: false
         });
-    if (error) {
-      productsContainer.innerHTML =
-        '<div class="message error">❌ ' +
-        error.message +
-        '</div>';
-      return;
-    }
-    if (!data || data.length === 0) {
-      productsContainer.innerHTML =
-        "<p>Товарів поки немає.</p>";
-      return;
-    }
-    productsContainer.innerHTML = "";
-    data.forEach(product => {
-      const div =
-        document.createElement("div");
-      div.className =
-        "product";
-      let imageHTML = "";
-      if (product.image) {
-        imageHTML =
-          `<img src="${escapeHTML(product.image)}"
-                alt="${escapeHTML(product.name)}"
-                onerror="this.style.display='none'">`;
+
+
+      if (error) {
+
+        console.error(error);
+
+        productsList.innerHTML =
+          "❌ " + error.message;
+
+        return;
       }
-      div.innerHTML = `
-        <h3>
-          ${escapeHTML(product.name)}
-        </h3>
-        <p>
-          💰 <b>${product.price} грн</b>
-        </p>
-        <p>
-          📂 ${escapeHTML(product.category || "Без категорії")}
-        </p>
-        <p>
-          ${escapeHTML(product.description || "")}
-        </p>
-        ${imageHTML}
-        <button
-          type="button"
-          class="delete"
-          onclick="deleteProduct(${product.id})"
-        >
-          🗑 Видалити
-        </button>
-      `;
-      productsContainer.appendChild(div);
-    });
+
+
+      if (!data || data.length === 0) {
+
+        productsList.innerHTML =
+          "Поки що товарів немає.";
+
+        return;
+      }
+
+
+      productsList.innerHTML = "";
+
+
+      data.forEach(product => {
+
+        const div =
+          document.createElement("div");
+
+        div.className = "product";
+
+
+        const imageHTML =
+          product.image
+            ? `
+              <img
+                src="${escapeHTML(product.image)}"
+                alt="${escapeHTML(product.name)}"
+                style="
+                  width:100%;
+                  max-width:250px;
+                  border-radius:10px;
+                  margin-bottom:10px;
+                "
+              >
+            `
+            : "";
+
+
+        div.innerHTML = `
+
+          ${imageHTML}
+
+          <h3>
+            ${escapeHTML(product.name)}
+          </h3>
+
+          <div class="price">
+            ${product.price} грн
+          </div>
+
+          <p>
+            ${escapeHTML(product.description || "")}
+          </p>
+
+          <p>
+            <b>Категорія:</b>
+            ${escapeHTML(product.category || "")}
+          </p>
+
+          <p>
+            <b>Статус:</b>
+            ${
+              product.available
+                ? "✅ Є в наявності"
+                : "❌ Немає в наявності"
+            }
+          </p>
+
+          ${
+            product.is_hit
+              ? "<p>🔥 Хіт продажу</p>"
+              : ""
+          }
+
+          <button
+            class="danger"
+            onclick="deleteProduct(${product.id})"
+          >
+            🗑 Видалити
+          </button>
+
+        `;
+
+
+        productsList.appendChild(div);
+
+      });
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      productsList.innerHTML =
+        "❌ Помилка: " + error.message;
+
+    }
+
   }
-  /* =========================================
-     ВИДАЛИТИ ТОВАР
-     ========================================= */
+
+
+  /* =====================================================
+     ВИДАЛЕННЯ ТОВАРУ
+     ===================================================== */
+
   async function deleteProduct(id) {
-    const answer =
+
+    const confirmDelete =
       confirm(
         "Точно видалити цей товар?"
       );
-    if (!answer) {
+
+    if (!confirmDelete) {
       return;
     }
-    const { error } =
-      await db
+
+
+    try {
+
+      const {
+        error
+      } = await db
         .from("products")
         .delete()
         .eq("id", id);
-    if (error) {
+
+
+      if (error) {
+
+        alert(
+          "❌ " + error.message
+        );
+
+        return;
+      }
+
+
       alert(
-        "❌ Помилка: " +
-        error.message
+        "✅ Товар видалено."
       );
-      return;
+
+
+      loadProducts();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "❌ Помилка: " + error.message
+      );
+
     }
-    loadProducts();
+
   }
-  /* =========================================
+
+
+  /* =====================================================
      ЗАХИСТ ВІД HTML
-     ========================================= */
+     ===================================================== */
+
   function escapeHTML(value) {
+
+    if (value === null ||
+        value === undefined) {
+
+      return "";
+
+    }
+
     return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+
   }
-  /* =========================================
-     ПЕРЕВІРКА СЕСІЇ
-     ========================================= */
-  async function checkSession() {
-    const { data, error } =
-      await db.auth.getSession();
-    if (error) {
-      console.error(error);
-      return;
-    }
-    if (data.session) {
-      showAdmin();
-    } else {
-      loginBox.style.display =
-        "block";
-      admin.style.display =
-        "none";
-    }
-  }
-  /* =========================================
+
+
+  /* =====================================================
      КНОПКИ
-     ========================================= */
+     ===================================================== */
+
   loginButton.addEventListener(
     "click",
     login
   );
+
   logoutButton.addEventListener(
     "click",
     logout
   );
-  addButton.addEventListener(
+
+  refreshButton.addEventListener(
+    "click",
+    loadProducts
+  );
+
+  addProductButton.addEventListener(
     "click",
     addProduct
   );
-  /* Enter для входу */
+
+
+  /* =====================================================
+     ENTER ДЛЯ ВХОДУ
+     ===================================================== */
+
   document
     .getElementById("password")
     .addEventListener(
       "keydown",
       function(event) {
+
         if (event.key === "Enter") {
           login();
         }
+
       }
     );
-  /* Запуск */
+
+
+  /* =====================================================
+     СТАРТ
+     ===================================================== */
+
   checkSession();
+
 </script>
+
 </body>
 </html>
