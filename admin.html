@@ -1,2 +1,314 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Адмін-панель — Дім Сад Інструмент</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .box {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background: #16803c;
+      color: white;
+      border: 0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #10652f;
+    }
+
+    #admin {
+      display: none;
+    }
+
+    .product {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 10px;
+    }
+
+    .logout {
+      background: #d33;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box" id="login">
+  <h1>🔐 Адмін-панель</h1>
+
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Пароль">
+
+  <button onclick="login()">Увійти</button>
+
+  <div id="loginError" class="error"></div>
+</div>
+
+<div class="box" id="admin">
+
+  <h1>🛒 Дім Сад Інструмент</h1>
+
+  <button class="logout" onclick="logout()">Вийти</button>
+
+  <hr>
+
+  <h2>Додати товар</h2>
+
+  <input id="name" placeholder="Назва товару">
+  <input id="price" type="number" placeholder="Ціна, грн">
+  <textarea id="description" placeholder="Опис товару"></textarea>
+  <input id="image" placeholder="Посилання на фото">
+  <input id="category" placeholder="Категорія">
+
+  <button onclick="addProduct()">➕ Додати товар</button>
+
+  <div id="message"></div>
+
+  <hr>
+
+  <h2>Товари</h2>
+
+  <div id="products"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+"https://rzdqohedzsgcmhcdhlri.supabase.co";
+
 const SUPABASE_KEY =
-"sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
+"sb_publishable_mEr-
+WmopCWb-
+Rtyq764qh1_A_rZitmXJZ";
+
+const db = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+
+async function login() {
+
+  const email =
+    document.getElementById("email").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const { error } =
+    await db.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+  if (error) {
+
+    document.getElementById("loginError").innerText =
+      error.message;
+
+    return;
+  }
+
+  showAdmin();
+}
+
+
+async function logout() {
+
+  await db.auth.signOut();
+
+  document.getElementById("admin").style.display = "none";
+  document.getElementById("login").style.display = "block";
+}
+
+
+async function showAdmin() {
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("admin").style.display = "block";
+
+  loadProducts();
+}
+
+
+async function addProduct() {
+
+  const name =
+    document.getElementById("name").value;
+
+  const price =
+    document.getElementById("price").value;
+
+  const description =
+    document.getElementById("description").value;
+
+  const image =
+    document.getElementById("image").value;
+
+  const category =
+    document.getElementById("category").value;
+
+  const { error } =
+    await db.from("products").insert({
+
+      name: name,
+      price: price,
+      description: description,
+      image: image,
+      category: category,
+      available: true,
+      is_hit: false
+
+    });
+
+  if (error) {
+
+    document.getElementById("message").innerText =
+      "Помилка: " + error.message;
+
+    return;
+  }
+
+  document.getElementById("message").innerText =
+    "✅ Товар додано!";
+
+  document.getElementById("name").value = "";
+  document.getElementById("price").value = "";
+  document.getElementById("description").value = "";
+  document.getElementById("image").value = "";
+  document.getElementById("category").value = "";
+
+  loadProducts();
+}
+
+
+async function loadProducts() {
+
+  const { data, error } =
+    await db
+      .from("products")
+      .select("*")
+      .order("id", { ascending: false });
+
+  if (error) {
+
+    document.getElementById("products").innerText =
+      "Помилка: " + error.message;
+
+    return;
+  }
+
+  const container =
+    document.getElementById("products");
+
+  container.innerHTML = "";
+
+  data.forEach(product => {
+
+    const div =
+      document.createElement("div");
+
+    div.className = "product";
+
+    div.innerHTML = `
+      <b>${product.name}</b>
+      <br>
+      💰 ${product.price} грн
+      <br>
+      📂 ${product.category || ""}
+      <br><br>
+      ${product.description || ""}
+      <br><br>
+      <button onclick="deleteProduct(${product.id})">
+        🗑 Видалити
+      </button>
+    `;
+
+    container.appendChild(div);
+
+  });
+}
+
+
+async function deleteProduct(id) {
+
+  if (!confirm("Видалити цей товар?")) {
+    return;
+  }
+
+  const { error } =
+    await db
+      .from("products")
+      .delete()
+      .eq("id", id);
+
+  if (error) {
+
+    alert("Помилка: " + error.message);
+    return;
+  }
+
+  loadProducts();
+}
+
+
+async function checkSession() {
+
+  const { data } =
+    await db.auth.getSession();
+
+  if (data.session) {
+    showAdmin();
+  }
+
+}
+
+
+checkSession();
+
+</script>
+
+</body>
+</html>
