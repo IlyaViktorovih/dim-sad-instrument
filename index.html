@@ -218,8 +218,8 @@ function productCardHTML(p){
   const timer=discount?saleTimerHTML(p):"";
   const stockKnown=p.stock_quantity!==null&&p.stock_quantity!==undefined;
   const stock=stockKnown?Math.max(0,Number(p.stock_quantity)||0):null;
-  const stockInfo=p.available===false||(stockKnown&&stock<=0)?'<div class="stock-info out">❌ Наразі немає в наявності</div>':stockKnown&&stock<=3?'<div class="stock-info low">⚠️ Залишилось лише '+stock+' шт.</div>':'<div class="stock-info">✓ Є в наявності</div>';
-  const buyNotes=p.available===false||(stockKnown&&stock<=0)?"":'<div class="buy-note"><span>🚚 Нова пошта</span><span>📦 Перевірка наявності</span></div>';
+  const stockInfo=p.available===false?'<div class="stock-info out">❌ Наразі немає в наявності</div>':stockKnown&&stock>0&&stock<=3?'<div class="stock-info low">⚠️ Залишилось лише '+stock+' шт.</div>':'<div class="stock-info">✓ Є в наявності</div>';
+  const buyNotes=p.available===false?"":'<div class="buy-note"><span>🚚 Нова пошта</span><span>📦 Перевірка наявності</span></div>';
   return `<article class="product">${galleryHTML}${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}${stockInfo}${buyNotes}<button class="details" onclick="openProduct(${p.id},0)">👁️ Детальніше</button><button class="buy" onclick="addToCart(${p.id})">🛒 Додати в кошик</button><button class="details" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
 }
 function toggleDiscountFilter(){discountOnly=!discountOnly;const btn=document.getElementById("discountFilter");if(btn)btn.classList.toggle("active",discountOnly);render();document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});}
@@ -299,7 +299,7 @@ function buyNow(id){
   if(!product)return;
   let stockKnown=product.stock_quantity!==null&&product.stock_quantity!==undefined;
   let stock=stockKnown?Math.max(0,Number(product.stock_quantity)||0):null;
-  if(product.available===false||(stockKnown&&stock<=0)){alert("❌ Цього товару зараз немає в наявності.");return;}
+  if(product.available===false){alert("❌ Цього товару зараз немає в наявності.");return;}
   let item=cart.find(x=>x.product.id===id);
   if(!item)cart.push({product,quantity:1});
   updateCount();
@@ -315,7 +315,7 @@ let stock=stockKnown?Math.max(0,Number(product.stock_quantity)||0):null;
 if(product.available===false||(stockKnown&&stock<=0)){alert("❌ Цього товару зараз немає в наявності.");return;}
 let item=cart.find(x=>x.product.id===id);
 if(item){
-  if(stockKnown&&item.quantity>=stock){alert("⚠️ Більше цього товару додати не можна. Залишилось: "+stock+" шт.");return;}
+  if(stockKnown&&stock>0&&item.quantity>=stock){alert("⚠️ Більше цього товару додати не можна. Залишилось: "+stock+" шт.");return;}
   item.quantity++;
 }else cart.push({product,quantity:1});
 updateCount();renderCart();alert("Товар додано до кошика 🛒");
