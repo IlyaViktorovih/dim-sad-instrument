@@ -27,7 +27,7 @@ header{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid
 .hero-card{background:white;border-radius:24px;padding:35px;box-shadow:0 15px 40px #173b2b18;text-align:center;font-size:70px}
 main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30px;margin-bottom:20px}
 .categories{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:40px}
-.cat{padding:22px;background:#f4f8f5;border-radius:18px;text-align:center;font-weight:800}.cat b{display:block;font-size:34px;margin-bottom:8px}
+.cat{padding:22px;background:#f4f8f5;border-radius:18px;text-align:center;font-weight:800;cursor:pointer;transition:.2s}.cat:hover{transform:translateY(-2px);box-shadow:0 8px 20px #15352a12}.cat.active{background:#168a4a;color:white}.cat b{display:block;font-size:34px;margin-bottom:8px}
 .toolbar{display:flex;gap:12px;margin-bottom:22px}.search{width:100%;padding:14px 16px;border:1px solid #dbe5df;border-radius:12px;font-size:16px}
 .products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .product{border:1px solid #e3ebe6;border-radius:18px;overflow:hidden;background:white;box-shadow:0 5px 20px #15352a0b}
@@ -55,7 +55,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 <section class="hero"><div class="hero-inner"><div><h1>Товари для дому, саду та інструменти</h1><p>Практичні товари для щоденних справ, ремонту, саду та господарства. Обирайте потрібне — замовляйте просто.</p><a class="cta" href="#products">Переглянути товари</a></div><div class="hero-card">🛠️<br><small style="font-size:18px">Все потрібне — в одному місці</small></div></div></section>
 <main>
 <h2 class="section-title">Категорії</h2>
-<div class="categories"><div class="cat"><b>🏠</b>Для дому</div><div class="cat"><b>🌱</b>Для саду</div><div class="cat"><b>🛠️</b>Інструменти</div><div class="cat"><b>✨</b>Корисні товари</div></div>
+<div class="categories"><div class="cat" onclick="setCategory('Для дому',this)"><b>🏠</b>Для дому</div><div class="cat" onclick="setCategory('Для саду',this)"><b>🌱</b>Для саду</div><div class="cat" onclick="setCategory('Інструменти',this)"><b>🛠️</b>Інструменти</div><div class="cat" onclick="setCategory('Корисні товари',this)"><b>✨</b>Корисні товари</div></div><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Показати всі товари</button></div>
 <h2 class="section-title" id="products">Наші товари</h2>
 <div class="toolbar"><input class="search" id="search" placeholder="🔎 Пошук товару..." oninput="render()"></div>
 <div class="products" id="grid"><div class="loading">Завантаження товарів...</div></div>
@@ -95,7 +95,7 @@ window.addEventListener("appinstalled",()=>{
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(err=>console.log("Service worker:",err)));
 }
-let products=[],productImages={},cart=[];
+let products=[],productImages={},cart=[],selectedCategory="";
 
 async function loadProducts(){
 const {data,error}=await supabaseClient.from("products").select("*").order("id",{ascending:false});
@@ -129,9 +129,24 @@ for(const p of products){
 render();
 }
 
+function setCategory(category,element){
+  selectedCategory=category;
+  document.querySelectorAll(".cat").forEach(el=>el.classList.remove("active"));
+  const all=document.getElementById("allCategory");
+  if(all)all.classList.remove("active");
+  if(category && element && element.classList.contains("cat")) element.classList.add("active");
+  if(!category && all) all.classList.add("active");
+  render();
+  document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});
+}
 function render(){
 let q=document.getElementById("search").value.toLowerCase();
-let list=products.filter(p=>((p.name||"")+" "+(p.category||"")).toLowerCase().includes(q));
+let list=products.filter(p=>{
+  const text=((p.name||"")+" "+(p.category||"")).toLowerCase();
+  const matchesSearch=text.includes(q);
+  const matchesCategory=!selectedCategory || (p.category||"").toLowerCase()===selectedCategory.toLowerCase();
+  return matchesSearch && matchesCategory;
+});
 if(!list.length){document.getElementById("grid").innerHTML="<p>Товарів не знайдено.</p>";return;}
 document.getElementById("grid").innerHTML=list.map(p=>{
 let gallery=productImages[p.id]||[];
