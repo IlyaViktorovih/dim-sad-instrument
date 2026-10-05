@@ -517,6 +517,7 @@
 
 
 <script>
+  window.adminLoginInProgress = false;
   window.addEventListener("error", function(event) {
     const el = document.getElementById("loginStatus");
     if (el && event && event.message) el.textContent = "❌ Помилка адмінки: " + event.message;
@@ -533,6 +534,7 @@
 <script>
   async function adminLoginFallback(event) {
     if (event) event.preventDefault();
+    window.adminLoginInProgress = true;
     const status = document.getElementById("loginStatus");
     const button = document.getElementById("loginButton");
     const email = (document.getElementById("email")?.value || "").trim();
@@ -568,6 +570,7 @@
       console.error("Admin fallback login:", error);
       if (status) status.textContent = "❌ " + (error?.message || "Помилка входу.");
     } finally {
+      window.adminLoginInProgress = false;
       if (button) { button.disabled = false; button.textContent = "Увійти"; }
     }
   }
@@ -654,12 +657,12 @@
 
       if (session) {
         showAdmin(session);
-      } else {
+      } else if (!window.adminLoginInProgress) {
         showLogin();
       }
     } catch (error) {
       console.error("Supabase session check:", error);
-      showLogin();
+      if (!window.adminLoginInProgress) showLogin();
       loginStatus.textContent = "❌ Не вдалося перевірити сесію: " + (error.message || "невідома помилка");
     }
   }
