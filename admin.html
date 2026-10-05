@@ -195,6 +195,10 @@
     .top-product{border:1px solid #ddd;border-radius:12px;padding:13px;margin-top:10px;background:#fafafa}
     .top-product-line{display:flex;justify-content:space-between;gap:10px;font-weight:bold}
     .top-product-bar{height:8px;background:#176b38;border-radius:5px;margin-top:9px}
+    .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
+    .products-tools input,.products-tools select{margin:0}
+    .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    @media(max-width:700px){.products-tools{grid-template-columns:1fr 1fr}.products-tools input{grid-column:1/-1}}
     .photoPreview img {
       width: 78px;
       height: 78px;
@@ -388,6 +392,28 @@
     <div class="box">
 
       <h2>📦 Товари магазину</h2>
+
+      <div class="products-tools">
+        <input id="productSearch" type="search" placeholder="🔎 Пошук товару за назвою">
+        <select id="productCategoryFilter">
+          <option value="all">Усі категорії</option>
+          <option value="Для дому">🏠 Для дому</option>
+          <option value="Для саду">🌱 Для саду</option>
+          <option value="Інструменти">🛠️ Інструменти</option>
+          <option value="Корисні товари">✨ Корисні товари</option>
+        </select>
+        <select id="productAvailabilityFilter">
+          <option value="all">Усі товари</option>
+          <option value="available">🟢 Є в наявності</option>
+          <option value="unavailable">🔴 Немає в наявності</option>
+        </select>
+        <select id="productHitFilter">
+          <option value="all">Усі</option>
+          <option value="hits">🔥 Хіти продажу</option>
+          <option value="normal">Звичайні товари</option>
+        </select>
+      </div>
+      <div class="products-filter-summary" id="productsFilterSummary"></div>
 
       <button id="refreshButton">
         🔄 Оновити список
@@ -829,139 +855,57 @@
      ЗАВАНТАЖИТИ ТОВАРИ
      ===================================================== */
 
-  async function loadProducts() {
+  let allProductsAdmin = [];
 
-    productsList.innerHTML =
-      "⏳ Завантаження...";
+  function renderAdminProducts() {
+    const search = document.getElementById("productSearch").value.trim().toLowerCase();
+    const category = document.getElementById("productCategoryFilter").value;
+    const availability = document.getElementById("productAvailabilityFilter").value;
+    const hit = document.getElementById("productHitFilter").value;
 
+    const filtered = allProductsAdmin.filter(p => {
+      const matchesSearch = !search || String(p.name || "").toLowerCase().includes(search);
+      const matchesCategory = category === "all" || p.category === category;
+      const matchesAvailability =
+        availability === "all" ||
+        (availability === "available" && p.available !== false) ||
+        (availability === "unavailable" && p.available === false);
+      const matchesHit =
+        hit === "all" ||
+        (hit === "hits" && p.is_hit === true) ||
+        (hit === "normal" && p.is_hit !== true);
+      return matchesSearch && matchesCategory && matchesAvailability && matchesHit;
+    });
 
-    try {
+    const summary = document.getElementById("productsFilterSummary");
+    summary.textContent = "Показано: " + filtered.length + " з " + allProductsAdmin.length + " товарів";
 
-      const {
-        data,
-        error
-      } = await db
-        .from("products")
-        .select("*")
-        .order("id", {
-          ascending: false
-        });
-
-
-      if (error) {
-
-        console.error(error);
-
-        productsList.innerHTML =
-          "❌ " + error.message;
-
-        return;
-      }
-
-
-      if (!data || data.length === 0) {
-
-        productsList.innerHTML =
-          "Поки що товарів немає.";
-
-        return;
-      }
-
-
-      productsList.innerHTML = "";
-
-
-      data.forEach(product => {
-
-        const div =
-          document.createElement("div");
-
-        div.className = "product";
-
-
-        const imageHTML =
-          product.image
-            ? `
-              <img
-                src="${escapeHTML(product.image)}"
-                alt="${escapeHTML(product.name)}"
-                style="
-                  width:100%;
-                  max-width:250px;
-                  border-radius:10px;
-                  margin-bottom:10px;
-                "
-              >
-            `
-            : "";
-
-
-        div.innerHTML = `
-
-          ${imageHTML}
-
-          <h3>
-            ${escapeHTML(product.name)}
-          </h3>
-
-          <div class="price">
-            ${product.price} грн
-          </div>
-
-          <p>
-            ${escapeHTML(product.description || "")}
-          </p>
-
-          <p>
-            <b>Категорія:</b>
-            ${escapeHTML(product.category || "")}
-          </p>
-
-          <p>
-            <b>Статус:</b>
-            ${
-              product.available
-                ? "✅ Є в наявності"
-                : "❌ Немає в наявності"
-            }
-          </p>
-
-          ${
-            product.is_hit
-              ? "<p>🔥 Хіт продажу</p>"
-              : ""
-          }
-
-          <button
-            onclick="openEditProduct(${product.id})"
-          >
-            ✏️ Редагувати
-          </button>
-
-          <button
-            class="danger"
-            onclick="deleteProduct(${product.id})"
-          >
-            🗑 Видалити
-          </button>
-
-        `;
-
-
-        productsList.appendChild(div);
-
-      });
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      productsList.innerHTML =
-        "❌ Помилка: " + error.message;
-
+    if (!filtered.length) {
+      productsList.innerHTML = "<div class='status'>🔎 За вибраними фільтрами товарів не знайдено.</div>";
+      return;
     }
 
+    productsList.innerHTML = "";
+    filtered.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "product";
+      const price = Number(p.price || 0).toLocaleString("uk-UA");
+      const oldPrice = p.old_price ? Number(p.old_price).toLocaleString("uk-UA") : "";
+      const availabilityText = p.available !== false ? "🟢 Є в наявності" : "🔴 Немає в наявності";
+      card.innerHTML =
+        "<h3>" + escapeHTML(p.name) + "</h3>" +
+        "<p class='price'>" + price + " грн" + (oldPrice ? " <span style='text-decoration:line-through;color:#999;font-size:14px'>" + oldPrice + " грн</span>" : "") + "</p>" +
+        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
+        "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
+        "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
+      productsList.appendChild(card);
+    });
+  }
+
+  async function loadProducts() {
+
+    allProductsAdmin = data || [];
+    renderAdminProducts();
   }
 
 
@@ -1554,6 +1498,12 @@
     "click",
     loadProducts
   );
+  document.getElementById("productSearch").addEventListener("input", renderAdminProducts);
+  document.getElementById("productCategoryFilter").addEventListener("change", renderAdminProducts);
+  document.getElementById("productAvailabilityFilter").addEventListener("change", renderAdminProducts);
+  document.getElementById("productHitFilter").addEventListener("change", renderAdminProducts);
+
+
 
   addProductButton.addEventListener(
     "click",
