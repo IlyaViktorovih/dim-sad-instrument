@@ -176,6 +176,18 @@
     .stat-icon{font-size:28px}.stat-card span{display:block;color:#68766f;font-size:12px}.stat-card b{display:block;font-size:20px;color:#176b38;margin-top:3px}
     @media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card{padding:12px}.stat-icon{font-size:24px}}
+    .sales-head{display:flex;justify-content:space-between;align-items:center;gap:15px}
+    .sales-period{width:auto;min-width:170px;margin:0}
+    .sales-total{font-size:28px;font-weight:bold;color:#176b38;margin:8px 0 16px}
+    .sales-chart-wrap{width:100%;overflow-x:auto;padding-bottom:8px}
+    .sales-chart{height:230px;min-width:100%;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d8e0db;padding:15px 4px 0}
+    .sales-bar-wrap{height:100%;min-width:26px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+    .sales-bar-value{font-size:10px;color:#66736c;white-space:nowrap;overflow:hidden;max-width:70px;text-overflow:ellipsis}
+    .sales-bar{width:100%;max-width:42px;min-height:3px;background:#176b38;border-radius:6px 6px 0 0;transition:height .25s}
+    .sales-bar-label{font-size:10px;color:#68766f;white-space:nowrap}
+    .sales-empty{text-align:center;padding:30px 10px;color:#68766f}
+    .sales-note{margin-top:8px}
+    @media(max-width:600px){.sales-head{align-items:stretch;flex-direction:column}.sales-period{width:100%}.sales-chart{min-width:650px}}
     .photoPreview img {
       width: 78px;
       height: 78px;
@@ -248,6 +260,27 @@
         <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
       </div>
       <button id="refreshStatsButton">🔄 Оновити статистику</button>
+    </div>
+
+    <!-- ПРОДАЖІ -->
+    <div class="box">
+      <div class="sales-head">
+        <div>
+          <h2>📈 Продажі</h2>
+          <div class="small">Сума замовлень за вибраний період</div>
+        </div>
+        <select id="salesPeriod" class="sales-period">
+          <option value="today">Сьогодні</option>
+          <option value="7">Останні 7 днів</option>
+          <option value="30" selected>Останні 30 днів</option>
+        </select>
+      </div>
+      <div class="sales-total" id="salesTotal">—</div>
+      <div class="sales-chart-wrap">
+        <div class="sales-chart" id="salesChart"></div>
+      </div>
+      <div class="sales-empty hidden" id="salesEmpty">За цей період замовлень немає.</div>
+      <div class="small sales-note">Враховуються всі замовлення, включно з виконаними та скасованими.</div>
     </div>
 
     <!-- ДОДАВАННЯ ТОВАРУ -->
@@ -494,6 +527,7 @@
     loadOrders();
     loadReviewsAdmin();
     loadStats();
+    loadSalesChart();
 
   }
 
@@ -1152,6 +1186,82 @@
 
 
   /* =====================================================
+     ПРОДАЖІ
+     ===================================================== */
+
+  async function loadSalesChart() {
+    const chart = document.getElementById("salesChart");
+    const totalBox = document.getElementById("salesTotal");
+    const empty = document.getElementById("salesEmpty");
+    const period = document.getElementById("salesPeriod").value;
+
+    chart.innerHTML = "⏳";
+    totalBox.textContent = "Завантаження...";
+    empty.classList.add("hidden");
+
+    try {
+      const days = period === "today" ? 1 : Number(period);
+      const start = new Date();
+      start.setHours(0,0,0,0);
+      start.setDate(start.getDate() - (days - 1));
+
+      const result = await db.from("orders")
+        .select("created_at,total,status")
+        .gte("created_at", start.toISOString())
+        .order("created_at", {ascending:true});
+
+      if (result.error) throw result.error;
+
+      const rows = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const key = d.toLocaleDateString("en-CA");
+        rows.push({
+          key,
+          label: days === 1 ? "Сьогодні" : d.toLocaleDateString("uk-UA",{day:"2-digit",month:"2-digit"}),
+          total: 0
+        });
+      }
+
+      (result.data || []).forEach(order => {
+        const d = new Date(order.created_at);
+        const key = d.toLocaleDateString("en-CA");
+        const row = rows.find(x => x.key === key);
+        if (row) row.total += Number(order.total) || 0;
+      });
+
+      const total = rows.reduce((sum,row) => sum + row.total, 0);
+      totalBox.textContent = total.toLocaleString("uk-UA") + " грн";
+
+      if (!total) {
+        chart.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+
+      const max = Math.max(...rows.map(x => x.total), 1);
+      chart.innerHTML = rows.map(row => {
+        const height = Math.max(3, Math.round((row.total / max) * 180));
+        const value = row.total ? row.total.toLocaleString("uk-UA") + " грн" : "";
+        return '<div class="sales-bar-wrap">' +
+          '<div class="sales-bar-value">' + escapeHTML(value) + '</div>' +
+          '<div class="sales-bar" style="height:' + height + 'px" title="' + escapeHTML(row.label + ": " + value) + '"></div>' +
+          '<div class="sales-bar-label">' + escapeHTML(row.label) + '</div>' +
+        '</div>';
+      }).join("");
+
+    } catch (error) {
+      console.error(error);
+      chart.innerHTML = "";
+      totalBox.textContent = "—";
+      empty.textContent = "❌ Не вдалося завантажити продажі: " + error.message;
+      empty.classList.remove("hidden");
+    }
+  }
+
+
+  /* =====================================================
      СТАТИСТИКА
      ===================================================== */
 
@@ -1320,6 +1430,11 @@
   document.getElementById("refreshStatsButton").addEventListener(
     "click",
     loadStats
+  );
+
+  document.getElementById("salesPeriod").addEventListener(
+    "change",
+    loadSalesChart
   );
 
   document.getElementById("closeEditButton").addEventListener(
