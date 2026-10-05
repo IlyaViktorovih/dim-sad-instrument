@@ -2161,9 +2161,16 @@
     const doc = new DOMParser().parseFromString(xmlText, "application/xml");
     if (doc.querySelector("parsererror")) throw new Error("XML пошкоджений або має неправильний формат.");
 
-    let nodes = Array.from(doc.querySelectorAll("offer"));
-    if (!nodes.length) nodes = Array.from(doc.querySelectorAll("item"));
-    if (!nodes.length) throw new Error("У XML не знайдено товарів (<offer> або <item>).");
+    let nodes = Array.from(doc.querySelectorAll("offer, item"));
+    if (!nodes.length) {
+      nodes = Array.from(doc.getElementsByTagNameNS("*", "offer"));
+    }
+    if (!nodes.length) {
+      nodes = Array.from(doc.getElementsByTagNameNS("*", "item"));
+    }
+    if (!nodes.length) {
+      throw new Error("У XML не знайдено товарів. Очікувався YML/XML з тегами <offer> або <item>.");
+    }
 
     const products = [];
 
@@ -2206,9 +2213,25 @@
     if (file) return await file.text();
     if (!url) throw new Error("Встав посилання на XML DROPS або вибери XML-файл.");
 
-    const response = await fetch(url, {cache:"no-store"});
-    if (!response.ok) throw new Error("DROPS XML не завантажився: HTTP " + response.status);
-    return await response.text();
+    let response;
+    try {
+      response = await fetch(url, {
+        cache:"no-store",
+        mode:"cors",
+        credentials:"omit"
+      });
+    } catch (fetchError) {
+      throw new Error(
+        "Браузер не дозволив завантажити XML за посиланням DROPS. Це обмеження CORS. " +
+        "Скачай XML-файл з DROPS та вибери його у полі «XML-файл» нижче."
+      );
+    }
+    if (!response.ok) {
+      throw new Error("DROPS XML не завантажився: HTTP " + response.status + ". Спробуй завантажити XML-файл вручну.");
+    }
+    const text = await response.text();
+    if (!text.trim()) throw new Error("DROPS повернув порожній XML-файл.");
+    return text;
   }
 
   async function importDropsProducts() {
@@ -2224,7 +2247,7 @@
 
     try {
       const xml = await dropsGetXml();
-      status.textContent = "⏳ Аналізую товари...";
+      status.textContent = "⏳ XML завантажено. Аналізую товари...";
       const parsed = dropsParse(xml).slice(0, limit);
 
       if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
@@ -2272,8 +2295,9 @@
       await loadProducts();
     } catch (error) {
       console.error("importDropsProducts:", error);
-      status.textContent = "❌ " + (error?.message || "Помилка імпорту.");
-      alert("❌ Імпорт не виконано.\n\n" + (error?.message || "Невідома помилка."));
+      const message = error?.message || String(error) || "Невідома помилка.";
+      status.textContent = "❌ " + message;
+      alert("❌ Імпорт не виконано.\n\nПричина:\n" + message);
     } finally {
       button.disabled = false;
       button.textContent = "🚀 Імпортувати " + limit + " товарів";
