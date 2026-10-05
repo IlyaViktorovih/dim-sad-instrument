@@ -28,7 +28,7 @@ header{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid
 main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30px;margin-bottom:20px}
 .categories{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:40px}
 .cat{padding:22px;background:#f4f8f5;border-radius:18px;text-align:center;font-weight:800;cursor:pointer;transition:.2s}.cat:hover{transform:translateY(-2px);box-shadow:0 8px 20px #15352a12}.cat.active{background:#168a4a;color:white}.cat b{display:block;font-size:34px;margin-bottom:8px}
-.toolbar{display:flex;gap:12px;margin-bottom:22px}.search{width:100%;padding:14px 16px;border:1px solid #dbe5df;border-radius:12px;font-size:16px}
+.hits-section{margin-bottom:45px;padding:26px;background:linear-gradient(135deg,#fff8ed,#f4f8f5);border-radius:24px}.hits-head{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.hits-head .section-title{margin:4px 0 5px}.hits-head p{margin:0;color:#68766f}.hits-kicker{font-size:13px;font-weight:900;color:#ff8a00;text-transform:uppercase}.hits-all{border:1px solid #168a4a;background:white;color:#168a4a;padding:10px 14px;border-radius:10px;font-weight:800;white-space:nowrap}.toolbar{display:flex;gap:12px;margin-bottom:22px}.search{width:100%;padding:14px 16px;border:1px solid #dbe5df;border-radius:12px;font-size:16px}
 .products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .product{border:1px solid #e3ebe6;border-radius:18px;overflow:hidden;background:white;box-shadow:0 5px 20px #15352a0b}
 .product-media{position:relative}.badge{position:absolute;top:10px;left:10px;z-index:2;padding:7px 10px;border-radius:9px;font-size:12px;font-weight:900;box-shadow:0 3px 10px #15352a20}.hit-badge{background:#ff8a00;color:white}.stock-badge{position:absolute;top:10px;right:10px;z-index:2;background:#e8f7ee;color:#168a4a;padding:6px 9px;border-radius:9px;font-size:11px;font-weight:900}.gallery{height:210px;background:#eef7f1;overflow:hidden;cursor:pointer}.gallery img{width:100%;height:100%;object-fit:cover;display:block}
@@ -46,7 +46,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 .submit{width:100%;padding:14px;border:0;border-radius:11px;background:#ff8a00;color:white;font-weight:800;font-size:16px}
 .cart-item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.qty{display:flex;align-items:center;gap:8px}.qty button{border:0;background:#e8f7ee;border-radius:7px;width:30px;height:30px;font-weight:bold}
 .delivery-box{margin-top:20px;padding-top:15px;border-top:1px solid #ddd}.loading{text-align:center;padding:40px;color:#68766f}
-@media(max-width:800px){.hero-inner{grid-template-columns:1fr}.hero h1{font-size:36px}.categories{grid-template-columns:repeat(2,1fr)}.products{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.hero-inner{grid-template-columns:1fr}.hero h1{font-size:36px}.categories{grid-template-columns:repeat(2,1fr)}.products{grid-template-columns:repeat(2,1fr)}.hits-head{align-items:flex-start;flex-direction:column}}
 @media(max-width:480px){.product-layout{grid-template-columns:1fr}.product-main-photo{height:300px}.products{grid-template-columns:1fr 1fr}.pic,.gallery{height:140px}.logo{font-size:17px}.hero{padding:35px 18px}.hero h1{font-size:32px}.thumbs img{width:44px;height:44px}}
 </style>
 </head>
@@ -56,6 +56,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 <main>
 <h2 class="section-title">Категорії</h2>
 <div class="categories"><div class="cat" onclick="setCategory('Для дому',this)"><b>🏠</b>Для дому</div><div class="cat" onclick="setCategory('Для саду',this)"><b>🌱</b>Для саду</div><div class="cat" onclick="setCategory('Інструменти',this)"><b>🛠️</b>Інструменти</div><div class="cat" onclick="setCategory('Корисні товари',this)"><b>✨</b>Корисні товари</div></div><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Показати всі товари</button></div>
+<section class="hits-section" id="hitsSection"><div class="hits-head"><div><span class="hits-kicker">⭐ Рекомендуємо</span><h2 class="section-title">Хіти продажу</h2><p>Найпопулярніші товари, які варто переглянути першими.</p></div><button class="hits-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Усі товари →</button></div><div class="products" id="hitsGrid"></div></section>
 <h2 class="section-title" id="products">Наші товари</h2>
 <div class="toolbar"><input class="search" id="search" placeholder="🔎 Пошук товару..." oninput="render()"></div>
 <div class="products" id="grid"><div class="loading">Завантаження товарів...</div></div>
@@ -148,8 +149,17 @@ let list=products.filter(p=>{
   const matchesCategory=!selectedCategory || (p.category||"").toLowerCase()===selectedCategory.toLowerCase();
   return matchesSearch && matchesCategory;
 }).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
+const hits=products.filter(p=>p.is_hit===true).slice(0,4);
+const hitsGrid=document.getElementById("hitsGrid"),hitsSection=document.getElementById("hitsSection");
+if(hitsGrid&&hitsSection){
+  hitsSection.style.display=hits.length?"block":"none";
+  hitsGrid.innerHTML=hits.map(p=>productCardHTML(p)).join("");
+}
 if(!list.length){document.getElementById("grid").innerHTML="<p>Товарів не знайдено.</p>";return;}
-document.getElementById("grid").innerHTML=list.map(p=>{
+document.getElementById("grid").innerHTML=list.map(p=>productCardHTML(p)).join("");
+}
+function productCardHTML(p){
+
 let gallery=productImages[p.id]||[];
 if(!gallery.length&&p.image)gallery=[p.image];
 let image=gallery[0]||"";
@@ -158,6 +168,15 @@ let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery"
 let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':'';
 return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><button class="buy" onclick="addToCart('+p.id+')">Додати в кошик</button></div></article>';
 }).join("");
+}
+function productCardHTML(p){
+let gallery=productImages[p.id]||[];
+if(!gallery.length&&p.image)gallery=[p.image];
+let image=gallery[0]||"";
+let badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+(p.available!==false?'<span class="stock-badge">✓ В наявності</span>':"");
+let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>':'<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
+let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':"";
+return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><button class="details" onclick="openProduct('+p.id+',0)">👁️ Детальніше</button><button class="buy" onclick="addToCart('+p.id+')">Додати в кошик</button></div></article>';
 }
 
 function changeImage(productId,index){
