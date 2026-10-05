@@ -290,6 +290,13 @@
     <!-- ЗАМОВЛЕННЯ -->
     <div class="box"><h2>🛒 Замовлення</h2><button id="refreshOrdersButton">🔄 Оновити замовлення</button><div id="ordersList">Завантаження замовлень...</div></div>
 
+    <!-- ВІДГУКИ -->
+    <div class="box">
+      <h2>⭐ Відгуки</h2>
+      <button id="refreshReviewsButton">🔄 Оновити відгуки</button>
+      <div id="reviewsAdminList">Завантаження відгуків...</div>
+    </div>
+
     <!-- ТОВАРИ -->
     <div class="box">
 
@@ -317,6 +324,7 @@
 
     <input type="text" id="editProductName" placeholder="Назва товару">
     <input type="number" id="editProductPrice" placeholder="Ціна, грн" min="0">
+    <input type="number" id="editProductOldPrice" placeholder="Стара ціна (необов'язково), грн" min="0">
     <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
 
     <label><b>Головне фото (посилання)</b></label>
@@ -466,6 +474,7 @@
 
     loadProducts();
     loadOrders();
+    loadReviewsAdmin();
 
   }
 
@@ -1124,6 +1133,74 @@
 
 
   /* =====================================================
+     ВІДГУКИ — МОДЕРАЦІЯ
+     ===================================================== */
+
+  async function loadReviewsAdmin() {
+    const box = document.getElementById("reviewsAdminList");
+    box.innerHTML = "⏳ Завантаження...";
+    const result = await db.from("product_reviews")
+      .select("*")
+      .order("created_at", {ascending:false});
+
+    if (result.error) {
+      box.innerHTML = "❌ " + escapeHTML(result.error.message);
+      return;
+    }
+
+    if (!result.data || !result.data.length) {
+      box.innerHTML = "Відгуків поки немає.";
+      return;
+    }
+
+    const productResult = await db.from("products").select("id,name");
+    const productMap = {};
+    (productResult.data || []).forEach(p => productMap[p.id] = p.name);
+
+    box.innerHTML = "";
+    result.data.forEach(review => {
+      const div = document.createElement("div");
+      div.className = "product";
+      const stars = "★".repeat(Number(review.rating)) + "☆".repeat(5 - Number(review.rating));
+      const date = review.created_at ? new Date(review.created_at).toLocaleString("uk-UA") : "";
+      div.innerHTML =
+        "<h3>" + (review.approved ? "✅ Опублікований" : "🕐 Очікує модерації") + "</h3>" +
+        "<p><b>Товар:</b> " + escapeHTML(productMap[review.product_id] || ("ID " + review.product_id)) + "</p>" +
+        "<p><b>Ім'я:</b> " + escapeHTML(review.name) + "</p>" +
+        "<p><b>Оцінка:</b> <span style='color:#f5a623;font-size:20px'>" + stars + "</span></p>" +
+        "<p><b>Дата:</b> " + escapeHTML(date) + "</p>" +
+        "<p>" + escapeHTML(review.text) + "</p>" +
+        "<button onclick='toggleReviewApproval(" + review.id + "," + (!review.approved) + ")'>" +
+          (review.approved ? "🙈 Приховати" : "✅ Опублікувати") +
+        "</button>" +
+        "<button class='danger' onclick='deleteReview(" + review.id + ")'>🗑 Видалити</button>";
+      box.appendChild(div);
+    });
+  }
+
+  async function toggleReviewApproval(id, approved) {
+    const result = await db.from("product_reviews")
+      .update({approved: approved})
+      .eq("id", id);
+    if (result.error) {
+      alert("❌ " + result.error.message);
+      return;
+    }
+    loadReviewsAdmin();
+  }
+
+  async function deleteReview(id) {
+    if (!confirm("Точно видалити цей відгук?")) return;
+    const result = await db.from("product_reviews").delete().eq("id", id);
+    if (result.error) {
+      alert("❌ " + result.error.message);
+      return;
+    }
+    loadReviewsAdmin();
+  }
+
+
+  /* =====================================================
      ЗАХИСТ ВІД HTML
      ===================================================== */
 
@@ -1173,6 +1250,11 @@
   refreshOrdersButton.addEventListener(
     "click",
     loadOrders
+  );
+
+  document.getElementById("refreshReviewsButton").addEventListener(
+    "click",
+    loadReviewsAdmin
   );
 
   document.getElementById("closeEditButton").addEventListener(
