@@ -170,6 +170,29 @@ main {
   overflow: hidden;
 }
 
+.gallery {
+  height: 210px;
+  background: #eef7f1;
+  overflow: hidden;
+}
+.gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumbs {
+  display: flex;
+  gap: 5px;
+  padding: 6px 8px 0;
+  overflow-x: auto;
+}
+.thumbs img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
 .pic img {
   width: 100%;
   height: 100%;
@@ -340,7 +363,7 @@ main {
     grid-template-columns: 1fr 1fr;
   }
 
-  .pic {
+  .pic, .gallery {
     height: 140px;
   }
 
@@ -584,6 +607,7 @@ SUPABASE_KEY
 
 
 let products = [];
+let productImages = {};
 let cart = [];
 
 
@@ -595,7 +619,6 @@ const { data, error } =
 await supabaseClient
 .from("products")
 .select("*")
-.eq("available", true)
 .order("id", { ascending:false });
 
 if(error) {
@@ -609,7 +632,11 @@ return;
 
 }
 
-products = data || [];
+products = (data || []).filter(p => p.available !== false);
+
+const { data: images } = await supabaseClient.from("product_images").select("product_id,image_url,sort_order").in("product_id", products.map(p => p.id)).order("sort_order", { ascending: true });
+productImages = {};
+(images || []).forEach(img => { if (!productImages[img.product_id]) productImages[img.product_id] = []; productImages[img.product_id].push(img.image_url); });
 
 render();
 
@@ -619,78 +646,17 @@ render();
 /* ПОКАЗ ТОВАРІВ */
 
 function render(){
-
-let q =
-document.getElementById("search")
-.value
-.toLowerCase();
-
-let list =
-products.filter(p =>
-((p.name || "") + " " + (p.category || ""))
-.toLowerCase()
-.includes(q)
-);
-
-if(!list.length){
-
-document.getElementById("grid").innerHTML =
-"<p>Товарів не знайдено.</p>";
-
-return;
-
-}
-
-document.getElementById("grid").innerHTML =
-list.map(p => {
-
-let image = p.image || "";
-
-return `
-
-<article class="product">
-
-<div class="pic">
-
-${
-image
-?
-`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}">`
-:
-`<div class="no-image">📦</div>`
-}
-
-</div>
-
-<div class="info">
-
-<h3>
-${escapeHTML(p.name)}
-</h3>
-
-<small>
-${escapeHTML(p.category || "Товар")}
-</small>
-
-<div class="price">
-${Number(p.price).toLocaleString("uk-UA")} грн
-</div>
-
-<button
-class="buy"
-onclick="addToCart(${p.id})"
->
-Додати в кошик
-</button>
-
-</div>
-
-</article>
-
-`;
-
+let q = document.getElementById("search").value.toLowerCase();
+let list = products.filter(p => ((p.name || "") + " " + (p.category || "")).toLowerCase().includes(q));
+if(!list.length){ document.getElementById("grid").innerHTML = "<p>Товарів не знайдено.</p>"; return; }
+document.getElementById("grid").innerHTML = list.map(p => {
+let gallery = productImages[p.id] || [];
+if(!gallery.length && p.image) gallery = [p.image];
+let image = gallery[0] || "";
+let galleryHTML = image ? "<div class=\"gallery\"><img src=\"" + escapeHTML(image) + "\" alt=\"" + escapeHTML(p.name) + "\"></div>" : "<div class=\"pic\"><div class=\"no-image\">📦</div></div>";
+let thumbs = gallery.length > 1 ? "<div class=\"thumbs\">" + gallery.slice(0,5).map(url => "<img src=\"" + escapeHTML(url) + "\" alt=\"\">").join("") + "</div>" : "";
+return "<article class=\"product\">" + galleryHTML + thumbs + "<div class=\"info\"><h3>" + escapeHTML(p.name) + "</h3><small>" + escapeHTML(p.category || "Товар") + "</small><div class=\"price\">" + Number(p.price).toLocaleString("uk-UA") + " грн</div><button class=\"buy\" onclick=\"addToCart(" + p.id + ")\">Додати в кошик</button></div></article>";
 }).join("");
-
 }
 
 
