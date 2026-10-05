@@ -580,6 +580,9 @@
     const description =
       document.getElementById("productDescription")
         .value.trim();
+    const oldPriceValue = Number(document.getElementById("productOldPrice").value);
+    const old_price = oldPriceValue > price ? oldPriceValue : null;
+    const discount = old_price ? Math.round((1 - price / old_price) * 100) : null;
 
     const image =
       document.getElementById("productImage")
@@ -637,7 +640,9 @@
           image: image,
           category: category,
           available: available,
-          is_hit: is_hit
+          is_hit: is_hit,
+          old_price: old_price,
+          discount: discount
         }])
         .select()
         .single();
@@ -680,6 +685,7 @@
 
       document.getElementById("productPrice")
         .value = "";
+      document.getElementById("productOldPrice").value = "";
 
       document.getElementById("productDescription")
         .value = "";
@@ -876,6 +882,7 @@
     document.getElementById("editProductId").value = product.id;
     document.getElementById("editProductName").value = product.name || "";
     document.getElementById("editProductPrice").value = product.price || "";
+    document.getElementById("editProductOldPrice").value = product.old_price || "";
     document.getElementById("editProductDescription").value = product.description || "";
     document.getElementById("editProductImage").value = product.image || "";
     document.getElementById("editProductCategory").value = product.category || "Для дому";
@@ -913,6 +920,9 @@
     const id = Number(document.getElementById("editProductId").value);
     const name = document.getElementById("editProductName").value.trim();
     const price = Number(document.getElementById("editProductPrice").value);
+    const oldPriceValue = Number(document.getElementById("editProductOldPrice").value);
+    const old_price = oldPriceValue > price ? oldPriceValue : null;
+    const discount = old_price ? Math.round((1 - price / old_price) * 100) : null;
     const description = document.getElementById("editProductDescription").value.trim();
     const image = document.getElementById("editProductImage").value.trim();
     const category = document.getElementById("editProductCategory").value;
@@ -944,7 +954,9 @@
           image,
           category,
           available,
-          is_hit
+          is_hit,
+          old_price,
+          discount
         })
         .eq("id", id);
 
