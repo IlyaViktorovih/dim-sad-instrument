@@ -361,7 +361,21 @@
 
 
     <!-- ЗАМОВЛЕННЯ -->
-    <div class="box"><h2>🛒 Замовлення</h2><button id="refreshOrdersButton">🔄 Оновити замовлення</button><div id="ordersList">Завантаження замовлень...</div></div>
+    <div class="box"><h2>🛒 Замовлення</h2>
+      <div class="orders-tools">
+        <input id="orderSearch" type="search" placeholder="🔎 Пошук за ім'ям, телефоном або містом">
+        <select id="orderStatusFilter">
+          <option value="all">Усі статуси</option>
+          <option value="new">🆕 Нові</option>
+          <option value="processing">⚙️ В обробці</option>
+          <option value="shipped">🚚 Відправлено</option>
+          <option value="completed">✅ Виконано</option>
+          <option value="cancelled">❌ Скасовано</option>
+        </select>
+      </div>
+      <button id="refreshOrdersButton">🔄 Оновити замовлення</button>
+      <div id="ordersList">Завантаження замовлень...</div>
+    </div>
 
     <!-- ВІДГУКИ -->
     <div class="box">
@@ -1168,15 +1182,33 @@
      ЗАМОВЛЕННЯ
      ===================================================== */
 
+  let allOrders = [];
+  let allOrderItems = [];
+
   async function loadOrders() {
     ordersList.innerHTML = "⏳ Завантаження...";
     const result = await db.from("orders").select("*").order("created_at", {ascending:false});
     if (result.error) { ordersList.innerHTML = "❌ " + escapeHTML(result.error.message); return; }
     const itemResult = await db.from("order_items").select("*");
-    const items = itemResult.data || [];
+    allOrders = result.data || [];
+    allOrderItems = itemResult.data || [];
+    renderOrders();
+  }
+
+  function renderOrders() {
+    const search = document.getElementById("orderSearch").value.trim().toLowerCase();
+    const status = document.getElementById("orderStatusFilter").value;
+    const items = allOrderItems;
+    const filtered = allOrders.filter(order => {
+      const matchesStatus = status === "all" || order.status === status;
+      const text = [order.customer_name, order.phone, order.city, order.branch, order.postal_code].join(" ").toLowerCase();
+      return matchesStatus && (!search || text.includes(search));
+    });
+
     ordersList.innerHTML = "";
-    if (!result.data || !result.data.length) { ordersList.innerHTML = "Замовлень поки немає."; return; }
-    result.data.forEach(order => {
+    if (!allOrders.length) { ordersList.innerHTML = "Замовлень поки немає."; return; }
+    if (!filtered.length) { ordersList.innerHTML = "За вашим пошуком замовлень не знайдено."; return; }
+    filtered.forEach(order => {
       const orderItems = items.filter(x => x.order_id === order.id);
       const div = document.createElement("div");
       div.className = "product";
@@ -1205,7 +1237,11 @@
   async function updateOrderStatus(id, status) {
     const result = await db.from("orders").update({status:status}).eq("id", id);
     if (result.error) { alert("❌ " + result.error.message); return; }
-    loadOrders();
+    const order = allOrders.find(o => o.id === id);
+    if (order) order.status = status;
+    renderOrders();
+    loadStats();
+    loadSalesChart();
   }
 
 
