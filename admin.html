@@ -517,6 +517,20 @@
 
 
 <script>
+  window.addEventListener("error", function(event) {
+    const el = document.getElementById("loginStatus");
+    if (el && event && event.message) el.textContent = "❌ Помилка адмінки: " + event.message;
+    console.error("Admin JavaScript error:", event.error || event.message);
+  });
+  window.addEventListener("unhandledrejection", function(event) {
+    const el = document.getElementById("loginStatus");
+    const msg = event?.reason?.message || String(event?.reason || "Невідома помилка");
+    if (el) el.textContent = "❌ Помилка авторизації: " + msg;
+    console.error("Admin unhandled rejection:", event.reason);
+  });
+</script>
+
+<script>
   async function adminLoginFallback(event) {
     if (event) event.preventDefault();
     const status = document.getElementById("loginStatus");
@@ -544,7 +558,11 @@
       if (typeof window.showAdmin === "function") {
         window.showAdmin(data.session);
       } else {
-        location.reload();
+        const panel = document.getElementById("adminPanel");
+        const box = document.getElementById("loginBox");
+        if (box) box.classList.add("hidden");
+        if (panel) panel.classList.remove("hidden");
+        if (status) status.textContent = "⚠️ Вхід виконано, але основний код адмінки не завантажився. Перевіряємо помилку...";
       }
     } catch (error) {
       console.error("Admin fallback login:", error);
