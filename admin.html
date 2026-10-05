@@ -1285,6 +1285,48 @@
     }
   }
 
+  function showNewOrderStockNotification(newOrders) {
+    const stockMap = {};
+    allProductsAdmin.forEach(p => {
+      stockMap[String(p.id)] = p;
+    });
+
+    const critical = [];
+    (newOrders || []).forEach(order => {
+      const items = allOrderItems.filter(item => item.order_id === order.id);
+      items.forEach(item => {
+        const product = stockMap[String(item.product_id)];
+        if (!product || product.stock_quantity === null || product.stock_quantity === undefined) return;
+        const stock = Math.max(0, Number(product.stock_quantity) || 0);
+        if (stock <= 3) {
+          const exists = critical.find(x => String(x.id) === String(product.id));
+          if (!exists) critical.push({id: product.id, name: product.name, stock});
+        }
+      });
+    });
+
+    if (!critical.length) return;
+
+    const names = critical.map(item =>
+      item.stock === 0
+        ? "🔴 " + item.name + " — 0 шт."
+        : "⚠️ " + item.name + " — " + item.stock + " шт."
+    );
+
+    const alertBox = document.getElementById("newOrderAlert");
+    const textBox = document.getElementById("newOrderAlertText");
+    if (alertBox && textBox) {
+      textBox.textContent = "Нове замовлення • " + names.join(" • ");
+      alertBox.classList.remove("hidden");
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("⚠️ Контроль залишків", {
+        body: names.join("\n")
+      });
+    }
+  }
+
   async function requestOrderNotifications() {
     if ("Notification" in window && Notification.permission === "default") {
       try { await Notification.requestPermission(); } catch(e) {}
@@ -1308,6 +1350,7 @@
         showNewOrderAlert(newOrders.length);
         await loadProducts();
         await loadOrders();
+        showNewOrderStockNotification(newOrders);
         loadStats();
         loadSalesChart();
         loadTopProducts();
