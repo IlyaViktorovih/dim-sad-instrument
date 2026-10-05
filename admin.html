@@ -1046,7 +1046,7 @@
       card.innerHTML =
         "<h3>" + escapeHTML(p.name) + "</h3>" +
         "<div class='quick-product-row'>" +
-          "<label>💰 Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \\"price\\", this.value)'></label>" +
+          "<label>💰 Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \"price\", this.value)'></label>" +
           "<label>📦 <select onchange='quickUpdateProduct(" + p.id + ", \"available\", this.value === \"true\")'>" +
             "<option value='true' " + (p.available !== false ? "selected" : "") + ">Є в наявності</option>" +
             "<option value='false' " + (p.available === false ? "selected" : "") + ">Немає</option>" +
