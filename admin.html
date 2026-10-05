@@ -198,6 +198,9 @@
     .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
     .products-tools input,.products-tools select{margin:0}
     .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    .order-status-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+    .order-status-actions button{width:auto;margin:0;padding:8px 10px;border:0;border-radius:9px;background:#eef2ef;color:#26352d;font-weight:700;cursor:pointer;font-size:12px}
+    .order-status-actions button:hover{background:#dce8df}
     .order-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
     .order-contact-actions a,.order-contact-actions button{display:inline-block;width:auto;margin:0;padding:9px 12px;border:0;border-radius:9px;text-decoration:none;background:#168a4a;color:#fff;font-weight:600;font-size:13px;cursor:pointer}
     .order-contact-actions button{background:#eef2ef;color:#26352d}
@@ -1442,7 +1445,12 @@
         "<option value=\"processing\" " + (order.status === "processing" ? "selected" : "") + ">⚙️ В обробці</option>" +
         "<option value=\"shipped\" " + (order.status === "shipped" ? "selected" : "") + ">🚚 Відправлено</option>" +
         "<option value=\"completed\" " + (order.status === "completed" ? "selected" : "") + ">✅ Виконано</option>" +
-        "<option value=\"cancelled\" " + (order.status === "cancelled" ? "selected" : "") + ">❌ Скасовано</option></select>";
+        "<option value=\"cancelled\" " + (order.status === "cancelled" ? "selected" : "") + ">❌ Скасовано</option></select>" +
+        "<div class=\"order-status-actions\">" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'processing')\">⚙️ В обробку</button>" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'shipped')\">🚚 Відправлено</button>" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'completed')\">✅ Виконано</button>" +
+        "</div>";
       ordersList.appendChild(div);
     });
   }
