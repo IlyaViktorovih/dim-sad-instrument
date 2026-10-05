@@ -1,4 +1,4 @@
-const CACHE_NAME = "dim-sad-v6";
+const CACHE_NAME = "dim-sad-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -32,7 +32,9 @@ self.addEventListener("fetch", event => {
   // Supabase, CDN та інші зовнішні запити не кешуємо,
   // щоб товари й замовлення завжди були актуальними.
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith("/admin.html") || url.pathname.endsWith("/admin")) return;
 
+  // Адмінка не кешується: у ній часто змінюється JavaScript, тому завжди беремо свіжу версію.
   event.respondWith(
     fetch(event.request)
       .then(response => {
