@@ -67,13 +67,32 @@ let products=[],productImages={},cart=[];
 
 async function loadProducts(){
 const {data,error}=await supabaseClient.from("products").select("*").order("id",{ascending:false});
-if(error){console.error(error);document.getElementById("grid").innerHTML="<p>Не вдалося завантажити товари.</p>";return;}
+if(error){
+  console.error("Помилка завантаження товарів:",error);
+  document.getElementById("grid").innerHTML="<p>Не вдалося завантажити товари.</p>";
+  return;
+}
 products=(data||[]).filter(p=>p.available!==false);
-const ids=products.map(p=>p.id);
-if(ids.length){
-const {data:images}=await supabaseClient.from("product_images").select("product_id,image_url,sort_order").in("product_id",ids).order("sort_order",{ascending:true});
 productImages={};
-(images||[]).forEach(img=>{if(!productImages[img.product_id])productImages[img.product_id]=[];productImages[img.product_id].push(img.image_url);});
+
+for(const p of products){
+  const {data:images,error:imageError}=await supabaseClient
+    .from("product_images")
+    .select("product_id,image_url,sort_order")
+    .eq("product_id",p.id)
+    .order("sort_order",{ascending:true});
+
+  if(imageError){
+    console.error("Помилка фото товару",p.id,imageError);
+    continue;
+  }
+
+  if(images&&images.length){
+    productImages[p.id]=images
+      .filter(x=>x.image_url)
+      .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0))
+      .map(x=>x.image_url);
+  }
 }
 render();
 }
