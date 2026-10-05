@@ -405,8 +405,7 @@ async function searchNovaPoshtaCities(value){
     try{
       const items=await novaPoshtaRequest("getCities",{
         FindByString:q,
-        Limit:20,
-        Page:1
+        Limit:20
       },"Address");
 
       renderNovaPoshtaSuggestions("city",items);
