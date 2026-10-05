@@ -49,7 +49,12 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 @media(max-width:800px){.toolbar{grid-template-columns:1fr 1fr}.filter-btn{padding:0 10px}.hero-inner{grid-template-columns:1fr}.hero h1{font-size:36px}.categories{grid-template-columns:repeat(2,1fr)}.products{grid-template-columns:repeat(2,1fr)}.hits-head{align-items:flex-start;flex-direction:column}}
 @media(max-width:480px){.toolbar{grid-template-columns:1fr}.product-layout{grid-template-columns:1fr}.product-main-photo{height:300px}.products{grid-template-columns:1fr 1fr}.pic,.gallery{height:140px}.logo{font-size:17px}.hero{padding:35px 18px}.hero h1{font-size:32px}.thumbs img{width:44px;height:44px}}
 .info-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}.info-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e3ebe6;border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.info-icon{font-size:28px}.info-card b{display:block;font-size:15px}.info-card span{display:block;color:#68756e;font-size:13px;margin-top:3px}.delivery-section{margin:34px 0;padding:28px;background:#f6faf7;border-radius:20px}.delivery-section h2{text-align:center;margin:0 0 22px}.delivery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.delivery-grid>div{background:#fff;border:1px solid #e3ebe6;border-radius:15px;padding:18px}.delivery-grid h3{margin:0 0 8px;font-size:17px}.delivery-grid p{margin:0;color:#66736c;line-height:1.55}@media(max-width:800px){.info-strip{grid-template-columns:repeat(2,1fr)}.delivery-grid{grid-template-columns:1fr}}@media(max-width:480px){.info-strip{grid-template-columns:1fr}.info-card{padding:13px}.delivery-section{padding:20px 14px}}.empty-cart{text-align:center;padding:28px 10px}.empty-cart-icon{font-size:48px}.empty-cart h3{margin:8px 0}.empty-cart p{color:#68756e}.cart-list{display:flex;flex-direction:column;gap:10px}.cart-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #e3ebe6;border-radius:14px;background:#fff}.cart-product{display:flex;align-items:center;gap:12px;min-width:0}.cart-thumb{width:62px;height:62px;object-fit:cover;border-radius:10px;background:#f3f6f4;flex:none}.cart-placeholder{display:flex;align-items:center;justify-content:center;font-size:25px}.cart-product-info{min-width:0}.cart-product-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}.cart-product-info span{display:block;color:#68756e;font-size:13px;margin-top:4px}.cart-actions{display:flex;align-items:center;gap:10px}.remove-cart{border:0;background:#fff1f1;border-radius:10px;padding:9px;cursor:pointer}.cart-summary{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e3ebe6;margin-top:14px;padding:16px 4px;font-size:18px}.cart-summary strong{font-size:22px}.cart-checkout{width:100%;margin-top:4px}@media(max-width:480px){.cart-item{align-items:flex-start}.cart-thumb{width:52px;height:52px}.cart-product-info b{max-width:150px}.cart-actions{flex-direction:column;align-items:flex-end;gap:5px}}.reviews-section{margin-top:24px;padding-top:20px;border-top:1px solid #e3ebe6}.review-summary{background:#f6faf7;border-radius:12px;padding:12px;margin:12px 0}.review-stars{color:#f5a623;letter-spacing:2px}.review-card{padding:12px 0;border-bottom:1px solid #edf1ee}.review-head{display:flex;justify-content:space-between;gap:8px}.review-name{font-weight:800}.review-date{font-size:12px;color:#7a867f}.review-text{color:#59665f;line-height:1.5}.review-form{margin-top:16px;padding:14px;background:#f6faf7;border-radius:12px}.review-form input,.review-form textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #dbe5df;border-radius:9px;margin-bottom:9px;font:inherit}.review-form textarea{min-height:75px}.rating-buttons{display:flex;gap:3px}.rating-buttons button{border:0;background:none;font-size:25px;opacity:.35}.rating-buttons button.active{opacity:1}.reviews-note{font-size:12px;color:#7a867f;margin-top:7px}</style>
-</head>
+<style>
+.success-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.success-modal-card{background:#fff;border-radius:24px;padding:30px 22px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:successPop .25s ease}
+.success-icon{font-size:58px;margin-bottom:8px}.success-modal-card h2{margin:8px 0 10px;font-size:26px}.success-modal-card p{margin:8px 0}.success-text{color:#666;line-height:1.5}.success-modal-card .buy{margin-top:18px;width:100%}
+@keyframes successPop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+</style></head>
 <body>
 <header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><div style="display:flex;gap:8px;align-items:center"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div></header>
 <section class="hero"><div class="hero-inner"><div><h1>Товари для дому, саду та інструменти</h1><p>Практичні товари для щоденних справ, ремонту, саду та господарства. Обирайте потрібне — замовляйте просто.</p><a class="cta" href="#products">Переглянути товари</a></div><div class="hero-card">🛠️<br><small style="font-size:18px">Все потрібне — в одному місці</small></div></div></section>
@@ -333,10 +338,21 @@ if(error){
   alert(error.message && error.message.includes("Недостатньо") ? "❌ " + error.message : "❌ Не вдалося оформити замовлення. Спробуйте ще раз.");
   return;
 }
-alert("✅ Дякуємо!\n\nЗамовлення №" + order + " прийнято.\nМи зв'яжемося з вами найближчим часом.");
+document.getElementById("successOrderNumber").textContent = "Номер вашого замовлення: №" + order;
+document.getElementById("orderSuccessModal").style.display = "flex";
 cart=[];updateCount();closeCart();
 await loadProducts();document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("comment").value="";document.getElementById("delivery").value="";document.getElementById("deliveryFields").innerHTML="";
 }
+<div id="orderSuccessModal" class="success-modal" style="display:none;">
+  <div class="success-modal-card">
+    <div class="success-icon">🎉</div>
+    <h2>Замовлення прийнято!</h2>
+    <p id="successOrderNumber"></p>
+    <p class="success-text">Дякуємо за замовлення! Ми зв'яжемося з вами найближчим часом.</p>
+    <button class="buy" onclick="closeOrderSuccess()">🛍️ Продовжити покупки</button>
+  </div>
+</div>
+function closeOrderSuccess(){document.getElementById("orderSuccessModal").style.display="none";}
 function escapeHTML(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 updateFavoritesCount();
 loadProducts();
