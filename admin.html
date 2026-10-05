@@ -171,6 +171,11 @@
       margin: 8px 0 12px;
     }
 
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}
+    .stat-card{background:#f6faf7;border:1px solid #e1ebe5;border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;min-width:0}
+    .stat-icon{font-size:28px}.stat-card span{display:block;color:#68766f;font-size:12px}.stat-card b{display:block;font-size:20px;color:#176b38;margin-top:3px}
+    @media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card{padding:12px}.stat-icon{font-size:24px}}
     .photoPreview img {
       width: 78px;
       height: 78px;
@@ -231,6 +236,19 @@
       </button>
     </div>
 
+
+    <!-- СТАТИСТИКА -->
+    <div class="box">
+      <h2>📊 Статистика магазину</h2>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon">📦</div><div><span>Товарів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🛒</div><div><span>Замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div><span>Нових</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div><span>Сума замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
+      </div>
+      <button id="refreshStatsButton">🔄 Оновити статистику</button>
+    </div>
 
     <!-- ДОДАВАННЯ ТОВАРУ -->
     <div class="box">
@@ -475,6 +493,7 @@
     loadProducts();
     loadOrders();
     loadReviewsAdmin();
+    loadStats();
 
   }
 
@@ -1133,6 +1152,47 @@
 
 
   /* =====================================================
+     СТАТИСТИКА
+     ===================================================== */
+
+  async function loadStats() {
+    const grid = document.getElementById("statsGrid");
+    try {
+      const [productsResult, ordersResult, reviewsResult] = await Promise.all([
+        db.from("products").select("id"),
+        db.from("orders").select("id,status,total"),
+        db.from("product_reviews").select("id,approved")
+      ]);
+
+      if (productsResult.error) throw productsResult.error;
+      if (ordersResult.error) throw ordersResult.error;
+      if (reviewsResult.error) throw reviewsResult.error;
+
+      const productsCount = (productsResult.data || []).length;
+      const orders = ordersResult.data || [];
+      const reviews = reviewsResult.data || [];
+      const newOrders = orders.filter(o => o.status === "new").length;
+      const total = orders.reduce((sum,o) => sum + (Number(o.total) || 0), 0);
+
+      grid.innerHTML =
+        statCard("📦","Товарів",productsCount.toLocaleString("uk-UA")) +
+        statCard("🛒","Замовлень",orders.length.toLocaleString("uk-UA")) +
+        statCard("🆕","Нових",newOrders.toLocaleString("uk-UA")) +
+        statCard("💰","Сума замовлень",total.toLocaleString("uk-UA") + " грн") +
+        statCard("⭐","Відгуків",reviews.length.toLocaleString("uk-UA"));
+
+    } catch (error) {
+      console.error(error);
+      grid.innerHTML = '<div class="status">❌ Не вдалося завантажити статистику: ' + escapeHTML(error.message) + '</div>';
+    }
+  }
+
+  function statCard(icon,label,value) {
+    return '<div class="stat-card"><div class="stat-icon">' + icon + '</div><div><span>' + label + '</span><b>' + value + '</b></div></div>';
+  }
+
+
+  /* =====================================================
      ВІДГУКИ — МОДЕРАЦІЯ
      ===================================================== */
 
@@ -1255,6 +1315,11 @@
   document.getElementById("refreshReviewsButton").addEventListener(
     "click",
     loadReviewsAdmin
+  );
+
+  document.getElementById("refreshStatsButton").addEventListener(
+    "click",
+    loadStats
   );
 
   document.getElementById("closeEditButton").addEventListener(
