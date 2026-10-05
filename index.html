@@ -348,14 +348,34 @@ let novaPoshtaBranchTimer=null;
 let novaPoshtaCityRef="";
 
 async function novaPoshtaRequest(calledMethod,methodProperties={},modelName="Address"){
-  const response=await fetch(NOVA_POSHTA_FUNCTION_URL,{
-    method:"POST",
-    headers:{"Content-Type":"text/plain;charset=UTF-8"},
-    body:JSON.stringify({modelName,calledMethod,methodProperties})
-  });
-  const data=await response.json().catch(()=>({success:false,data:[]}));
-  if(!response.ok||data.success===false) throw new Error(data.errors?.[0]||data.error||"Не вдалося отримати дані Нової пошти.");
-  return data.data||[];
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  try{
+    const response=await fetch(NOVA_POSHTA_FUNCTION_URL,{
+      method:"POST",
+      mode:"cors",
+      headers:{
+        "Content-Type":"text/plain;charset=UTF-8",
+        "Accept":"application/json"
+      },
+      body:JSON.stringify({modelName,calledMethod,methodProperties}),
+      signal:controller.signal
+    });
+    const raw=await response.text();
+    let data={};
+    try{data=raw?JSON.parse(raw):{};}catch(e){throw new Error("Сервер повернув некоректну відповідь.");}
+    if(!response.ok||data.success===false){
+      const details=(Array.isArray(data.errors)?data.errors:[]).concat(Array.isArray(data.warnings)?data.warnings:[]).filter(Boolean);
+      throw new Error(details[0]||data.error||("Помилка сервера ("+response.status+")."));
+    }
+    if(!Array.isArray(data.data)) throw new Error("Nova Poshta не повернула список даних.");
+    return data.data;
+  }catch(error){
+    if(error.name==="AbortError")throw new Error("Nova Poshta не відповіла протягом 12 секунд.");
+    throw error;
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 function deliveryFieldHTML(){
@@ -381,10 +401,18 @@ async function searchNovaPoshtaCities(value){
   novaPoshtaCityTimer=setTimeout(async()=>{
     box.innerHTML='<div class="np-loading">🔎 Шукаємо міста…</div>';
     try{
-      const items=await novaPoshtaRequest("getCities",{Find:q,Limit:20},"Address");
+      let items=await novaPoshtaRequest("getCities",{Find:q,Limit:20},"Address");
+      if(!items.length){
+        try{
+          items=await novaPoshtaRequest("getSettlements",{Find:q,Limit:20},"Address");
+        }catch(fallbackError){
+          console.warn("getSettlements fallback:",fallbackError);
+        }
+      }
       renderNovaPoshtaSuggestions("city",items);
     }catch(error){
-      console.error(error);box.innerHTML='<div class="np-no-results">Не вдалося завантажити міста.</div>';
+      console.error("Nova Poshta city search:",error);
+      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося завантажити міста.")+'</div>';
     }
   },250);
 }
@@ -417,7 +445,8 @@ async function searchNovaPoshtaBranches(value){
       const items=await novaPoshtaRequest("getWarehouses",props,"AddressGeneral");
       renderNovaPoshtaSuggestions("branch",items);
     }catch(error){
-      console.error(error);box.innerHTML='<div class="np-no-results">Не вдалося завантажити відділення.</div>';
+      console.error("Nova Poshta branch search:",error);
+      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося завантажити відділення.")+'</div>';
     }
   },200);
 }
