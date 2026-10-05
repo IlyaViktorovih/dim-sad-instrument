@@ -31,7 +31,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 .toolbar{display:flex;gap:12px;margin-bottom:22px}.search{width:100%;padding:14px 16px;border:1px solid #dbe5df;border-radius:12px;font-size:16px}
 .products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .product{border:1px solid #e3ebe6;border-radius:18px;overflow:hidden;background:white;box-shadow:0 5px 20px #15352a0b}
-.gallery{height:210px;background:#eef7f1;overflow:hidden;cursor:pointer}.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.product-media{position:relative}.badge{position:absolute;top:10px;left:10px;z-index:2;padding:7px 10px;border-radius:9px;font-size:12px;font-weight:900;box-shadow:0 3px 10px #15352a20}.hit-badge{background:#ff8a00;color:white}.stock-badge{position:absolute;top:10px;right:10px;z-index:2;background:#e8f7ee;color:#168a4a;padding:6px 9px;border-radius:9px;font-size:11px;font-weight:900}.gallery{height:210px;background:#eef7f1;overflow:hidden;cursor:pointer}.gallery img{width:100%;height:100%;object-fit:cover;display:block}
 .thumbs{display:flex;gap:6px;padding:8px;overflow-x:auto;background:#fff}
 .thumbs button{border:2px solid transparent;padding:0;background:transparent;border-radius:7px;flex:0 0 auto;cursor:pointer}
 .thumbs button.active{border-color:#168a4a}.thumbs img{width:48px;height:48px;object-fit:cover;border-radius:5px;display:block}
@@ -147,13 +147,14 @@ let list=products.filter(p=>{
   const matchesSearch=text.includes(q);
   const matchesCategory=!selectedCategory || (p.category||"").toLowerCase()===selectedCategory.toLowerCase();
   return matchesSearch && matchesCategory;
-});
+}).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
 if(!list.length){document.getElementById("grid").innerHTML="<p>Товарів не знайдено.</p>";return;}
 document.getElementById("grid").innerHTML=list.map(p=>{
 let gallery=productImages[p.id]||[];
 if(!gallery.length&&p.image)gallery=[p.image];
 let image=gallery[0]||"";
-let galleryHTML=image?'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div>':'<div class="pic"><div class="no-image">📦</div></div>';
+let badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+(p.available!==false?'<span class="stock-badge">✓ В наявності</span>':"");
+let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>':'<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
 let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':'';
 return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><button class="buy" onclick="addToCart('+p.id+')">Додати в кошик</button></div></article>';
 }).join("");
@@ -178,7 +179,8 @@ function openProduct(productId,index=0){
   const p=products.find(x=>x.id===productId); if(!p)return;
   let gallery=productImages[p.id]||[]; if(!gallery.length&&p.image)gallery=[p.image]; if(!gallery.length)gallery=[""];
   const safeIndex=Math.min(index,gallery.length-1);
-  document.getElementById("productDetails").innerHTML='<div class="product-layout"><div><div class="product-main-photo"><img id="detailMainImage" src="'+escapeHTML(gallery[safeIndex])+'" alt="'+escapeHTML(p.name)+'"></div>'+(gallery.length>1?'<div class="product-gallery">'+gallery.map((url,i)=>'<button class="'+(i===safeIndex?'active':'')+'" onclick="changeDetailImage('+p.id+','+i+')"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':'')+'</div><div><small>'+escapeHTML(p.category||"Товар")+'</small><h2>'+escapeHTML(p.name)+'</h2><div class="price" style="font-size:30px">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><p class="product-description">'+escapeHTML(p.description||"Опис товару буде додано найближчим часом.")+'</p><button class="buy big-buy" onclick="addToCart('+p.id+');closeProduct()">🛒 Додати в кошик</button></div></div>';
+  const badges=(p.is_hit===true?'<span class="badge hit-badge" style="position:static;display:inline-block;margin-right:7px">⭐ Хіт продажу</span>':"")+(p.available!==false?'<span class="stock-badge" style="position:static;display:inline-block">✓ В наявності</span>':"");
+  document.getElementById("productDetails").innerHTML='<div class="product-layout"><div><div class="product-main-photo"><img id="detailMainImage" src="'+escapeHTML(gallery[safeIndex])+'" alt="'+escapeHTML(p.name)+'"></div>'+(gallery.length>1?'<div class="product-gallery">'+gallery.map((url,i)=>'<button class="'+(i===safeIndex?'active':'')+'" onclick="changeDetailImage('+p.id+','+i+')"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':'')+'</div><div><div style="margin-bottom:10px">'+badges+'</div><small>'+escapeHTML(p.category||"Товар")+'</small><h2>'+escapeHTML(p.name)+'</h2><div class="price" style="font-size:30px">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><p class="product-description">'+escapeHTML(p.description||"Опис товару буде додано найближчим часом.")+'</p><button class="buy big-buy" onclick="addToCart('+p.id+');closeProduct()">🛒 Додати в кошик</button></div></div>';
   document.getElementById("productModal").style.display="block";
 }
 function changeDetailImage(productId,index){
