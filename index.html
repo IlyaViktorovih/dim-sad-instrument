@@ -279,11 +279,22 @@ if(!delivery){alert("Оберіть спосіб доставки.");return}
 if(!city||!branch){alert("Вкажіть місто та відділення.");return}
 if(delivery==="Укрпошта"&&!postal){alert("Вкажіть поштовий індекс.");return}
 let total=cart.reduce((sum,item)=>sum+Number(item.product.price)*item.quantity,0);
-const {data:order,error}=await supabaseClient.from("orders").insert({customer_name:name,phone:phone,delivery_method:delivery,city,branch,postal_code:postal,comment,total,status:"new"}).select().single();
-if(error){console.error(error);alert("Не вдалося оформити замовлення. Спробуйте ще раз.");return}
-const items=cart.map(item=>({order_id:order.id,product_id:item.product.id,product_name:item.product.name,price:Number(item.product.price),quantity:item.quantity}));
-const {error:itemsError}=await supabaseClient.from("order_items").insert(items);
-if(itemsError){console.error(itemsError);alert("Замовлення створене, але виникла помилка з товарами.");return}
+const orderPayload={
+  customer_name:name, phone:phone, delivery_method:delivery, city, branch,
+  postal_code:postal, comment, total, status:"new",
+  items:cart.map(item=>({
+    product_id:item.product.id,
+    product_name:item.product.name,
+    price:Number(item.product.price),
+    quantity:item.quantity
+  }))
+};
+const {data:order,error}=await supabaseClient.rpc("place_order", {order_data:orderPayload});
+if(error){
+  console.error(error);
+  alert(error.message && error.message.includes("Недостатньо") ? "❌ " + error.message : "❌ Не вдалося оформити замовлення. Спробуйте ще раз.");
+  return;
+}
 alert("✅ Дякуємо!\n\nВаше замовлення прийнято.\nМи зв'яжемося з вами найближчим часом.");
 cart=[];updateCount();closeCart();document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("comment").value="";document.getElementById("delivery").value="";document.getElementById("deliveryFields").innerHTML="";
 }
