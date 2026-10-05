@@ -2072,6 +2072,214 @@
   }
 
 
+
+  /* =====================================================
+     ІМПОРТ DROPS XML
+     ===================================================== */
+
+  function dropsText(node, names) {
+    for (const name of names) {
+      const el = node.querySelector(name);
+      if (el && el.textContent && el.textContent.trim()) return el.textContent.trim();
+    }
+    return "";
+  }
+
+  function dropsNumber(value) {
+    if (value === null || value === undefined) return 0;
+    const s = String(value).replace(/\s/g, "").replace(",", ".");
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    return m ? Number(m[0]) : 0;
+  }
+
+  function dropsBool(value) {
+    if (value === true) return true;
+    const s = String(value ?? "").trim().toLowerCase();
+    return ["true","1","yes","y","так","в наличии","в наявності"].includes(s);
+  }
+
+  function dropsCategory(name, sourceCategory) {
+    const s = ((name || "") + " " + (sourceCategory || "")).toLowerCase();
+
+    if (/(сад|город|гряд|газон|теплиц|полив|опрыскив|секатор|садов|растен|цвет|лопат|грабл|тяп|кусторез|веткорез|сучкорез|косил|шланг)/i.test(s)) return "Для саду";
+    if (/(авто|автомоб|машин|пылесос автомобиль|компрессор автомобиль|держател.*телефон|зарядн.*авто|насос.*авто)/i.test(s)) return "Товари для авто";
+    if (/(дрель|шуруповерт|перфоратор|болгар|лобзик|пила|ножовк|рубан|фрезер|сверл|бит|ключ|трещот|отвертк|пассатиж|плоскогуб|молоток|степлер|клещ|инструмент|домкрат|свароч)/i.test(s)) return "Інструменти";
+    if (/(футболк|t-shirt|майк)/i.test(s)) return "Футболки";
+    if (/(брюк|штан|джинс|леггинс)/i.test(s)) return "Штани";
+    if (/(куртк|пуховик|жилет|пальто|плащ)/i.test(s)) return "Куртки";
+    if (/(кроссовк|кед|ботинк|сапог|туфл|сланц|шлепан|обув|взутт)/i.test(s)) return "Взуття";
+    if (/(свитер|світр|худи|худі|толстовк|кофт|джемпер|кардиган)/i.test(s)) return "Светри";
+    if (/(клатч)/i.test(s)) return "Клатчі";
+    if (/(портфел|ділов.*сумк)/i.test(s)) return "Портфелі";
+    if (/(рюкзак|сумк|барсетк|бананка|шоппер|торб)/i.test(s)) return "Сумки";
+    if (/(нижн.*бель|трус|бюстгальтер|майк.*нижн|білизн|белье)/i.test(s)) return "Нижня білизна";
+    if (/(чоловіч|мужск|мужчин|для чоловік|мужской)/i.test(s)) return "Чоловічий одяг";
+    if (/(жіноч|женск|женщин|для жін|женский)/i.test(s)) return "Жіночий одяг";
+    if (/(аксесуар|ремень|ремін|гаманець|кошелек|окуляр|рукавич|шапк|кепк|шарф)/i.test(s)) return "Аксесуари";
+    if (/(одяг|одежд|курт|футбол|штани|светр|свитер|сорочк|платт|спідниц)/i.test(s)) return "Одяг";
+    if (/(кухн|ванн|душ|будин|дом|побут|зберіган|хранен|органайзер|посуд|декор|світиль|ламп|текстил|прилад|електр|мебл)/i.test(s)) return "Для дому";
+
+    return "Корисні товари";
+  }
+
+  function dropsRetailPrice(cost) {
+    const n = Math.round(Number(cost) || 0);
+    if (n <= 0) return 0;
+    if (n <= 300) return n + 200;
+    if (n <= 700) return n + 250;
+    return n + 300;
+  }
+
+  function dropsDescription(name, category, sourceDescription) {
+    const intros = {
+      "Для дому":"Практичний товар для дому, який допоможе зробити побут зручнішим та комфортнішим.",
+      "Для саду":"Корисний товар для саду та городу — для зручної роботи, догляду за рослинами та ділянкою.",
+      "Товари для авто":"Практичний товар для автомобіля — стане у пригоді в дорозі, гаражі та щоденному користуванні.",
+      "Інструменти":"Надійний та практичний інструмент для дому, майстерні й ремонтних робіт.",
+      "Корисні товари":"Зручний та практичний товар для щоденного використання.",
+      "Одяг":"Практичний та зручний одяг для щоденного використання.",
+      "Чоловічий одяг":"Зручний чоловічий одяг для повсякденного використання.",
+      "Жіночий одяг":"Стильний та зручний жіночий одяг на кожен день.",
+      "Футболки":"Зручна футболка для повсякденного образу.",
+      "Штани":"Практичні та зручні штани для щоденного носіння.",
+      "Куртки":"Зручна куртка для комфортного використання у прохолодну погоду.",
+      "Взуття":"Зручне та практичне взуття для повсякденного використання.",
+      "Светри":"Теплий та комфортний светр для прохолодної погоди.",
+      "Аксесуари":"Практичний аксесуар, який доповнить повсякденний образ.",
+      "Нижня білизна":"Комфортна та практична нижня білизна для щоденного використання.",
+      "Клатчі":"Стильний та компактний клатч для необхідних речей.",
+      "Портфелі":"Практичний портфель для роботи, документів та щоденних справ.",
+      "Сумки":"Зручна та містка сумка для щоденного використання."
+    };
+    const intro = intros[category] || intros["Корисні товари"];
+    let source = String(sourceDescription || "").replace(/\s+/g," ").trim();
+    if (source.length > 280) source = source.slice(0,277).replace(/\s+\S*$/,"") + "...";
+    return source ? intro + " " + source : intro + " " + name + ".";
+  }
+
+  function dropsParse(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("XML пошкоджений або має неправильний формат.");
+
+    let nodes = Array.from(doc.querySelectorAll("offer"));
+    if (!nodes.length) nodes = Array.from(doc.querySelectorAll("item"));
+    if (!nodes.length) throw new Error("У XML не знайдено товарів (<offer> або <item>).");
+
+    const products = [];
+
+    for (const node of nodes) {
+      const name = dropsText(node, ["name","title","product_name"]);
+      const categorySource = dropsText(node, ["category","categoryName","category_name","group"]);
+      const description = dropsText(node, ["description","description_ua","description_uk"]);
+      const image = dropsText(node, ["picture","image","image_url","url"]);
+      const price = dropsNumber(dropsText(node, ["price","purchase_price","cost","price_purchase","price_retail"]));
+      const stockText = dropsText(node, ["stock","quantity","qty","count","available_quantity","остаток","залишок"]);
+      const stockAttr = node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
+      const stock = Math.max(0, Math.floor(dropsNumber(stockText || stockAttr)));
+      const availableAttr = node.getAttribute("available");
+      const availableText = dropsText(node, ["available","availability","in_stock","stock_status"]);
+      const hasStockSignal = !!(stockText || stockAttr);
+      const available = availableAttr !== null ? dropsBool(availableAttr) : (availableText ? dropsBool(availableText) : stock > 0);
+      const sku = node.getAttribute("id") || node.getAttribute("sku") || dropsText(node, ["sku","vendorCode","vendor_code","article","Артикул"]);
+
+      if (!name || price <= 0) continue;
+      if (!available) continue;
+      if (hasStockSignal && stock <= 0) continue;
+
+      products.push({
+        name,
+        sourceCategory: categorySource,
+        description,
+        image,
+        cost: price,
+        stock: hasStockSignal ? stock : 1,
+        sku: sku || ""
+      });
+    }
+    return products;
+  }
+
+  async function dropsGetXml() {
+    const file = document.getElementById("dropsXmlFile")?.files?.[0];
+    const url = document.getElementById("dropsXmlUrl")?.value?.trim();
+
+    if (file) return await file.text();
+    if (!url) throw new Error("Встав посилання на XML DROPS або вибери XML-файл.");
+
+    const response = await fetch(url, {cache:"no-store"});
+    if (!response.ok) throw new Error("DROPS XML не завантажився: HTTP " + response.status);
+    return await response.text();
+  }
+
+  async function importDropsProducts() {
+    const button = document.getElementById("dropsImportButton");
+    const status = document.getElementById("dropsImportStatus");
+    const limit = Math.min(50, Math.max(1, Number(document.getElementById("dropsImportLimit")?.value) || 50));
+
+    if (!button || !status) return;
+
+    button.disabled = true;
+    button.textContent = "⏳ Завантажуємо XML...";
+    status.textContent = "⏳ Читаю каталог DROPS...";
+
+    try {
+      const xml = await dropsGetXml();
+      status.textContent = "⏳ Аналізую товари...";
+      const parsed = dropsParse(xml).slice(0, limit);
+
+      if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
+
+      const existingResult = await withTimeout(
+        db.from("products").select("id,name"),
+        "Перевірка існуючих товарів",
+        15000
+      );
+      if (existingResult.error) throw existingResult.error;
+
+      const existingNames = new Set((existingResult.data || []).map(p => String(p.name || "").trim().toLowerCase()));
+      const rows = [];
+
+      for (const p of parsed) {
+        if (existingNames.has(p.name.toLowerCase())) continue;
+
+        const category = dropsCategory(p.name, p.sourceCategory);
+        const retail = dropsRetailPrice(p.cost);
+        rows.push({
+          name: p.name,
+          price: retail,
+          description: dropsDescription(p.name, category, p.description),
+          image: p.image || "",
+          category,
+          available: true,
+          is_hit: false,
+          stock_quantity: p.stock,
+          old_price: null,
+          discount: null
+        });
+      }
+
+      if (!rows.length) throw new Error("Усі вибрані товари вже є у магазині.");
+
+      status.textContent = "⏳ Додаю " + rows.length + " товарів...";
+      const result = await withTimeout(
+        db.from("products").insert(rows),
+        "Додавання товарів",
+        30000
+      );
+      if (result.error) throw result.error;
+
+      status.textContent = "✅ Готово! Додано " + rows.length + " товарів. Ціни DROPS у магазин не записуються — клієнт їх не бачить.";
+      await loadProducts();
+    } catch (error) {
+      console.error("importDropsProducts:", error);
+      status.textContent = "❌ " + (error?.message || "Помилка імпорту.");
+      alert("❌ Імпорт не виконано.\n\n" + (error?.message || "Невідома помилка."));
+    } finally {
+      button.disabled = false;
+      button.textContent = "🚀 Імпортувати " + limit + " товарів";
+    }
+  }
+
   /* =====================================================
      КНОПКИ
      ===================================================== */
