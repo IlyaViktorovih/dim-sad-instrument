@@ -1322,6 +1322,7 @@
         "<div class=\"order-contact-actions\">" +
         "<a href=\"tel:" + encodeURIComponent(order.phone || "") + "\">📞 Подзвонити</a>" +
         "<button type=\"button\" onclick=\"copyOrderPhone('" + String(order.phone || "").replace(/'/g, "\\'") + "')\">📋 Копіювати</button>" +
+        "<button type=\"button\" onclick=\"printOrder(" + order.id + ")\">🖨️ Друк</button>" +
         "</div>" +
         "<p><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</p>" +
         "<p><b>Місто:</b> " + escapeHTML(order.city || "") + "</p>" +
@@ -1346,6 +1347,25 @@
     } catch(error) {
       prompt("Скопіюй номер телефону:", phone);
     }
+  }
+
+  function printOrder(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) { alert("❌ Замовлення не знайдено."); return; }
+    const items = allOrderItems.filter(x => x.order_id === orderId);
+    const rows = items.map(x => "<tr><td>" + escapeHTML(x.product_name) + "</td><td>" + x.quantity + "</td><td>" + Number(x.price).toLocaleString("uk-UA") + " грн</td><td>" + (Number(x.price) * Number(x.quantity)).toLocaleString("uk-UA") + " грн</td></tr>").join("");
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) { alert("⚠️ Дозволь спливаючі вікна для друку."); return; }
+    const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
+    w.document.write("<html lang=\"uk\"><head><meta charset=\"UTF-8\"><title>Замовлення №" + order.id + "</title><style>body{font-family:Arial;padding:25px;max-width:850px;margin:auto}h1{color:#176b38}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:9px;text-align:left}th{background:#f3f5f4}.total{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.meta{margin:5px 0}</style></head><body>");
+    w.document.write("<h1>🏠 Дім Сад Інструмент</h1><h2>Замовлення №" + order.id + "</h2>");
+    w.document.write("<div class=\"meta\"><b>Дата:</b> " + escapeHTML(created) + "</div><div class=\"meta\"><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</div><div class=\"meta\"><b>Телефон:</b> " + escapeHTML(order.phone) + "</div>");
+    w.document.write("<div class=\"meta\"><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</div><div class=\"meta\"><b>Місто:</b> " + escapeHTML(order.city || "") + "</div><div class=\"meta\"><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</div><div class=\"meta\"><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</div>");
+    w.document.write("<table><thead><tr><th>Товар</th><th>Кількість</th><th>Ціна</th><th>Сума</th></tr></thead><tbody>" + rows + "</tbody></table>");
+    w.document.write("<div class=\"total\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</div></body></html>");
+    w.document.close();
+    w.focus();
+    setTimeout(function(){ w.print(); }, 300);
   }
 
   async function updateOrderStatus(id, status) {
