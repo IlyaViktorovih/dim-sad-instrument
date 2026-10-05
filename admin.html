@@ -1115,16 +1115,22 @@
       patch.available = stock > 0;
     }
 
-    const result = await db.from("products").update(patch).eq("id", id);
-    if (result.error) {
-      alert("❌ " + result.error.message);
-      loadProducts();
-      return;
-    }
+    try {
+      const result = await withTimeout(
+        db.from("products").update(patch).eq("id", id),
+        "Збереження товару",
+        15000
+      );
+      if (result.error) throw result.error;
 
-    const product = allProductsAdmin.find(p => p.id === id);
-    if (product) Object.assign(product, patch);
-    renderAdminProducts();
+      const product = allProductsAdmin.find(p => p.id === id);
+      if (product) Object.assign(product, patch);
+      renderAdminProducts();
+    } catch (error) {
+      console.error("quickUpdateProduct:", error);
+      alert("❌ Не вдалося зберегти товар: " + (error.message || "невідома помилка"));
+      await loadProducts();
+    }
   }
 
 
@@ -1133,14 +1139,16 @@
      ===================================================== */
 
   async function openEditProduct(id) {
-    const result = await db.from("products").select("*").eq("id", id).single();
+    try {
+      const result = await withTimeout(
+        db.from("products").select("*").eq("id", id).single(),
+        "Завантаження товару",
+        15000
+      );
 
-    if (result.error) {
-      alert("❌ " + result.error.message);
-      return;
-    }
+      if (result.error) throw result.error;
 
-    const product = result.data;
+      const product = result.data;
 
     document.getElementById("editProductId").value = product.id;
     document.getElementById("editProductName").value = product.name || "";
@@ -1154,10 +1162,14 @@
     document.getElementById("editProductHit").value = product.is_hit ? "true" : "false";
     document.getElementById("editProductImages").value = "";
 
-    const photos = await db.from("product_images")
-      .select("image_url,sort_order")
-      .eq("product_id", id)
-      .order("sort_order", {ascending:true});
+    const photos = await withTimeout(
+      db.from("product_images")
+        .select("image_url,sort_order")
+        .eq("product_id", id)
+        .order("sort_order", {ascending:true}),
+      "Завантаження фотографій",
+      15000
+    );
 
     const preview = document.getElementById("editPhotoPreview");
     preview.innerHTML = "";
@@ -1174,6 +1186,10 @@
     document.getElementById("editStatus").textContent =
       "Можна змінити дані та додати нові фото.";
     document.getElementById("editModal").classList.remove("hidden");
+    } catch (error) {
+      console.error("openEditProduct:", error);
+      alert("❌ Не вдалося відкрити товар: " + (error.message || "невідома помилка"));
+    }
   }
 
   function closeEditProduct() {
@@ -1627,23 +1643,26 @@
       }
     }
 
-    const result = await db.rpc("set_order_status", {
-      order_id: id,
-      new_status: status
-    });
+    try {
+      const result = await withTimeout(
+        db.rpc("set_order_status", {
+          order_id: id,
+          new_status: status
+        }),
+        "Зміна статусу замовлення",
+        15000
+      );
 
-    if (result.error) {
-      alert("❌ Не вдалося змінити статус: " + result.error.message);
+      if (result.error) throw result.error;
+
+      order.status = status;
       renderOrders();
-      return;
+      await Promise.allSettled([loadStats(), loadSalesChart(), loadTopProducts()]);
+    } catch (error) {
+      console.error("updateOrderStatus:", error);
+      alert("❌ Не вдалося змінити статус: " + (error.message || "невідома помилка"));
+      renderOrders();
     }
-
-    order.status = status;
-
-    renderOrders();
-    loadStats();
-    loadSalesChart();
-    loadTopProducts();
   }
 
 
@@ -1868,7 +1887,12 @@
       return;
     }
 
-    const productResult = await db.from("products").select("id,name");
+    const productResult = await withTimeout(
+      db.from("products").select("id,name"),
+      "Завантаження назв товарів",
+      15000
+    );
+    if (productResult.error) throw productResult.error;
     const productMap = {};
     (productResult.data || []).forEach(p => productMap[p.id] = p.name);
 
