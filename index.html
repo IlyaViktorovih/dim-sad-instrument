@@ -401,18 +401,18 @@ async function searchNovaPoshtaCities(value){
   if(q.length<2){box.innerHTML="";return;}
   clearTimeout(novaPoshtaCityTimer);
   novaPoshtaCityTimer=setTimeout(async()=>{
-    box.innerHTML='<div class="np-loading">🔎 Шукаємо населений пункт…</div>';
+    box.innerHTML='<div class="np-loading">🔎 Шукаємо місто…</div>';
     try{
-      const result=await novaPoshtaRequest("searchSettlements",{
-        CityName:q,
-        Limit:20
+      const items=await novaPoshtaRequest("getCities",{
+        FindByString:q,
+        Limit:20,
+        Page:1
       },"Address");
-      const items=(result||[]).flatMap(x=>Array.isArray(x.Addresses)?x.Addresses:[x]);
 
       renderNovaPoshtaSuggestions("city",items);
     }catch(error){
       console.error("Nova Poshta city search:",error);
-      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося знайти населений пункт.")+'</div>';
+      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося знайти місто.")+'</div>';
     }
   },250);
 }
@@ -420,9 +420,8 @@ async function searchNovaPoshtaCities(value){
 function selectNovaPoshtaCity(index){
   const city=window._npCities?.[index]; if(!city)return;
   const input=document.getElementById("city"),ref=document.getElementById("cityRef"),branch=document.getElementById("branch"),suggestions=document.getElementById("citySuggestions");
-  const name=city.Present||city.MainDescription||city.Description||city.PresentShort||"";
-  if(input)input.value=name;
-  novaPoshtaCityRef=city.DeliveryCity||city.Ref||"";
+  if(input)input.value=city.Description||city.Present||"";
+  novaPoshtaCityRef=city.Ref||"";
   if(ref)ref.value=novaPoshtaCityRef;
   if(suggestions)suggestions.innerHTML="";
   if(branch){branch.disabled=!novaPoshtaCityRef;branch.value="";branch.placeholder="Почніть вводити номер або назву відділення";}
