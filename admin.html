@@ -207,6 +207,8 @@
     .new-order-alert button{width:auto;margin:0;padding:10px 14px;background:#f0a500}
     .new-order-alert button:hover{background:#d98f00}
 
+    .stock-warning{background:#fff3cd;border:1px solid #f0c36d;color:#8a5a00;border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700}
+    .stock-out{background:#ffe8e8;border:1px solid #ef9a9a;color:#b71c1c;border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700}
     .quick-product-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
     .quick-product-row label{font-size:12px;color:#68766f}
     .quick-product-row input,.quick-product-row select{margin:4px 0 0;padding:9px;font-size:14px}
@@ -1313,9 +1315,17 @@
       const orderItems = items.filter(x => x.order_id === order.id);
       const div = document.createElement("div");
       div.className = "product";
+      const stockKnown = product.stock_quantity !== null && product.stock_quantity !== undefined;
+      const stockValue = stockKnown ? Math.max(0, Number(product.stock_quantity) || 0) : null;
+      const stockWarning = stockKnown && stockValue === 0
+        ? '<div class="stock-out">🔴 Товар закінчився — залишок 0 шт.</div>'
+        : stockKnown && stockValue <= 3
+          ? '<div class="stock-warning">⚠️ Закінчується — залишилось ' + stockValue + ' шт.</div>'
+          : '';
       const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
       const itemText = orderItems.map(x => escapeHTML(x.product_name) + " × " + x.quantity + " — " + Number(x.price).toLocaleString("uk-UA") + " грн").join("<br>") || "—";
-      div.innerHTML = "<h3>🧾 Замовлення №" + order.id + "</h3>" +
+      div.innerHTML = stockWarning +
+        "<h3>🧾 Замовлення №" + order.id + "</h3>" +
         "<p><b>Дата:</b> " + escapeHTML(created) + "</p>" +
         "<p><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</p>" +
         "<p><b>Телефон:</b> " + escapeHTML(order.phone) + "</p>" +
