@@ -427,6 +427,7 @@
           <option value="all">Усі товари</option>
           <option value="available">🟢 Є в наявності</option>
           <option value="unavailable">🔴 Немає в наявності</option>
+          <option value="lowstock">⚠️ Закінчується — ≤3 шт.</option>
         </select>
         <select id="productHitFilter">
           <option value="all">Усі</option>
@@ -895,10 +896,14 @@
     const filtered = allProductsAdmin.filter(p => {
       const matchesSearch = !search || String(p.name || "").toLowerCase().includes(search);
       const matchesCategory = category === "all" || p.category === category;
+      const stockKnown = p.stock_quantity !== null && p.stock_quantity !== undefined;
+      const stockValue = stockKnown ? Math.max(0, Number(p.stock_quantity) || 0) : null;
+
       const matchesAvailability =
         availability === "all" ||
         (availability === "available" && p.available !== false) ||
-        (availability === "unavailable" && p.available === false);
+        (availability === "unavailable" && p.available === false) ||
+        (availability === "lowstock" && stockKnown && stockValue <= 3);
       const matchesHit =
         hit === "all" ||
         (hit === "hits" && p.is_hit === true) ||
