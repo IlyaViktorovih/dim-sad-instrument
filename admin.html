@@ -128,6 +128,56 @@
       font-size: 13px;
       color: #666;
     }
+
+    .editModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+
+    .editModal.hidden {
+      display: none;
+    }
+
+    .editModalContent {
+      background: white;
+      width: 100%;
+      max-width: 650px;
+      max-height: 92vh;
+      overflow: auto;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .editActions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .secondary {
+      background: #777;
+    }
+
+    .photoPreview {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 12px;
+    }
+
+    .photoPreview img {
+      width: 78px;
+      height: 78px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+    }
   </style>
 </head>
 
@@ -255,6 +305,51 @@
 
   </div>
 
+</div>
+
+<!-- РЕДАГУВАННЯ ТОВАРУ -->
+<div id="editModal" class="editModal hidden">
+  <div class="editModalContent">
+    <h2>✏️ Редагувати товар</h2>
+    <input type="hidden" id="editProductId">
+
+    <input type="text" id="editProductName" placeholder="Назва товару">
+    <input type="number" id="editProductPrice" placeholder="Ціна, грн" min="0">
+    <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
+
+    <label><b>Головне фото (посилання)</b></label>
+    <input type="text" id="editProductImage" placeholder="Посилання на головне фото">
+
+    <label><b>Додати нові фото</b></label>
+    <input type="file" id="editProductImages" accept="image/*" multiple>
+    <div class="small">Можна додати одразу кілька нових фотографій.</div>
+
+    <div id="editPhotoPreview" class="photoPreview"></div>
+
+    <select id="editProductCategory">
+      <option value="Для дому">Для дому</option>
+      <option value="Для саду">Для саду</option>
+      <option value="Інструменти">Інструменти</option>
+      <option value="Корисні товари">Корисні товари</option>
+    </select>
+
+    <select id="editProductAvailable">
+      <option value="true">Є в наявності</option>
+      <option value="false">Немає в наявності</option>
+    </select>
+
+    <select id="editProductHit">
+      <option value="false">Звичайний товар</option>
+      <option value="true">🔥 Хіт продажу</option>
+    </select>
+
+    <div id="editStatus" class="status">Зміни товару.</div>
+
+    <div class="editActions">
+      <button class="secondary" id="closeEditButton">Скасувати</button>
+      <button id="saveEditButton">💾 Зберегти зміни</button>
+    </div>
+  </div>
 </div>
 
 
@@ -730,6 +825,12 @@
           }
 
           <button
+            onclick="openEditProduct(${product.id})"
+          >
+            ✏️ Редагувати
+          </button>
+
+          <button
             class="danger"
             onclick="deleteProduct(${product.id})"
           >
@@ -753,6 +854,156 @@
 
     }
 
+  }
+
+
+  /* =====================================================
+     РЕДАГУВАННЯ ТОВАРУ
+     ===================================================== */
+
+  async function openEditProduct(id) {
+    const result = await db.from("products").select("*").eq("id", id).single();
+
+    if (result.error) {
+      alert("❌ " + result.error.message);
+      return;
+    }
+
+    const product = result.data;
+
+    document.getElementById("editProductId").value = product.id;
+    document.getElementById("editProductName").value = product.name || "";
+    document.getElementById("editProductPrice").value = product.price || "";
+    document.getElementById("editProductDescription").value = product.description || "";
+    document.getElementById("editProductImage").value = product.image || "";
+    document.getElementById("editProductCategory").value = product.category || "Для дому";
+    document.getElementById("editProductAvailable").value = product.available ? "true" : "false";
+    document.getElementById("editProductHit").value = product.is_hit ? "true" : "false";
+    document.getElementById("editProductImages").value = "";
+
+    const photos = await db.from("product_images")
+      .select("image_url,sort_order")
+      .eq("product_id", id)
+      .order("sort_order", {ascending:true});
+
+    const preview = document.getElementById("editPhotoPreview");
+    preview.innerHTML = "";
+
+    if (!photos.error && photos.data && photos.data.length) {
+      photos.data.forEach(photo => {
+        const img = document.createElement("img");
+        img.src = photo.image_url;
+        img.alt = "Фото товару";
+        preview.appendChild(img);
+      });
+    }
+
+    document.getElementById("editStatus").textContent =
+      "Можна змінити дані та додати нові фото.";
+    document.getElementById("editModal").classList.remove("hidden");
+  }
+
+  function closeEditProduct() {
+    document.getElementById("editModal").classList.add("hidden");
+  }
+
+  async function saveEditProduct() {
+    const id = Number(document.getElementById("editProductId").value);
+    const name = document.getElementById("editProductName").value.trim();
+    const price = Number(document.getElementById("editProductPrice").value);
+    const description = document.getElementById("editProductDescription").value.trim();
+    const image = document.getElementById("editProductImage").value.trim();
+    const category = document.getElementById("editProductCategory").value;
+    const available = document.getElementById("editProductAvailable").value === "true";
+    const is_hit = document.getElementById("editProductHit").value === "true";
+    const files = Array.from(document.getElementById("editProductImages").files || []);
+    const status = document.getElementById("editStatus");
+
+    if (!name) {
+      status.textContent = "❌ Вкажи назву товару.";
+      return;
+    }
+
+    if (!price || price <= 0) {
+      status.textContent = "❌ Вкажи правильну ціну.";
+      return;
+    }
+
+    const saveButton = document.getElementById("saveEditButton");
+    saveButton.disabled = true;
+    saveButton.textContent = "Зберігаємо...";
+
+    try {
+      const update = await db.from("products")
+        .update({
+          name,
+          price,
+          description,
+          image,
+          category,
+          available,
+          is_hit
+        })
+        .eq("id", id);
+
+      if (update.error) throw update.error;
+
+      if (files.length) {
+        const existing = await db.from("product_images")
+          .select("sort_order")
+          .eq("product_id", id)
+          .order("sort_order", {ascending:false})
+          .limit(1);
+
+        let nextSort = existing.data && existing.data.length
+          ? Number(existing.data[0].sort_order || 0) + 1
+          : 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = id + "/" + Date.now() + "_edit_" + i + "_" + safeName;
+
+          const upload = await db.storage
+            .from("product-images")
+            .upload(path, file, {upsert:false});
+
+          if (upload.error) throw upload.error;
+
+          const publicUrl = db.storage
+            .from("product-images")
+            .getPublicUrl(path).data.publicUrl;
+
+          const insert = await db.from("product_images").insert({
+            product_id: id,
+            image_url: publicUrl,
+            sort_order: nextSort + i
+          });
+
+          if (insert.error) throw insert.error;
+
+          if (!image && i === 0) {
+            const main = await db.from("products")
+              .update({image:publicUrl})
+              .eq("id", id);
+            if (main.error) throw main.error;
+          }
+        }
+      }
+
+      status.textContent = "✅ Товар успішно оновлено!";
+      document.getElementById("editProductImages").value = "";
+      await loadProducts();
+
+      setTimeout(closeEditProduct, 700);
+
+    } catch (error) {
+      console.error(error);
+      status.textContent = "❌ Помилка: " + error.message;
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = "💾 Зберегти зміни";
+    }
   }
 
 
@@ -908,6 +1159,23 @@
   refreshOrdersButton.addEventListener(
     "click",
     loadOrders
+  );
+
+  document.getElementById("closeEditButton").addEventListener(
+    "click",
+    closeEditProduct
+  );
+
+  document.getElementById("saveEditButton").addEventListener(
+    "click",
+    saveEditProduct
+  );
+
+  document.getElementById("editModal").addEventListener(
+    "click",
+    function(event) {
+      if (event.target.id === "editModal") closeEditProduct();
+    }
   );
 
 
