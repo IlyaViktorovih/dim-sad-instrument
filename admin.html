@@ -2216,13 +2216,19 @@
     // Спочатку пробуємо наш Supabase-проксі: браузер напряму не може
     // прочитати XML DROPS через CORS.
     try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Сесія адміністратора не знайдена. Увійди в адмін-панель ще раз.");
+      }
+
       const proxyResponse = await fetch(
         SUPABASE_URL + "/functions/v1/drops-xml-proxy",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "apikey": SUPABASE_KEY
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + session.access_token
           },
           body: JSON.stringify({ url })
         }
