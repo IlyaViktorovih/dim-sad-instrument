@@ -1481,6 +1481,15 @@
 
     const previousStatus = order.status;
 
+    if (previousStatus === "cancelled" && status !== "cancelled") {
+      alert(
+        "⚠️ Скасоване замовлення не можна знову відкрити.\n\n" +
+        "Товар уже повернуто на склад. Щоб уникнути подвійного списання, створіть нове замовлення."
+      );
+      renderOrders();
+      return;
+    }
+
     if (status === "cancelled" && previousStatus !== "cancelled") {
       const confirmed = confirm(
         "❌ Скасувати це замовлення?\\n\\n" +
