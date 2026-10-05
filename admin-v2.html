@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Адмін-панель — Дім Сад Інструмент</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f4;
+      color: #222;
+    }
+
+    header {
+      background: #176b38;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #176b38;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 13px;
+      margin: 7px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #176b38;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background: #0f542b;
+    }
+
+    .danger {
+      background: #c62828;
+    }
+
+    .danger:hover {
+      background: #a51f1f;
+    }
+
+    .logout {
+      background: #555;
+    }
+
+    .product {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 12px;
+      background: #fafafa;
+    }
+
+    .product h3 {
+      margin: 0 0 8px;
+    }
+
+    .price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #176b38;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #f0f0f0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .editModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+
+    .editModal.hidden {
+      display: none;
+    }
+
+    .editModalContent {
+      background: white;
+      width: 100%;
+      max-width: 650px;
+      max-height: 92vh;
+      overflow: auto;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .editActions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .secondary {
+      background: #777;
+    }
+
+    .photoPreview {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 12px;
+    }
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+    .stat-card{background:#f6faf7;border:1px solid #e1ebe5;border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;min-width:0}
+    .stat-icon{font-size:28px}.stat-card span{display:block;color:#68766f;font-size:12px}.stat-card b{display:block;font-size:20px;color:#176b38;margin-top:3px}
+    @media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card{padding:12px}.stat-icon{font-size:24px}}
+    .sales-head{display:flex;justify-content:space-between;align-items:center;gap:15px}
+    .sales-period{width:auto;min-width:170px;margin:0}
+    .sales-total{font-size:28px;font-weight:bold;color:#176b38;margin:8px 0 16px}
+    .sales-chart-wrap{width:100%;overflow-x:auto;padding-bottom:8px}
+    .sales-chart{height:230px;min-width:100%;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d8e0db;padding:15px 4px 0}
+    .sales-bar-wrap{height:100%;min-width:26px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+    .sales-bar-value{font-size:10px;color:#66736c;white-space:nowrap;overflow:hidden;max-width:70px;text-overflow:ellipsis}
+    .sales-bar{width:100%;max-width:42px;min-height:3px;background:#176b38;border-radius:6px 6px 0 0;transition:height .25s}
+    .sales-bar-label{font-size:10px;color:#68766f;white-space:nowrap}
+    .sales-empty{text-align:center;padding:30px 10px;color:#68766f}
+    .sales-note{margin-top:8px}
+    @media(max-width:600px){.sales-head{align-items:stretch;flex-direction:column}.sales-period{width:100%}.sales-chart{min-width:650px}}
+.customer-stats{font-size:15px;color:#555;margin:8px 0 14px}
+    .customer-row{border:1px solid #ddd;border-radius:12px;padding:13px;margin-top:10px;background:#fafafa}
+    .customer-row h3{margin:0 0 7px;color:#176b38}
+    .customer-meta{font-size:13px;color:#666}
+    .top-product{border:1px solid #ddd;border-radius:12px;padding:13px;margin-top:10px;background:#fafafa}
+    .top-product-line{display:flex;justify-content:space-between;gap:10px;font-weight:bold}
+    .top-product-bar{height:8px;background:#176b38;border-radius:5px;margin-top:9px}
+    .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
+    .products-tools input,.products-tools select{margin:0}
+    .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    .order-new-highlight{border:2px solid #f0a500;background:#fffaf0;box-shadow:0 4px 14px rgba(240,165,0,.16)}
+    .order-new-badge{display:inline-block;background:#f0a500;color:#fff;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;margin-bottom:8px}
+    .order-status-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+    .order-status-actions button{width:auto;margin:0;padding:8px 10px;border:0;border-radius:9px;background:#eef2ef;color:#26352d;font-weight:700;cursor:pointer;font-size:12px}
+    .order-status-actions button:hover{background:#dce8df}
+    .order-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+    .order-contact-actions a,.order-contact-actions button{display:inline-block;width:auto;margin:0;padding:9px 12px;border:0;border-radius:9px;text-decoration:none;background:#168a4a;color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+    .order-contact-actions button{background:#eef2ef;color:#26352d}
+    .new-order-alert{position:sticky;top:10px;z-index:100;background:#fff7e6;border:2px solid #f0a500;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .new-order-alert.hidden{display:none}
+    .new-order-alert b{color:#9a6200}
+    .new-order-alert button{width:auto;margin:0;padding:10px 14px;background:#f0a500}
+    .new-order-alert button:hover{background:#d98f00}
+
+    .stock-warning{background:#fff3cd;border:1px solid #f0c36d;color:#8a5a00;border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700}
+    .stock-out{background:#ffe8e8;border:1px solid #ef9a9a;color:#b71c1c;border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700}
+    .stock-alert{border:1px solid #f0c36d;background:#fff8e1;border-radius:10px;padding:10px 12px;margin:8px 0}
+    .stock-alert.out{border-color:#ef9a9a;background:#ffecec;color:#b71c1c}
+    .stock-alert b{display:block;margin-bottom:3px}
+
+    .quick-product-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+    .quick-product-row label{font-size:12px;color:#68766f}
+    .quick-product-row input,.quick-product-row select{margin:4px 0 0;padding:9px;font-size:14px}
+    @media(max-width:600px){.quick-product-row{grid-template-columns:1fr}}
+
+    @media(max-width:700px){.products-tools{grid-template-columns:1fr 1fr}.products-tools input{grid-column:1/-1}}
+    .photoPreview img {
+      width: 78px;
+      height: 78px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🏠 Дім Сад Інструмент</h1>
+  <div>Адмін-панель магазину</div>
+</header>
+
+<div class="container">
+
+  <!-- ВХІД -->
+  <div class="box" id="loginBox">
+    <h2>🔐 Вхід адміністратора</h2>
+
+    <input
+      type="email"
+      id="email"
+      placeholder="Email"
+      autocomplete="email"
+    >
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Пароль"
+      autocomplete="current-password"
+    >
+
+    <button id="loginButton" type="button" onclick="adminLoginFallback(event)">
+      Увійти
+    </button>
+    <button type="button" onclick="showPasswordReset()">
+  🔑 Забули пароль?
+</button>
+
+<div id="passwordResetBox" style="display:none; margin-top:15px;">
+  <input
+    type="email"
+    id="resetEmail"
+    placeholder="Введіть ваш email"
+    autocomplete="email"
+  >
+
+  <button type="button" onclick="sendPasswordReset()">
+    📧 Надіслати посилання
+  </button>
+
+  <button type="button" onclick="hidePasswordReset()">
+    Скасувати
+  </button>
+
+  <div id="resetStatus" class="status"></div>
+</div>
+
+    <div id="loginStatus" class="status">
+      Введи дані адміністратора.
+    </div>
+  </div>
+
+
+  <!-- АДМІНКА -->
+  <div id="adminPanel" class="hidden">
+    <div id="newOrderAlert" class="new-order-alert hidden">
+      <div>🔔 <b id="newOrderAlertText">Нове замовлення!</b></div>
+      <button id="newOrderAlertButton">Переглянути</button>
+    </div>
+
+    <div class="box">
+      <h2>👤 Адміністратор</h2>
+
+      <div id="userEmail" class="small"></div>
+
+      <button class="logout" id="logoutButton">
+        Вийти
+      </button>
+    </div>
+
+
+    <!-- СТАТИСТИКА -->
+    <div class="box">
+      <h2>📊 Статистика магазину</h2>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon">📦</div><div><span>Товарів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🛒</div><div><span>Замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div><span>Нових</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div><span>Сума всіх замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div><span>Сьогодні</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div><span>За 7 днів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🗓️</div><div><span>За 30 днів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
+      </div>
+      <button id="refreshStatsButton">🔄 Оновити статистику</button>
+    </div>
+
+    <!-- КЛІЄНТИ -->
+    <div class="box">
+      <h2>👥 Клієнти</h2>
+      <div class="customer-stats" id="customerStats">⏳ Завантаження...</div>
+      <div id="customersList">Завантаження клієнтів...</div>
+      <button id="refreshCustomersButton">🔄 Оновити клієнтів</button>
+    </div>
+
+    <!-- ПОПУЛЯРНІ ТОВАРИ -->
+    <div class="box">
+      <h2>🔥 Популярні товари</h2>
+      <div id="topProductsList">Завантаження...</div>
+      <button id="refreshTopProductsButton">🔄 Оновити товари</button>
+    </div>
+
+    <!-- ПРОДАЖІ -->
+    <div class="box">
+      <div class="sales-head">
+        <div>
+          <h2>📈 Продажі</h2>
+          <div class="small">Сума замовлень за вибраний період</div>
+        </div>
+        <select id="salesPeriod" class="sales-period">
+          <option value="today">Сьогодні</option>
+          <option value="7">Останні 7 днів</option>
+          <option value="30" selected>Останні 30 днів</option>
+        </select>
+      </div>
+      <div class="sales-total" id="salesTotal">—</div>
+      <div class="sales-chart-wrap">
+        <div class="sales-chart" id="salesChart"></div>
+      </div>
+      <div class="sales-empty hidden" id="salesEmpty">За цей період замовлень немає.</div>
+      <div class="small sales-note">Враховуються всі замовлення, включно з виконаними та скасованими.</div>
+    </div>
+
+    <!-- ДОДАВАННЯ ТОВАРУ -->
+    <div class="box">
+
+      <h2>➕ Додати товар</h2>
+
+      <input
+        type="text"
+        id="productName"
+        placeholder="Назва товару"
+      >
+
+      <input
+        type="number"
+        id="productPrice"
+        placeholder="Ціна продажу, грн"
+        min="0"
+      >
+
+      <input type="number" id="productOldPrice" placeholder="Стара ціна (необов'язково), грн" min="0">
+      <input type="number" id="productStock" placeholder="📦 Кількість на складі, шт." min="0" step="1" value="0">
+
+      <textarea
+        id="productDescription"
+        placeholder="Опис товару"
+      ></textarea>
+
+      <label><b>Фотографії товару</b></label><input type="file" id="productImages" accept="image/*" multiple><div class="small">Можна вибрати одразу кілька фото. Перше буде головним.</div><input type="text" id="productImage" placeholder="Або посилання на головне фото">
+
+      <select id="productCategory">      <option value="Для дому">Для дому</option>
+      <option value="Для саду">Для саду</option>
+      <option value="Товари для авто">Товари для авто</option>
+      <option value="Інструменти">Інструменти</option>
+      <option value="Корисні товари">Корисні товари</option>
+      <option value="Одяг">Одяг</option>
+      <option value="Чоловічий одяг">Чоловічий одяг</option>
+      <option value="Жіночий одяг">Жіночий одяг</option>
+      <option value="Футболки">Футболки</option>
+      <option value="Штани">Штани</option>
+      <option value="Куртки">Куртки</option>
+      <option value="Взуття">Взуття</option>
+      <option value="Светри">Светри</option>
+      <option value="Аксесуари">Аксесуари</option>
+      <option value="Нижня білизна">Нижня білизна</option>
+      <option value="Клатчі">Клатчі</option>
+      <option value="Портфелі">Портфелі</option>
+      <option value="Сумки">Сумки</option></select>
+
+      <select id="productAvailable">
+        <option value="true">Є в наявності</option>
+        <option value="false">Немає в наявності</option>
+      </select>
+
+      <select id="productHit">
+        <option value="false">Звичайний товар</option>
+        <option value="true">🔥 Хіт продажу</option>
+      </select>
+
+      <button id="addProductButton">
+        Додати товар
+      </button>
+
+      <div id="addStatus" class="status">
+        Заповни дані товару.
+      </div>
+
+    </div>
+
+
+    <!-- ІМПОРТ DROPS -->
+    <div class="box">
+      <h2>🚚 Імпорт товарів з DROPS</h2>
+      <div class="small">Встав посилання XML DROPS. Імпорт візьме лише товари з наявністю, автоматично визначить категорію, додасть +200–300 грн та створить короткий продаючий опис українською.</div>
+      <input id="dropsXmlUrl" type="url" placeholder="https://drops.in.ua/xml/....xml" value="">
+      <input id="dropsXmlFile" type="file" accept=".xml,text/xml,application/xml">
+      <div class="small">Якщо браузер не дозволить завантажити XML за посиланням, просто скачай XML з DROPS і вибери файл тут.</div>
+      <input id="dropsImportLimit" type="number" min="1" max="50" value="50" placeholder="Кількість товарів">
+      <button id="dropsImportButton" type="button" onclick="importDropsProducts()">🚀 Імпортувати 50 товарів</button>
+      <div id="dropsImportStatus" class="status">Готово до імпорту.</div>
+    </div>
+
+    <!-- ЗАМОВЛЕННЯ -->
+    <div class="box"><h2>🛒 Замовлення</h2>
+      <div class="orders-tools">
+        <input id="orderSearch" type="search" placeholder="🔎 Пошук за ім'ям, телефоном або містом">
+        <select id="orderStatusFilter">
+          <option value="all">Усі статуси</option>
+          <option value="new">🆕 Нові</option>
+          <option value="processing">⚙️ В обробці</option>
+          <option value="shipped">🚚 Відправлено</option>
+          <option value="completed">✅ Виконано</option>
+          <option value="cancelled">❌ Скасовано</option>
+        </select>
+      </div>
+      <button id="refreshOrdersButton">🔄 Оновити замовлення</button>
+      <div id="ordersList">Завантаження замовлень...</div>
+    </div>
+
+    <!-- ВІДГУКИ -->
+    <div class="box">
+      <h2>⭐ Відгуки</h2>
+      <button id="refreshReviewsButton">🔄 Оновити відгуки</button>
+      <div id="reviewsAdminList">Завантаження відгуків...</div>
+    </div>
+
+    <!-- КОНТРОЛЬ ЗАЛИШКІВ -->
+    <div class="box" id="stockAlertBox">
+      <h2>🚨 Контроль залишків</h2>
+      <div id="stockAlertSummary">Перевірка залишків...</div>
+      <div id="stockAlerts"></div>
+      <button id="refreshStockAlertsButton">🔄 Перевірити залишки</button>
+    </div>
+
+    <!-- ТОВАРИ -->
+    <div class="box">
+
+      <h2>📦 Товари магазину</h2>
+
+      <div class="products-tools">
+        <input id="productSearch" type="search" placeholder="🔎 Пошук товару за назвою">
+        <select id="productCategoryFilter">
+          <option value="all">Усі категорії</option>
+          <option value="Для дому">🏠 Для дому</option>
+          <option value="Для саду">🌱 Для саду</option>
+          <option value="Інструменти">🛠️ Інструменти</option>
+          <option value="Корисні товари">✨ Корисні товари</option>
+        </select>
+        <select id="productAvailabilityFilter">
+          <option value="all">Усі товари</option>
+          <option value="available">🟢 Є в наявності</option>
+          <option value="unavailable">🔴 Немає в наявності</option>
+          <option value="lowstock">⚠️ Закінчується — ≤3 шт.</option>
+        </select>
+        <select id="productHitFilter">
+          <option value="all">Усі</option>
+          <option value="hits">🔥 Хіти продажу</option>
+          <option value="normal">Звичайні товари</option>
+        </select>
+      </div>
+      <div class="products-filter-summary" id="productsFilterSummary"></div>
+
+      <button id="refreshButton">
+        🔄 Оновити список
+      </button>
+
+      <div id="productsList">
+        Завантаження товарів...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- РЕДАГУВАННЯ ТОВАРУ -->
+<div id="editModal" class="editModal hidden">
+  <div class="editModalContent">
+    <h2>✏️ Редагувати товар</h2>
+    <input type="hidden" id="editProductId">
+
+    <input type="text" id="editProductName" placeholder="Назва товару">
+    <input type="number" id="editProductPrice" placeholder="Ціна, грн" min="0">
+    <input type="number" id="editProductOldPrice" placeholder="Стара ціна (необов'язково), грн" min="0">
+    <input type="number" id="editProductStock" placeholder="📦 Кількість на складі, шт." min="0" step="1">
+    <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
+
+    <label><b>Головне фото (посилання)</b></label>
+    <input type="text" id="editProductImage" placeholder="Посилання на головне фото">
+
+    <label><b>Додати нові фото</b></label>
+    <input type="file" id="editProductImages" accept="image/*" multiple>
+    <div class="small">Можна додати одразу кілька нових фотографій.</div>
+
+    <div id="editPhotoPreview" class="photoPreview"></div>
+
+    <select id="editProductCategory">      <option value="Для дому">Для дому</option>
+      <option value="Для саду">Для саду</option>
+      <option value="Товари для авто">Товари для авто</option>
+      <option value="Інструменти">Інструменти</option>
+      <option value="Корисні товари">Корисні товари</option>
+      <option value="Одяг">Одяг</option>
+      <option value="Чоловічий одяг">Чоловічий одяг</option>
+      <option value="Жіночий одяг">Жіночий одяг</option>
+      <option value="Футболки">Футболки</option>
+      <option value="Штани">Штани</option>
+      <option value="Куртки">Куртки</option>
+      <option value="Взуття">Взуття</option>
+      <option value="Светри">Светри</option>
+      <option value="Аксесуари">Аксесуари</option>
+      <option value="Нижня білизна">Нижня білизна</option>
+      <option value="Клатчі">Клатчі</option>
+      <option value="Портфелі">Портфелі</option>
+      <option value="Сумки">Сумки</option></select>
+
+    <select id="editProductAvailable">
+      <option value="true">Є в наявності</option>
+      <option value="false">Немає в наявності</option>
+    </select>
+
+    <select id="editProductHit">
+      <option value="false">Звичайний товар</option>
+      <option value="true">🔥 Хіт продажу</option>
+    </select>
+
+    <div id="editStatus" class="status">Зміни товару.</div>
+
+    <div class="editActions">
+      <button class="secondary" id="closeEditButton">Скасувати</button>
+      <button id="saveEditButton">💾 Зберегти зміни</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  window.adminLoginInProgress = false;
+  window.addEventListener("error", function(event) {
+    const el = document.getElementById("loginStatus");
+    if (el && event && event.message) el.textContent = "❌ Помилка адмінки: " + event.message;
+    console.error("Admin JavaScript error:", event.error || event.message);
+  });
+  window.addEventListener("unhandledrejection", function(event) {
+    const el = document.getElementById("loginStatus");
+    const msg = event?.reason?.message || String(event?.reason || "Невідома помилка");
+    if (el) el.textContent = "❌ Помилка авторизації: " + msg;
+    console.error("Admin unhandled rejection:", event.reason);
+  });
+</script>
+
+<script>
+  async function adminLoginFallback(event) {
+    if (event) event.preventDefault();
+    window.adminLoginInProgress = true;
+    const status = document.getElementById("loginStatus");
+    const button = document.getElementById("loginButton");
+    const email = (document.getElementById("email")?.value || "").trim();
+    const password = document.getElementById("password")?.value || "";
+    if (!email || !password) {
+      if (status) status.textContent = "❌ Введи email та пароль.";
+      return;
+    }
+    if (button) { button.disabled = true; button.textContent = "Вхід..."; }
+    if (status) status.textContent = "Перевіряємо дані...";
+    try {
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        throw new Error("Supabase JS не завантажився.");
+      }
+      const client = window.supabase.createClient(
+        "https://rzdqohedzsgcmhcdhlri.supabase.co",
+        "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ"
+      );
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (!data?.session) throw new Error("Сесію не створено.");
+      if (status) status.textContent = "✅ Успішний вхід! Завантажуємо адмінку...";
+      if (typeof window.showAdmin === "function") {
+        window.showAdmin(data.session);
+      } else {
+        const panel = document.getElementById("adminPanel");
+        const box = document.getElementById("loginBox");
+        if (box) box.classList.add("hidden");
+        if (panel) panel.classList.remove("hidden");
+        if (status) status.textContent = "⚠️ Вхід виконано, але основний код адмінки не завантажився. Перевіряємо помилку...";
+      }
+    } catch (error) {
+      console.error("Admin fallback login:", error);
+      if (status) status.textContent = "❌ " + (error?.message || "Помилка входу.");
+    } finally {
+      window.adminLoginInProgress = false;
+      if (button) { button.disabled = false; button.textContent = "Увійти"; }
+    }
+  }
+</script>
+
+<script>
+
+  /* =====================================================
+     SUPABASE
+     ===================================================== */
+
+  const SUPABASE_URL =
+    "https://rzdqohedzsgcmhcdhlri.supabase.co";
+
+  /*
+    СЮДИ ВСТАВ СВІЙ СПРАВЖНІЙ
+    sb_publishable_... КЛЮЧ
+  */
+
+  const SUPABASE_KEY =
+    "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
+
+  let db;
+
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    const status = document.getElementById("loginStatus");
+    if (status) {
+      status.textContent = "❌ Не завантажився модуль авторизації Supabase. Онови сторінку.";
+    }
+    throw new Error("Supabase JS library is unavailable.");
+  }
+
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  // Резервний обробник входу має використовувати той самий Supabase-клієнт,
+  // що й усі запити адмінки. Це гарантує, що після входу запити до таблиць
+  // одразу виконуються з тією самою авторизованою сесією.
+  window.adminDb = db;
+
+
+  /* =====================================================
+     ЕЛЕМЕНТИ
+     ===================================================== */
+
+  const loginBox =
+    document.getElementById("loginBox");
+
+  const adminPanel =
+    document.getElementById("adminPanel");
+
+  const loginButton =
+    document.getElementById("loginButton");
+
+  const logoutButton =
+    document.getElementById("logoutButton");
+
+  const refreshButton =
+    document.getElementById("refreshButton");
+
+  const addProductButton =
+    document.getElementById("addProductButton");
+
+  const loginStatus =
+    document.getElementById("loginStatus");
+
+  const addStatus =
+    document.getElementById("addStatus");
+
+  const productsList =
+    document.getElementById("productsList");
+
+  const userEmail =
+    document.getElementById("userEmail");
+
+  const refreshOrdersButton = document.getElementById("refreshOrdersButton");
+  const ordersList = document.getElementById("ordersList");
+
+
+  /* =====================================================
+     НАДІЙНІСТЬ ЗАПИТІВ
+     ===================================================== */
+
+  function withTimeout(promise, label, ms = 15000) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label + " — перевищено час очікування (" + Math.round(ms / 1000) + " с).")), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function showLoadError(element, error, fallbackLabel) {
+    if (!element) return;
+    const message = error?.message || "Невідома помилка.";
+    element.innerHTML = "❌ Не вдалося " + fallbackLabel + ": " + escapeHTML(message) +
+      '<br><button type="button" onclick="location.reload()">🔄 Перезавантажити адмінку</button>';
+  }
+
+    /* =====================================================
+     ПЕРЕВІРКА СЕСІЇ
+     ===================================================== */
+
+  async function checkSession() {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+
+      if (session) {
+        if (!window.adminPanelActive) showAdmin(session);
+      } else if (!window.adminLoginInProgress && !window.adminLoginCompleted) {
+        showLogin();
+      }
+    } catch (error) {
+      console.error("Supabase session check:", error);
+      if (!window.adminLoginInProgress) showLogin();
+      loginStatus.textContent = "❌ Не вдалося перевірити сесію: " + (error.message || "невідома помилка");
+    }
+  }
+
+
+  /* =====================================================
+     ПОКАЗАТИ ВХІД
+     ===================================================== */
+
+  function showLogin() {
+
+    window.adminPanelActive = false;
+    window.adminLoginCompleted = false;
+    loginBox.classList.remove("hidden");
+    adminPanel.classList.add("hidden");
+
+  }
+
+
+  /* =====================================================
+     ПОКАЗАТИ АДМІНКУ
+     ===================================================== */
+
+  function showAdmin(session) {
+
+    if (!session?.user) return;
+    if (window.adminPanelActive && window.adminPanelSessionId === session.user.id) return;
+
+    window.adminPanelActive = true;
+    window.adminPanelSessionId = session.user.id;
+    loginBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+
+    userEmail.textContent =
+      "Ви увійшли як: " + session.user.email;
+
+    loadProducts();
+    loadOrders();
+    loadReviewsAdmin();
+    loadStats();
+    loadSalesChart();
+    loadCustomers();
+    loadTopProducts();
+    requestOrderNotifications();
+    setTimeout(() => checkForNewOrders(), 1000);
+    startOrderWatcher();
+
+  }
+
+  window.showAdmin = showAdmin;
+
+
+  /* =====================================================
+     ВХІД
+     ===================================================== */
+
+  async function login() {
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    if (!email || !password) {
+
+      loginStatus.textContent =
+        "❌ Введи email та пароль.";
+
+      return;
+    }
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Вхід...";
+
+    loginStatus.textContent =
+      "Перевіряємо дані...";
+
+    try {
+
+      const {
+        data,
+        error
+      } = await db.auth.signInWithPassword({
+
+        email: email,
+        password: password
+
+      });
+
+      if (error) {
+
+        console.error(error);
+
+        loginStatus.textContent =
+          "❌ " + error.message;
+
+        return;
+      }
+
+      if (!data.session) {
+
+        loginStatus.textContent =
+          "❌ Сесію не створено.";
+
+        return;
+      }
+
+      loginStatus.textContent =
+        "✅ Успішний вхід!";
+
+      showAdmin(data.session);
+
+    } catch (error) {
+
+      console.error(error);
+
+      loginStatus.textContent =
+        "❌ Помилка: " + error.message;
+
+    } finally {
+
+      loginButton.disabled = false;
+      loginButton.textContent = "Увійти";
+
+    }
+
+  }
+
+
+  /* =====================================================
+     ВИХІД
+     ===================================================== */
+
+  async function logout() {
+
+    await db.auth.signOut();
+
+    showLogin();
+
+  }
+
+
+  /* =====================================================
+     ДОДАТИ ТОВАР
+     ===================================================== */
+
+  async function addProduct() {
+
+    const name =
+      document.getElementById("productName")
+        .value.trim();
+
+    const price =
+      Number(
+        document.getElementById("productPrice")
+          .value
+      );
+
+    const description =
+      document.getElementById("productDescription")
+        .value.trim();
+    const oldPriceValue = Number(document.getElementById("productOldPrice").value);
+    const old_price = oldPriceValue > price ? oldPriceValue : null;
+    const discount = old_price ? Math.round((1 - price / old_price) * 100) : null;
+
+    const image =
+      document.getElementById("productImage")
+        .value.trim();
+
+    const category =
+      document.getElementById("productCategory")
+        .value;
+
+    const available =
+      document.getElementById("productAvailable")
+        .value === "true";
+
+    const is_hit =
+      document.getElementById("productHit")
+        .value === "true";
+    const stock_quantity = Math.max(0, Math.floor(Number(document.getElementById("productStock").value) || 0));
+    const availableByStock = stock_quantity > 0;
+
+
+    if (!name) {
+
+      addStatus.textContent =
+        "❌ Вкажи назву товару.";
+
+      return;
+    }
+
+    if (!price || price <= 0) {
+
+      addStatus.textContent =
+        "❌ Вкажи правильну ціну.";
+
+      return;
+    }
+
+
+    addProductButton.disabled = true;
+    addProductButton.textContent =
+      "Додаємо...";
+
+    addStatus.textContent =
+      "Зберігаємо товар...";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } = await db
+        .from("products")
+        .insert([{
+          name: name,
+          price: price,
+          description: description,
+          image: image,
+          category: category,
+          available: available,
+          is_hit: is_hit,
+          stock_quantity: stock_quantity,
+          old_price: old_price,
+          discount: discount
+        }])
+        .select()
+        .single();
+
+
+      if (error) {
+
+        console.error(error);
+
+        addStatus.textContent =
+          "❌ " + error.message;
+
+        return;
+      }
+
+
+      const selectedFiles = Array.from(document.getElementById("productImages").files || []);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = data.id + "/" + Date.now() + "_" + i + "_" + safeName;
+        const upload = await db.storage.from("product-images").upload(path, file, { upsert: false });
+        if (upload.error) throw upload.error;
+        const publicUrl = db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+        const imageInsert = await db.from("product_images").insert({product_id:data.id,image_url:publicUrl,sort_order:i});
+        if(imageInsert.error){ throw new Error("Помилка збереження фото №"+(i+1)+": "+imageInsert.error.message); }
+        if(i===0){
+          const mainUpdate = await db.from("products").update({image:publicUrl}).eq("id",data.id);
+          if(mainUpdate.error){ throw new Error("Фото завантажено, але не вдалося встановити головне фото: "+mainUpdate.error.message); }
+        }
+        if (imageInsert.error) throw imageInsert.error;
+      }
+
+      addStatus.textContent =
+        "✅ Товар успішно додано!";
+
+
+      document.getElementById("productName")
+        .value = "";
+
+      document.getElementById("productPrice")
+        .value = "";
+      document.getElementById("productOldPrice").value = "";
+
+      document.getElementById("productDescription")
+        .value = "";
+
+      document.getElementById("productImage")
+        .value = "";
+      document.getElementById("productImages").value = "";
+
+      document.getElementById("productCategory")
+        .value = "Для дому";
+
+      document.getElementById("productAvailable")
+        .value = "true";
+
+      document.getElementById("productHit")
+        .value = "false";
+      document.getElementById("productStock").value = "0";
+
+
+      loadProducts();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      addStatus.textContent =
+        "❌ Помилка: " + error.message;
+
+    } finally {
+
+      addProductButton.disabled = false;
+      addProductButton.textContent =
+        "Додати товар";
+
+    }
+
+  }
+
+
+  /* =====================================================
+     ЗАВАНТАЖИТИ ТОВАРИ
+     ===================================================== */
+
+  let allProductsAdmin = [];
+
+  function renderAdminProducts() {
+    const search = document.getElementById("productSearch").value.trim().toLowerCase();
+    const category = document.getElementById("productCategoryFilter").value;
+    const availability = document.getElementById("productAvailabilityFilter").value;
+    const hit = document.getElementById("productHitFilter").value;
+
+    const filtered = allProductsAdmin.filter(p => {
+      const matchesSearch = !search || String(p.name || "").toLowerCase().includes(search);
+      const matchesCategory = category === "all" || p.category === category;
+      const stockKnown = p.stock_quantity !== null && p.stock_quantity !== undefined;
+      const stockValue = stockKnown ? Math.max(0, Number(p.stock_quantity) || 0) : null;
+
+      const matchesAvailability =
+        availability === "all" ||
+        (availability === "available" && p.available !== false) ||
+        (availability === "unavailable" && p.available === false) ||
+        (availability === "lowstock" && stockKnown && stockValue <= 3);
+      const matchesHit =
+        hit === "all" ||
+        (hit === "hits" && p.is_hit === true) ||
+        (hit === "normal" && p.is_hit !== true);
+      return matchesSearch && matchesCategory && matchesAvailability && matchesHit;
+    });
+
+    const summary = document.getElementById("productsFilterSummary");
+    summary.textContent = "Показано: " + filtered.length + " з " + allProductsAdmin.length + " товарів";
+
+    if (!filtered.length) {
+      productsList.innerHTML = "<div class='status'>🔎 За вибраними фільтрами товарів не знайдено.</div>";
+      return;
+    }
+
+    productsList.innerHTML = "";
+    filtered.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "product";
+      const price = Number(p.price || 0).toLocaleString("uk-UA");
+      const oldPrice = p.old_price ? Number(p.old_price).toLocaleString("uk-UA") : "";
+      const availabilityText = p.available !== false ? "🟢 Є в наявності" : "🔴 Немає в наявності";
+      card.innerHTML =
+        "<h3>" + escapeHTML(p.name) + "</h3>" +
+        "<div class='quick-product-row'>" +
+          "<label>💰 Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \"price\", this.value)'></label>" +
+          "<label>📦 Залишок <input class='quick-price' type='number' min='0' step='1' value='" + (p.stock_quantity == null ? 0 : Number(p.stock_quantity)) + "' onchange='quickUpdateProduct(" + p.id + ", \"stock_quantity\", this.value)'></label>" +
+          "<label>📦 <select onchange='quickUpdateProduct(" + p.id + ", \"available\", this.value === \"true\")'>" +
+            "<option value='true' " + (p.available !== false ? "selected" : "") + ">Є в наявності</option>" +
+            "<option value='false' " + (p.available === false ? "selected" : "") + ">Немає</option>" +
+          "</select></label>" +
+          "<label>🔥 <select onchange='quickUpdateProduct(" + p.id + ", \"is_hit\", this.value === \"true\")'>" +
+            "<option value='false' " + (!p.is_hit ? "selected" : "") + ">Звичайний</option>" +
+            "<option value='true' " + (p.is_hit ? "selected" : "") + ">Хіт</option>" +
+          "</select></label>" +
+        "</div>" +
+        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • 📦 Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
+        "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
+        "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
+      productsList.appendChild(card);
+    });
+  }
+
+  function renderStockAlerts() {
+    const box = document.getElementById("stockAlerts");
+    const summary = document.getElementById("stockAlertSummary");
+    if (!box || !summary) return;
+
+    const tracked = allProductsAdmin.filter(p => p.stock_quantity !== null && p.stock_quantity !== undefined);
+    const out = tracked.filter(p => Number(p.stock_quantity) <= 0);
+    const low = tracked.filter(p => Number(p.stock_quantity) > 0 && Number(p.stock_quantity) <= 3);
+
+    summary.textContent = out.length || low.length
+      ? "🔴 Закінчились: " + out.length + " • ⚠️ Мало: " + low.length + " • 📦 Контролюється: " + tracked.length
+      : "✅ Критичних залишків немає. • 📦 Контролюється: " + tracked.length;
+
+    box.innerHTML =
+      out.map(p => "<div class='stock-alert out'><b>🔴 " + escapeHTML(p.name) + "</b>Товар закінчився — 0 шт.</div>").join("") +
+      low.map(p => "<div class='stock-alert'><b>⚠️ " + escapeHTML(p.name) + "</b>Залишилось: " + Number(p.stock_quantity) + " шт.</div>").join("");
+  }
+
+  async function loadProducts() {
+    productsList.innerHTML = "⏳ Завантаження товарів...";
+    try {
+      const result = await withTimeout(
+        db.from("products").select("*").order("id", {ascending:false}),
+        "Завантаження товарів",
+        15000
+      );
+      if (result.error) throw result.error;
+      allProductsAdmin = result.data || [];
+      renderAdminProducts();
+      renderStockAlerts();
+    } catch (error) {
+      console.error("loadProducts:", error);
+      showLoadError(productsList, error, "завантажити товари");
+    }
+  }
+
+  async function quickUpdateProduct(id, field, value) {
+    const patch = {};
+    if (field === "price") {
+      const price = Number(value);
+      if (!Number.isFinite(price) || price < 0) {
+        alert("❌ Вкажи правильну ціну.");
+        renderAdminProducts();
+        return;
+      }
+      patch.price = price;
+      const product = allProductsAdmin.find(p => p.id === id);
+      if (product) {
+        const oldPrice = Number(product.old_price);
+        if (Number.isFinite(oldPrice) && oldPrice > price) {
+          patch.discount = Math.round((1 - price / oldPrice) * 100);
+        } else {
+          patch.old_price = null;
+          patch.discount = null;
+        }
+      }
+    } else if (field === "available" || field === "is_hit") {
+      patch[field] = Boolean(value);
+    } else if (field === "stock_quantity") {
+      const stock = Math.floor(Number(value));
+      if (!Number.isFinite(stock) || stock < 0) {
+        alert("❌ Вкажи правильний залишок.");
+        renderAdminProducts();
+        return;
+      }
+      patch.stock_quantity = stock;
+    }
+
+    try {
+      const result = await withTimeout(
+        db.from("products").update(patch).eq("id", id),
+        "Збереження товару",
+        15000
+      );
+      if (result.error) throw result.error;
+
+      const product = allProductsAdmin.find(p => p.id === id);
+      if (product) Object.assign(product, patch);
+      renderAdminProducts();
+    } catch (error) {
+      console.error("quickUpdateProduct:", error);
+      alert("❌ Не вдалося зберегти товар: " + (error.message || "невідома помилка"));
+      await loadProducts();
+    }
+  }
+
+
+  /* =====================================================
+     РЕДАГУВАННЯ ТОВАРУ
+     ===================================================== */
+
+  async function openEditProduct(id) {
+    try {
+      const result = await withTimeout(
+        db.from("products").select("*").eq("id", id).single(),
+        "Завантаження товару",
+        15000
+      );
+
+      if (result.error) throw result.error;
+
+      const product = result.data;
+
+    document.getElementById("editProductId").value = product.id;
+    document.getElementById("editProductName").value = product.name || "";
+    document.getElementById("editProductPrice").value = product.price || "";
+    document.getElementById("editProductOldPrice").value = product.old_price || "";
+    document.getElementById("editProductStock").value = product.stock_quantity ?? 0;
+    document.getElementById("editProductDescription").value = product.description || "";
+    document.getElementById("editProductImage").value = product.image || "";
+    document.getElementById("editProductCategory").value = product.category || "Для дому";
+    document.getElementById("editProductAvailable").value = product.available ? "true" : "false";
+    document.getElementById("editProductHit").value = product.is_hit ? "true" : "false";
+    document.getElementById("editProductImages").value = "";
+
+    const photos = await withTimeout(
+      db.from("product_images")
+        .select("image_url,sort_order")
+        .eq("product_id", id)
+        .order("sort_order", {ascending:true}),
+      "Завантаження фотографій",
+      15000
+    );
+
+    const preview = document.getElementById("editPhotoPreview");
+    preview.innerHTML = "";
+
+    if (!photos.error && photos.data && photos.data.length) {
+      photos.data.forEach(photo => {
+        const img = document.createElement("img");
+        img.src = photo.image_url;
+        img.alt = "Фото товару";
+        preview.appendChild(img);
+      });
+    }
+
+    document.getElementById("editStatus").textContent =
+      "Можна змінити дані та додати нові фото.";
+    document.getElementById("editModal").classList.remove("hidden");
+    } catch (error) {
+      console.error("openEditProduct:", error);
+      alert("❌ Не вдалося відкрити товар: " + (error.message || "невідома помилка"));
+    }
+  }
+
+  function closeEditProduct() {
+    document.getElementById("editModal").classList.add("hidden");
+  }
+
+  async function saveEditProduct() {
+    const id = Number(document.getElementById("editProductId").value);
+    const name = document.getElementById("editProductName").value.trim();
+    const price = Number(document.getElementById("editProductPrice").value);
+    const stock_quantity = Math.max(0, Math.floor(Number(document.getElementById("editProductStock").value) || 0));
+    const availableByStock = stock_quantity > 0;
+    const oldPriceValue = Number(document.getElementById("editProductOldPrice").value);
+    const old_price = oldPriceValue > price ? oldPriceValue : null;
+    const discount = old_price ? Math.round((1 - price / old_price) * 100) : null;
+    const description = document.getElementById("editProductDescription").value.trim();
+    const image = document.getElementById("editProductImage").value.trim();
+    const category = document.getElementById("editProductCategory").value;
+    const available = document.getElementById("editProductAvailable").value === "true";
+    const is_hit = document.getElementById("editProductHit").value === "true";
+    const files = Array.from(document.getElementById("editProductImages").files || []);
+    const status = document.getElementById("editStatus");
+
+    if (!name) {
+      status.textContent = "❌ Вкажи назву товару.";
+      return;
+    }
+
+    if (!price || price <= 0) {
+      status.textContent = "❌ Вкажи правильну ціну.";
+      return;
+    }
+
+    const saveButton = document.getElementById("saveEditButton");
+    saveButton.disabled = true;
+    saveButton.textContent = "Зберігаємо...";
+
+    try {
+      const update = await db.from("products")
+        .update({
+          name,
+          price,
+          description,
+          image,
+          category,
+          available: available,
+          is_hit,
+          stock_quantity,
+          old_price,
+          discount
+        })
+        .eq("id", id);
+
+      if (update.error) throw update.error;
+
+      if (files.length) {
+        const existing = await db.from("product_images")
+          .select("sort_order")
+          .eq("product_id", id)
+          .order("sort_order", {ascending:false})
+          .limit(1);
+
+        let nextSort = existing.data && existing.data.length
+          ? Number(existing.data[0].sort_order || 0) + 1
+          : 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = id + "/" + Date.now() + "_edit_" + i + "_" + safeName;
+
+          const upload = await withTimeout(
+            db.storage
+              .from("product-images")
+              .upload(path, file, {upsert:false}),
+            "Завантаження фото",
+            30000
+          );
+
+          if (upload.error) throw upload.error;
+
+          const publicUrl = db.storage
+            .from("product-images")
+            .getPublicUrl(path).data.publicUrl;
+
+          const insert = await db.from("product_images").insert({
+            product_id: id,
+            image_url: publicUrl,
+            sort_order: nextSort + i
+          });
+
+          if (insert.error) throw insert.error;
+
+          if (!image && i === 0) {
+            const main = await db.from("products")
+              .update({image:publicUrl})
+              .eq("id", id);
+            if (main.error) throw main.error;
+          }
+        }
+      }
+
+      status.textContent = "✅ Товар успішно оновлено!";
+      document.getElementById("editProductImages").value = "";
+      await loadProducts();
+
+      setTimeout(closeEditProduct, 700);
+
+    } catch (error) {
+      console.error(error);
+      status.textContent = "❌ Помилка: " + error.message;
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = "💾 Зберегти зміни";
+    }
+  }
+
+
+  /* =====================================================
+     ВИДАЛЕННЯ ТОВАРУ
+     ===================================================== */
+
+  async function deleteProduct(id) {
+
+    const confirmDelete =
+      confirm(
+        "Точно видалити цей товар?"
+      );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+
+    try {
+
+      const {
+        error
+      } = await db
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+
+      if (error) {
+
+        alert(
+          "❌ " + error.message
+        );
+
+        return;
+      }
+
+
+      alert(
+        "✅ Товар видалено."
+      );
+
+
+      loadProducts();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "❌ Помилка: " + error.message
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     ЗАМОВЛЕННЯ
+     ===================================================== */
+
+  let allOrders = [];
+  let allOrderItems = [];
+  let lastKnownOrderIds = new Set();
+  let orderWatcherStarted = false;
+
+  function playNewOrderSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.36);
+    } catch (e) {
+      console.log("Звук сповіщення недоступний:", e);
+    }
+  }
+
+  function showNewOrderAlert(count) {
+    const alertBox = document.getElementById("newOrderAlert");
+    const textBox = document.getElementById("newOrderAlertText");
+    textBox.textContent = count === 1 ? "Нове замовлення!" : "Нових замовлень: " + count;
+    alertBox.classList.remove("hidden");
+    playNewOrderSound();
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Дім Сад Інструмент", {
+        body: count === 1 ? "Надійшло нове замовлення." : "Надійшло " + count + " нових замовлень."
+      });
+    }
+  }
+
+  function showNewOrderStockNotification(newOrders) {
+    const stockMap = {};
+    allProductsAdmin.forEach(p => {
+      stockMap[String(p.id)] = p;
+    });
+
+    const critical = [];
+    (newOrders || []).forEach(order => {
+      const items = allOrderItems.filter(item => item.order_id === order.id);
+      items.forEach(item => {
+        const product = stockMap[String(item.product_id)];
+        if (!product || product.stock_quantity === null || product.stock_quantity === undefined) return;
+        const stock = Math.max(0, Number(product.stock_quantity) || 0);
+        if (stock <= 3) {
+          const exists = critical.find(x => String(x.id) === String(product.id));
+          if (!exists) critical.push({id: product.id, name: product.name, stock});
+        }
+      });
+    });
+
+    if (!critical.length) return;
+
+    const names = critical.map(item =>
+      item.stock === 0
+        ? "🔴 " + item.name + " — 0 шт."
+        : "⚠️ " + item.name + " — " + item.stock + " шт."
+    );
+
+    const alertBox = document.getElementById("newOrderAlert");
+    const textBox = document.getElementById("newOrderAlertText");
+    if (alertBox && textBox) {
+      textBox.textContent = "Нове замовлення • " + names.join(" • ");
+      alertBox.classList.remove("hidden");
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("⚠️ Контроль залишків", {
+        body: names.join("\n")
+      });
+    }
+  }
+
+  async function requestOrderNotifications() {
+    if ("Notification" in window && Notification.permission === "default") {
+      try { await Notification.requestPermission(); } catch(e) {}
+    }
+  }
+
+  async function checkForNewOrders() {
+    try {
+      const result = await db.from("orders").select("id,status,created_at").order("created_at",{ascending:false}).limit(50);
+      if (result.error) return;
+      const orders = result.data || [];
+      const currentIds = new Set(orders.map(o => String(o.id)));
+
+      if (!lastKnownOrderIds.size) {
+        lastKnownOrderIds = currentIds;
+        return;
+      }
+
+      const newOrders = orders.filter(o => !lastKnownOrderIds.has(String(o.id)) && o.status === "new");
+      if (newOrders.length) {
+        showNewOrderAlert(newOrders.length);
+        await loadProducts();
+        await loadOrders();
+        showNewOrderStockNotification(newOrders);
+        loadStats();
+        loadSalesChart();
+        loadTopProducts();
+      }
+
+      lastKnownOrderIds = currentIds;
+    } catch(error) {
+      console.error("Помилка перевірки нових замовлень:", error);
+    }
+  }
+
+  function startOrderWatcher() {
+    if (orderWatcherStarted) return;
+    orderWatcherStarted = true;
+    setInterval(checkForNewOrders, 30000);
+  }
+
+
+  async function loadOrders() {
+    ordersList.innerHTML = "⏳ Завантаження замовлень...";
+    try {
+      const result = await withTimeout(
+        db.from("orders").select("*").order("created_at", {ascending:false}),
+        "Завантаження замовлень",
+        15000
+      );
+      if (result.error) throw result.error;
+
+      const itemResult = await withTimeout(
+        db.from("order_items").select("*"),
+        "Завантаження товарів у замовленнях",
+        15000
+      );
+      if (itemResult.error) throw itemResult.error;
+
+      allOrders = result.data || [];
+      allOrderItems = itemResult.data || [];
+      renderOrders();
+    } catch (error) {
+      console.error("loadOrders:", error);
+      showLoadError(ordersList, error, "завантажити замовлення");
+    }
+  }
+
+  function renderOrders() {
+    const search = document.getElementById("orderSearch").value.trim().toLowerCase();
+    const status = document.getElementById("orderStatusFilter").value;
+    const items = allOrderItems;
+    const filtered = allOrders.filter(order => {
+      const matchesStatus = status === "all" || order.status === status;
+      const text = [order.customer_name, order.phone, order.city, order.branch, order.postal_code].join(" ").toLowerCase();
+      return matchesStatus && (!search || text.includes(search));
+    });
+
+    ordersList.innerHTML = "";
+    if (!allOrders.length) { ordersList.innerHTML = "Замовлень поки немає."; return; }
+    if (!filtered.length) { ordersList.innerHTML = "За вашим пошуком замовлень не знайдено."; return; }
+    filtered.forEach(order => {
+      const orderItems = items.filter(x => x.order_id === order.id);
+      const div = document.createElement("div");
+      div.className = "product" + (order.status === "new" ? " order-new-highlight" : "");
+      const stockMap = {};
+      allProductsAdmin.forEach(p => {
+        stockMap[String(p.id)] = p;
+      });
+
+      const lowStockItems = orderItems.map(item => {
+        const product = stockMap[String(item.product_id)];
+        if (!product || product.stock_quantity === null || product.stock_quantity === undefined) return null;
+        const stock = Math.max(0, Number(product.stock_quantity) || 0);
+        if (stock === 0) return {name: product.name, stock: 0};
+        if (stock <= 3) return {name: product.name, stock: stock};
+        return null;
+      }).filter(Boolean);
+
+      const stockWarning = lowStockItems.length
+        ? '<div class="stock-alert-box">' +
+          lowStockItems.map(item => item.stock === 0
+            ? '<div class="stock-out">🔴 <b>' + escapeHTML(item.name) + '</b> — товар закінчився (0 шт.)</div>'
+            : '<div class="stock-warning">⚠️ <b>' + escapeHTML(item.name) + '</b> — залишилось ' + item.stock + ' шт.</div>'
+          ).join('') +
+          '</div>'
+        : '';
+
+      const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
+      const itemText = orderItems.map(x => escapeHTML(x.product_name) + " × " + x.quantity + " — " + Number(x.price).toLocaleString("uk-UA") + " грн").join("<br>") || "—";
+      const newBadge = order.status === "new" ? '<div class="order-new-badge">🔔 НОВЕ ЗАМОВЛЕННЯ</div>' : '';
+      div.innerHTML = newBadge + stockWarning +
+        "<h3>🧾 Замовлення №" + order.id + "</h3>" +
+        "<p><b>Дата:</b> " + escapeHTML(created) + "</p>" +
+        "<p><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</p>" +
+        "<p><b>Телефон:</b> " + escapeHTML(order.phone) + "</p>" +
+        "<div class=\"order-contact-actions\">" +
+        "<a href=\"tel:" + encodeURIComponent(order.phone || "") + "\">📞 Подзвонити</a>" +
+        "<button type=\"button\" onclick=\"copyOrderPhone('" + String(order.phone || "").replace(/'/g, "\\'") + "')\">📋 Копіювати</button>" +
+        "<button type=\"button\" onclick=\"printOrder(" + order.id + ")\">🖨️ Друк</button>" +
+        "</div>" +
+        "<p><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</p>" +
+        "<p><b>Місто:</b> " + escapeHTML(order.city || "") + "</p>" +
+        "<p><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</p>" +
+        "<p><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</p>" +
+        "<p><b>Товари:</b><br>" + itemText + "</p>" +
+        "<p class=\"price\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</p>" +
+        "<select onchange=\"updateOrderStatus(" + order.id + ", this.value)\">" +
+        "<option value=\"new\" " + (order.status === "new" ? "selected" : "") + ">🆕 Нове</option>" +
+        "<option value=\"processing\" " + (order.status === "processing" ? "selected" : "") + ">⚙️ В обробці</option>" +
+        "<option value=\"shipped\" " + (order.status === "shipped" ? "selected" : "") + ">🚚 Відправлено</option>" +
+        "<option value=\"completed\" " + (order.status === "completed" ? "selected" : "") + ">✅ Виконано</option>" +
+        "<option value=\"cancelled\" " + (order.status === "cancelled" ? "selected" : "") + ">❌ Скасовано</option></select>" +
+        "<div class=\"order-status-actions\">" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'processing')\">⚙️ В обробку</button>" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'shipped')\">🚚 Відправлено</button>" +
+        "<button type=\"button\" onclick=\"updateOrderStatus(" + order.id + ", 'completed')\">✅ Виконано</button>" +
+        "</div>";
+      ordersList.appendChild(div);
+    });
+  }
+
+  async function copyOrderPhone(phone) {
+    try {
+      await navigator.clipboard.writeText(phone);
+      alert("✅ Номер скопійовано");
+    } catch(error) {
+      prompt("Скопіюй номер телефону:", phone);
+    }
+  }
+
+  function printOrder(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) { alert("❌ Замовлення не знайдено."); return; }
+    const items = allOrderItems.filter(x => x.order_id === orderId);
+    const rows = items.map(x => "<tr><td>" + escapeHTML(x.product_name) + "</td><td>" + x.quantity + "</td><td>" + Number(x.price).toLocaleString("uk-UA") + " грн</td><td>" + (Number(x.price) * Number(x.quantity)).toLocaleString("uk-UA") + " грн</td></tr>").join("");
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) { alert("⚠️ Дозволь спливаючі вікна для друку."); return; }
+    const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
+    w.document.write("<html lang=\"uk\"><head><meta charset=\"UTF-8\"><title>Замовлення №" + order.id + "</title><style>body{font-family:Arial;padding:25px;max-width:850px;margin:auto}h1{color:#176b38}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:9px;text-align:left}th{background:#f3f5f4}.total{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.meta{margin:5px 0}</style></head><body>");
+    w.document.write("<h1>🏠 Дім Сад Інструмент</h1><h2>Замовлення №" + order.id + "</h2>");
+    w.document.write("<div class=\"meta\"><b>Дата:</b> " + escapeHTML(created) + "</div><div class=\"meta\"><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</div><div class=\"meta\"><b>Телефон:</b> " + escapeHTML(order.phone) + "</div>");
+    w.document.write("<div class=\"meta\"><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</div><div class=\"meta\"><b>Місто:</b> " + escapeHTML(order.city || "") + "</div><div class=\"meta\"><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</div><div class=\"meta\"><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</div>");
+    w.document.write("<table><thead><tr><th>Товар</th><th>Кількість</th><th>Ціна</th><th>Сума</th></tr></thead><tbody>" + rows + "</tbody></table>");
+    w.document.write("<div class=\"total\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</div></body></html>");
+    w.document.close();
+    w.focus();
+    setTimeout(function(){ w.print(); }, 300);
+  }
+
+  async function updateOrderStatus(id, status) {
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+
+    const previousStatus = order.status;
+
+    if (previousStatus === "cancelled" && status !== "cancelled") {
+      alert(
+        "⚠️ Скасоване замовлення не можна знову відкрити.\n\n" +
+        "Товар уже повернуто на склад. Щоб уникнути подвійного списання, створіть нове замовлення."
+      );
+      renderOrders();
+      return;
+    }
+
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      const confirmed = confirm(
+        "❌ Скасувати це замовлення?\\n\\n" +
+        "Товар автоматично повернеться на склад."
+      );
+      if (!confirmed) {
+        renderOrders();
+        return;
+      }
+    }
+
+    try {
+      const result = await withTimeout(
+        db.rpc("set_order_status", {
+          order_id: id,
+          new_status: status
+        }),
+        "Зміна статусу замовлення",
+        15000
+      );
+
+      if (result.error) throw result.error;
+
+      order.status = status;
+      renderOrders();
+      await Promise.allSettled([loadStats(), loadSalesChart(), loadTopProducts()]);
+    } catch (error) {
+      console.error("updateOrderStatus:", error);
+      alert("❌ Не вдалося змінити статус: " + (error.message || "невідома помилка"));
+      renderOrders();
+    }
+  }
+
+
+  /* =====================================================
+     КЛІЄНТИ ТА ПОПУЛЯРНІ ТОВАРИ
+     ===================================================== */
+
+  async function loadCustomers() {
+    const box = document.getElementById("customersList");
+    const stats = document.getElementById("customerStats");
+    box.innerHTML = "⏳ Завантаження...";
+    stats.textContent = "";
+
+    try {
+      const result = await db.from("orders")
+        .select("customer_name,phone,city,created_at,total,status")
+        .order("created_at",{ascending:false});
+      if (result.error) throw result.error;
+
+      const map = {};
+      (result.data || []).forEach(o => {
+        const key = ((o.phone || "") + "|" + (o.customer_name || "")).toLowerCase();
+        if (!map[key]) map[key] = {name:o.customer_name || "Без імені",phone:o.phone || "—",city:o.city || "—",orders:0,total:0,last:o.created_at,status:o.status};
+        map[key].orders++;
+        map[key].total += Number(o.total) || 0;
+        if (new Date(o.created_at) > new Date(map[key].last)) map[key].last = o.created_at;
+      });
+
+      const customers = Object.values(map).sort((a,b)=>b.total-a.total);
+      stats.textContent = "Унікальних клієнтів: " + customers.length + " • Усього замовлень: " + (result.data || []).length;
+
+      if (!customers.length) {
+        box.innerHTML = "Клієнтів поки немає.";
+        return;
+      }
+
+      box.innerHTML = customers.map(c =>
+        '<div class="customer-row">' +
+        '<h3>👤 ' + escapeHTML(c.name) + '</h3>' +
+        '<div class="customer-meta">📞 ' + escapeHTML(c.phone) + ' • 📍 ' + escapeHTML(c.city) + '</div>' +
+        '<p><b>Замовлень:</b> ' + c.orders + ' • <b>Сума:</b> ' + c.total.toLocaleString("uk-UA") + ' грн</p>' +
+        '<div class="customer-meta">Останнє замовлення: ' + escapeHTML(new Date(c.last).toLocaleString("uk-UA")) + '</div>' +
+        '</div>'
+      ).join("");
+    } catch(error) {
+      console.error(error);
+      box.innerHTML = "❌ " + escapeHTML(error.message);
+    }
+  }
+
+  async function loadTopProducts() {
+    const box = document.getElementById("topProductsList");
+    box.innerHTML = "⏳ Завантаження...";
+    try {
+      const result = await withTimeout(db.from("order_items").select("product_id,product_name,price,quantity"), "Завантаження популярних товарів", 15000);
+      if (result.error) throw result.error;
+
+      const map = {};
+      (result.data || []).forEach(item => {
+        const key = item.product_id + "|" + (item.product_name || "");
+        if (!map[key]) map[key] = {name:item.product_name || "Товар",quantity:0,revenue:0};
+        map[key].quantity += Number(item.quantity) || 0;
+        map[key].revenue += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      });
+
+      const products = Object.values(map).sort((a,b)=>b.quantity-a.quantity);
+      if (!products.length) {
+        box.innerHTML = "Продажів товарів поки немає.";
+        return;
+      }
+
+      const max = products[0].quantity || 1;
+      box.innerHTML = products.slice(0,10).map((p,i) =>
+        '<div class="top-product">' +
+        '<div class="top-product-line"><span>' + (i+1) + '. ' + escapeHTML(p.name) + '</span><span>' + p.quantity + ' шт.</span></div>' +
+        '<div class="top-product-bar" style="width:' + Math.max(5,Math.round(p.quantity/max*100)) + '%"></div>' +
+        '<div class="small">Продано на ' + p.revenue.toLocaleString("uk-UA") + ' грн</div>' +
+        '</div>'
+      ).join("");
+    } catch(error) {
+      console.error(error);
+      box.innerHTML = "❌ " + escapeHTML(error.message);
+    }
+  }
+
+
+  /* =====================================================
+     ПРОДАЖІ
+     ===================================================== */
+
+  async function loadSalesChart() {
+    const chart = document.getElementById("salesChart");
+    const totalBox = document.getElementById("salesTotal");
+    const empty = document.getElementById("salesEmpty");
+    const period = document.getElementById("salesPeriod").value;
+
+    chart.innerHTML = "⏳";
+    totalBox.textContent = "Завантаження...";
+    empty.classList.add("hidden");
+
+    try {
+      const days = period === "today" ? 1 : Number(period);
+      const start = new Date();
+      start.setHours(0,0,0,0);
+      start.setDate(start.getDate() - (days - 1));
+
+      const result = await db.from("orders")
+        .select("created_at,total,status")
+        .gte("created_at", start.toISOString())
+        .order("created_at", {ascending:true});
+
+      if (result.error) throw result.error;
+
+      const rows = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const key = d.toLocaleDateString("en-CA");
+        rows.push({
+          key,
+          label: days === 1 ? "Сьогодні" : d.toLocaleDateString("uk-UA",{day:"2-digit",month:"2-digit"}),
+          total: 0
+        });
+      }
+
+      (result.data || []).forEach(order => {
+        const d = new Date(order.created_at);
+        const key = d.toLocaleDateString("en-CA");
+        const row = rows.find(x => x.key === key);
+        if (row) row.total += Number(order.total) || 0;
+      });
+
+      const total = rows.reduce((sum,row) => sum + row.total, 0);
+      totalBox.textContent = total.toLocaleString("uk-UA") + " грн";
+
+      if (!total) {
+        chart.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+
+      const max = Math.max(...rows.map(x => x.total), 1);
+      chart.innerHTML = rows.map(row => {
+        const height = Math.max(3, Math.round((row.total / max) * 180));
+        const value = row.total ? row.total.toLocaleString("uk-UA") + " грн" : "";
+        return '<div class="sales-bar-wrap">' +
+          '<div class="sales-bar-value">' + escapeHTML(value) + '</div>' +
+          '<div class="sales-bar" style="height:' + height + 'px" title="' + escapeHTML(row.label + ": " + value) + '"></div>' +
+          '<div class="sales-bar-label">' + escapeHTML(row.label) + '</div>' +
+        '</div>';
+      }).join("");
+
+    } catch (error) {
+      console.error(error);
+      chart.innerHTML = "";
+      totalBox.textContent = "—";
+      empty.textContent = "❌ Не вдалося завантажити продажі: " + error.message;
+      empty.classList.remove("hidden");
+    }
+  }
+
+
+  /* =====================================================
+     СТАТИСТИКА
+     ===================================================== */
+
+  async function loadStats() {
+    const grid = document.getElementById("statsGrid");
+    try {
+      const [productsResult, ordersResult, reviewsResult] = await Promise.all([
+        db.from("products").select("id"),
+        db.from("orders").select("id,status,total,created_at"),
+        db.from("product_reviews").select("id,approved")
+      ]);
+
+      if (productsResult.error) throw productsResult.error;
+      if (ordersResult.error) throw ordersResult.error;
+      if (reviewsResult.error) throw reviewsResult.error;
+
+      const productsCount = (productsResult.data || []).length;
+      const orders = ordersResult.data || [];
+      const reviews = reviewsResult.data || [];
+      const newOrders = orders.filter(o => o.status === "new").length;
+      const total = orders.reduce((sum,o) => sum + (Number(o.total) || 0), 0);
+
+      const now = new Date();
+      const startToday = new Date(now);
+      startToday.setHours(0,0,0,0);
+
+      const start7 = new Date(startToday);
+      start7.setDate(start7.getDate() - 6);
+
+      const start30 = new Date(startToday);
+      start30.setDate(start30.getDate() - 29);
+
+      const sumFrom = start => orders.reduce((sum,o) => {
+        const created = o.created_at ? new Date(o.created_at) : null;
+        if (!created || Number.isNaN(created.getTime()) || created < start) return sum;
+        return sum + (Number(o.total) || 0);
+      }, 0);
+
+      const todayTotal = sumFrom(startToday);
+      const weekTotal = sumFrom(start7);
+      const monthTotal = sumFrom(start30);
+
+      grid.innerHTML =
+        statCard("📦","Товарів",productsCount.toLocaleString("uk-UA")) +
+        statCard("🛒","Замовлень",orders.length.toLocaleString("uk-UA")) +
+        statCard("🆕","Нових",newOrders.toLocaleString("uk-UA")) +
+        statCard("💰","Сума всіх замовлень",total.toLocaleString("uk-UA") + " грн") +
+        statCard("📅","Сьогодні",todayTotal.toLocaleString("uk-UA") + " грн") +
+        statCard("📈","За 7 днів",weekTotal.toLocaleString("uk-UA") + " грн") +
+        statCard("🗓️","За 30 днів",monthTotal.toLocaleString("uk-UA") + " грн") +
+        statCard("⭐","Відгуків",reviews.length.toLocaleString("uk-UA"));
+
+    } catch (error) {
+      console.error(error);
+      grid.innerHTML = '<div class="status">❌ Не вдалося завантажити статистику: ' + escapeHTML(error.message) + '</div>';
+    }
+  }
+
+  function statCard(icon,label,value) {
+    return '<div class="stat-card"><div class="stat-icon">' + icon + '</div><div><span>' + label + '</span><b>' + value + '</b></div></div>';
+  }
+
+
+  /* =====================================================
+     ВІДГУКИ — МОДЕРАЦІЯ
+     ===================================================== */
+
+  async function loadReviewsAdmin() {
+    const box = document.getElementById("reviewsAdminList");
+    box.innerHTML = "⏳ Завантаження...";
+    try {
+      const result = await withTimeout(
+        db.from("product_reviews").select("*").order("created_at", {ascending:false}),
+        "Завантаження відгуків",
+        15000
+      );
+
+      if (result.error) throw result.error;
+
+    if (!result.data || !result.data.length) {
+      box.innerHTML = "Відгуків поки немає.";
+      return;
+    }
+
+    const productResult = await withTimeout(
+      db.from("products").select("id,name"),
+      "Завантаження назв товарів",
+      15000
+    );
+    if (productResult.error) throw productResult.error;
+    const productMap = {};
+    (productResult.data || []).forEach(p => productMap[p.id] = p.name);
+
+    box.innerHTML = "";
+      result.data.forEach(review => {
+      const div = document.createElement("div");
+      div.className = "product";
+      const stars = "★".repeat(Number(review.rating)) + "☆".repeat(5 - Number(review.rating));
+      const date = review.created_at ? new Date(review.created_at).toLocaleString("uk-UA") : "";
+      div.innerHTML =
+        "<h3>" + (review.approved ? "✅ Опублікований" : "🕐 Очікує модерації") + "</h3>" +
+        "<p><b>Товар:</b> " + escapeHTML(productMap[review.product_id] || ("ID " + review.product_id)) + "</p>" +
+        "<p><b>Ім'я:</b> " + escapeHTML(review.name) + "</p>" +
+        "<p><b>Оцінка:</b> <span style='color:#f5a623;font-size:20px'>" + stars + "</span></p>" +
+        "<p><b>Дата:</b> " + escapeHTML(date) + "</p>" +
+        "<p>" + escapeHTML(review.text) + "</p>" +
+        "<button onclick='toggleReviewApproval(" + review.id + "," + (!review.approved) + ")'>" +
+          (review.approved ? "🙈 Приховати" : "✅ Опублікувати") +
+        "</button>" +
+        "<button class='danger' onclick='deleteReview(" + review.id + ")'>🗑 Видалити</button>";
+      box.appendChild(div);
+      });
+    } catch(error) {
+      console.error("loadReviewsAdmin:", error);
+      showLoadError(box, error, "завантажити відгуки");
+    }
+  }
+
+  async function toggleReviewApproval(id, approved) {
+    const result = await db.from("product_reviews")
+      .update({approved: approved})
+      .eq("id", id);
+    if (result.error) {
+      alert("❌ " + result.error.message);
+      return;
+    }
+    loadReviewsAdmin();
+  }
+
+  async function deleteReview(id) {
+    if (!confirm("Точно видалити цей відгук?")) return;
+    const result = await db.from("product_reviews").delete().eq("id", id);
+    if (result.error) {
+      alert("❌ " + result.error.message);
+      return;
+    }
+    loadReviewsAdmin();
+  }
+
+
+  /* =====================================================
+     ЗАХИСТ ВІД HTML
+     ===================================================== */
+
+  function escapeHTML(value) {
+
+    if (value === null ||
+        value === undefined) {
+
+      return "";
+
+    }
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+
+  /* =====================================================
+     ІМПОРТ DROPS XML
+     ===================================================== */
+
+  function dropsText(node, names) {
+    for (const name of names) {
+      const el = node.querySelector(name);
+      if (el && el.textContent && el.textContent.trim()) return el.textContent.trim();
+    }
+    return "";
+  }
+
+  function dropsNumber(value) {
+    if (value === null || value === undefined) return 0;
+    const s = String(value).replace(/\s/g, "").replace(",", ".");
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    return m ? Number(m[0]) : 0;
+  }
+
+  function dropsBool(value) {
+    if (value === true) return true;
+    const s = String(value ?? "").trim().toLowerCase();
+    return ["true","1","yes","y","так","в наличии","в наявності"].includes(s);
+  }
+
+  function dropsCategory(name, sourceCategory) {
+    const s = ((name || "") + " " + (sourceCategory || "")).toLowerCase();
+
+    if (/(сад|город|гряд|газон|теплиц|полив|опрыскив|секатор|садов|растен|цвет|лопат|грабл|тяп|кусторез|веткорез|сучкорез|косил|шланг)/i.test(s)) return "Для саду";
+    if (/(авто|автомоб|машин|пылесос автомобиль|компрессор автомобиль|держател.*телефон|зарядн.*авто|насос.*авто)/i.test(s)) return "Товари для авто";
+    if (/(дрель|шуруповерт|перфоратор|болгар|лобзик|пила|ножовк|рубан|фрезер|сверл|бит|ключ|трещот|отвертк|пассатиж|плоскогуб|молоток|степлер|клещ|инструмент|домкрат|свароч)/i.test(s)) return "Інструменти";
+    if (/(футболк|t-shirt|майк)/i.test(s)) return "Футболки";
+    if (/(брюк|штан|джинс|леггинс)/i.test(s)) return "Штани";
+    if (/(куртк|пуховик|жилет|пальто|плащ)/i.test(s)) return "Куртки";
+    if (/(кроссовк|кед|ботинк|сапог|туфл|сланц|шлепан|обув|взутт)/i.test(s)) return "Взуття";
+    if (/(свитер|світр|худи|худі|толстовк|кофт|джемпер|кардиган)/i.test(s)) return "Светри";
+    if (/(клатч)/i.test(s)) return "Клатчі";
+    if (/(портфел|ділов.*сумк)/i.test(s)) return "Портфелі";
+    if (/(рюкзак|сумк|барсетк|бананка|шоппер|торб)/i.test(s)) return "Сумки";
+    if (/(нижн.*бель|трус|бюстгальтер|майк.*нижн|білизн|белье)/i.test(s)) return "Нижня білизна";
+    if (/(чоловіч|мужск|мужчин|для чоловік|мужской)/i.test(s)) return "Чоловічий одяг";
+    if (/(жіноч|женск|женщин|для жін|женский)/i.test(s)) return "Жіночий одяг";
+    if (/(аксесуар|ремень|ремін|гаманець|кошелек|окуляр|рукавич|шапк|кепк|шарф)/i.test(s)) return "Аксесуари";
+    if (/(одяг|одежд|курт|футбол|штани|светр|свитер|сорочк|платт|спідниц)/i.test(s)) return "Одяг";
+    if (/(кухн|ванн|душ|будин|дом|побут|зберіган|хранен|органайзер|посуд|декор|світиль|ламп|текстил|прилад|електр|мебл)/i.test(s)) return "Для дому";
+
+    return "Корисні товари";
+  }
+
+  function dropsRetailPrice(cost) {
+    const n = Math.round(Number(cost) || 0);
+    if (n <= 0) return 0;
+    if (n <= 300) return n + 200;
+    if (n <= 700) return n + 250;
+    return n + 300;
+  }
+
+  function dropsDescription(name, category, sourceDescription) {
+    const intros = {
+      "Для дому":"Практичний товар для дому, який допоможе зробити побут зручнішим та комфортнішим.",
+      "Для саду":"Корисний товар для саду та городу — для зручної роботи, догляду за рослинами та ділянкою.",
+      "Товари для авто":"Практичний товар для автомобіля — стане у пригоді в дорозі, гаражі та щоденному користуванні.",
+      "Інструменти":"Надійний та практичний інструмент для дому, майстерні й ремонтних робіт.",
+      "Корисні товари":"Зручний та практичний товар для щоденного використання.",
+      "Одяг":"Практичний та зручний одяг для щоденного використання.",
+      "Чоловічий одяг":"Зручний чоловічий одяг для повсякденного використання.",
+      "Жіночий одяг":"Стильний та зручний жіночий одяг на кожен день.",
+      "Футболки":"Зручна футболка для повсякденного образу.",
+      "Штани":"Практичні та зручні штани для щоденного носіння.",
+      "Куртки":"Зручна куртка для комфортного використання у прохолодну погоду.",
+      "Взуття":"Зручне та практичне взуття для повсякденного використання.",
+      "Светри":"Теплий та комфортний светр для прохолодної погоди.",
+      "Аксесуари":"Практичний аксесуар, який доповнить повсякденний образ.",
+      "Нижня білизна":"Комфортна та практична нижня білизна для щоденного використання.",
+      "Клатчі":"Стильний та компактний клатч для необхідних речей.",
+      "Портфелі":"Практичний портфель для роботи, документів та щоденних справ.",
+      "Сумки":"Зручна та містка сумка для щоденного використання."
+    };
+    const intro = intros[category] || intros["Корисні товари"];
+    let source = String(sourceDescription || "").replace(/\s+/g," ").trim();
+    if (source.length > 280) source = source.slice(0,277).replace(/\s+\S*$/,"") + "...";
+    return source ? intro + " " + source : intro + " " + name + ".";
+  }
+
+  function dropsParse(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("XML пошкоджений або має неправильний формат.");
+
+    let nodes = Array.from(doc.querySelectorAll("offer, item"));
+    if (!nodes.length) {
+      nodes = Array.from(doc.getElementsByTagNameNS("*", "offer"));
+    }
+    if (!nodes.length) {
+      nodes = Array.from(doc.getElementsByTagNameNS("*", "item"));
+    }
+    if (!nodes.length) {
+      throw new Error("У XML не знайдено товарів. Очікувався YML/XML з тегами <offer> або <item>.");
+    }
+
+    const products = [];
+
+    for (const node of nodes) {
+      const name = dropsText(node, ["name","title","product_name"]);
+      const categorySource = dropsText(node, ["category","categoryName","category_name","group"]);
+      const description = dropsText(node, ["description","description_ua","description_uk"]);
+      const image = dropsText(node, ["picture","image","image_url","url"]);
+      const price = dropsNumber(dropsText(node, ["price","purchase_price","cost","price_purchase","price_retail"]));
+      const stockText = dropsText(node, ["stock","quantity","qty","count","available_quantity","остаток","залишок"]);
+      const stockAttr = node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
+      const stock = Math.max(0, Math.floor(dropsNumber(stockText || stockAttr)));
+      const availableAttr = node.getAttribute("available");
+      const availableText = dropsText(node, ["available","availability","in_stock","stock_status"]);
+      const hasStockSignal = !!(stockText || stockAttr);
+      const available = availableAttr !== null ? dropsBool(availableAttr) : (availableText ? dropsBool(availableText) : stock > 0);
+      const sku = node.getAttribute("id") || node.getAttribute("sku") || dropsText(node, ["sku","vendorCode","vendor_code","article","Артикул"]);
+
+      if (!name || price <= 0) continue;
+      if (!available) continue;
+      if (hasStockSignal && stock <= 0) continue;
+
+      products.push({
+        name,
+        sourceCategory: categorySource,
+        description,
+        image,
+        cost: price,
+        stock: hasStockSignal ? stock : 1,
+        sku: sku || ""
+      });
+    }
+    return products;
+  }
+
+  async function dropsGetXml() {
+    const file = document.getElementById("dropsXmlFile")?.files?.[0];
+    const url = document.getElementById("dropsXmlUrl")?.value?.trim();
+
+    if (file) return await file.text();
+    if (!url) throw new Error("Встав посилання на XML DROPS або вибери XML-файл.");
+
+    // Спочатку пробуємо наш Supabase-проксі: браузер напряму не може
+    // прочитати XML DROPS через CORS.
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Сесія адміністратора не знайдена. Увійди в адмін-панель ще раз.");
+      }
+
+      const proxyResponse = await fetch(
+        SUPABASE_URL + "/functions/v1/drops-xml-proxy",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + session.access_token
+          },
+          body: JSON.stringify({ url })
+        }
+      );
+
+      const proxyText = await proxyResponse.text();
+      if (proxyResponse.ok && proxyText.trim()) return proxyText;
+
+      let details = proxyText;
+      try {
+        const parsed = JSON.parse(proxyText);
+        details = parsed.error || parsed.message || proxyText;
+      } catch (_) {}
+      throw new Error(details || ("HTTP " + proxyResponse.status));
+    } catch (proxyError) {
+      console.warn("DROPS proxy error:", proxyError);
+      if (proxyError instanceof TypeError) {
+        throw new Error(
+          "Не вдалося зв'язатися із серверним проксі DROPS. " +
+          "Це може бути стара версія сторінки або проблема з підключенням. " +
+          "Онови сторінку адмінки та спробуй ще раз."
+        );
+      }
+      throw proxyError instanceof Error
+        ? proxyError
+        : new Error(String(proxyError));
+    }
+  }
+
+  async function importDropsProducts() {
+    const button = document.getElementById("dropsImportButton");
+    const status = document.getElementById("dropsImportStatus");
+    const limit = Math.min(50, Math.max(1, Number(document.getElementById("dropsImportLimit")?.value) || 50));
+
+    if (!button || !status) return;
+
+    button.disabled = true;
+    button.textContent = "⏳ Завантажуємо XML...";
+    status.textContent = "⏳ Читаю каталог DROPS...";
+
+    try {
+      const xml = await dropsGetXml();
+      status.textContent = "⏳ XML завантажено. Аналізую товари...";
+      const parsed = dropsParse(xml).slice(0, limit);
+
+      if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
+
+      const existingResult = await withTimeout(
+        db.from("products").select("id,name"),
+        "Перевірка існуючих товарів",
+        15000
+      );
+      if (existingResult.error) throw existingResult.error;
+
+      const existingNames = new Set((existingResult.data || []).map(p => String(p.name || "").trim().toLowerCase()));
+      const rows = [];
+
+      for (const p of parsed) {
+        if (existingNames.has(p.name.toLowerCase())) continue;
+
+        const category = dropsCategory(p.name, p.sourceCategory);
+        const retail = dropsRetailPrice(p.cost);
+        rows.push({
+          name: p.name,
+          price: retail,
+          description: dropsDescription(p.name, category, p.description),
+          image: p.image || "",
+          category,
+          available: true,
+          is_hit: false,
+          stock_quantity: p.stock,
+          old_price: null,
+          discount: null
+        });
+      }
+
+      if (!rows.length) throw new Error("Усі вибрані товари вже є у магазині.");
+
+      status.textContent = "⏳ Додаю " + rows.length + " товарів...";
+      const result = await withTimeout(
+        db.from("products").insert(rows),
+        "Додавання товарів",
+        30000
+      );
+      if (result.error) throw result.error;
+
+      status.textContent = "✅ Готово! Додано " + rows.length + " товарів. Ціни DROPS у магазин не записуються — клієнт їх не бачить.";
+      await loadProducts();
+    } catch (error) {
+      console.error("importDropsProducts:", error);
+      const message = error?.message || String(error) || "Невідома помилка.";
+      status.textContent = "❌ " + message;
+      alert("❌ Імпорт не виконано.\n\nПричина:\n" + message);
+    } finally {
+      button.disabled = false;
+      button.textContent = "🚀 Імпортувати " + limit + " товарів";
+    }
+  }
+
+  /* =====================================================
+     КНОПКИ
+     ===================================================== */
+
+  // Вхід обробляється резервним обробником кнопки, щоб уникнути подвійного запиту.
+
+  logoutButton.addEventListener(
+    "click",
+    logout
+  );
+
+  refreshButton.addEventListener(
+    "click",
+    loadProducts
+  );
+
+  document.getElementById("refreshStockAlertsButton").addEventListener("click", function() {
+    renderStockAlerts();
+  });
+  document.getElementById("productSearch").addEventListener("input", renderAdminProducts);
+  document.getElementById("productCategoryFilter").addEventListener("change", renderAdminProducts);
+  document.getElementById("productAvailabilityFilter").addEventListener("change", renderAdminProducts);
+  document.getElementById("productHitFilter").addEventListener("change", renderAdminProducts);
+
+
+
+  addProductButton.addEventListener(
+    "click",
+    addProduct
+  );
+
+  document.getElementById("dropsImportButton").addEventListener(
+    "click",
+    importDropsProducts
+  );
+
+  refreshOrdersButton.addEventListener(
+    "click",
+    loadOrders
+  );
+
+  document.getElementById("newOrderAlertButton").addEventListener("click", function() {
+    document.getElementById("newOrderAlert").classList.add("hidden");
+    document.getElementById("ordersList").scrollIntoView({behavior:"smooth",block:"start"});
+    loadOrders();
+  });
+
+  document.getElementById("refreshReviewsButton").addEventListener(
+    "click",
+    loadReviewsAdmin
+  );
+
+  document.getElementById("refreshStatsButton").addEventListener(
+    "click",
+    loadStats
+  );
+
+  document.getElementById("salesPeriod").addEventListener(
+    "change",
+    loadSalesChart
+  );
+
+  document.getElementById("refreshCustomersButton").addEventListener(
+    "click",
+    loadCustomers
+  );
+
+  document.getElementById("refreshTopProductsButton").addEventListener(
+    "click",
+    loadTopProducts
+  );
+
+  document.getElementById("closeEditButton").addEventListener(
+    "click",
+    closeEditProduct
+  );
+
+  document.getElementById("saveEditButton").addEventListener(
+    "click",
+    saveEditProduct
+  );
+
+  document.getElementById("editModal").addEventListener(
+    "click",
+    function(event) {
+      if (event.target.id === "editModal") closeEditProduct();
+    }
+  );
+
+
+  /* =====================================================
+     ENTER ДЛЯ ВХОДУ
+     ===================================================== */
+
+  document
+    .getElementById("password")
+    .addEventListener(
+      "keydown",
+      function(event) {
+
+        if (event.key === "Enter") {
+          login();
+        }
+
+      }
+    );
+
+
+  /* =====================================================
+     СТАРТ
+     ===================================================== */
+
+  checkSession();
+
+</script>
+
+</body>
+</html>
