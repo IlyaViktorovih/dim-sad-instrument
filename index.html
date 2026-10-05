@@ -355,7 +355,7 @@ async function novaPoshtaRequest(calledMethod,methodProperties={},modelName="Add
       method:"POST",
       mode:"cors",
       headers:{
-        "Content-Type":"text/plain;charset=UTF-8",
+        "Content-Type":"application/json",
         "Accept":"application/json"
       },
       body:JSON.stringify({modelName,calledMethod,methodProperties}),
