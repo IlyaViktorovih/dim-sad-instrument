@@ -2213,25 +2213,38 @@
     if (file) return await file.text();
     if (!url) throw new Error("Встав посилання на XML DROPS або вибери XML-файл.");
 
-    let response;
+    // Спочатку пробуємо наш Supabase-проксі: браузер напряму не може
+    // прочитати XML DROPS через CORS.
     try {
-      response = await fetch(url, {
-        cache:"no-store",
-        mode:"cors",
-        credentials:"omit"
-      });
-    } catch (fetchError) {
+      const proxyResponse = await fetch(
+        SUPABASE_URL + "/functions/v1/drops-xml-proxy",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY
+          },
+          body: JSON.stringify({ url })
+        }
+      );
+
+      const proxyText = await proxyResponse.text();
+      if (proxyResponse.ok && proxyText.trim()) return proxyText;
+
+      let details = proxyText;
+      try {
+        const parsed = JSON.parse(proxyText);
+        details = parsed.error || parsed.message || proxyText;
+      } catch (_) {}
+      throw new Error(details || ("HTTP " + proxyResponse.status));
+    } catch (proxyError) {
+      console.warn("DROPS proxy error:", proxyError);
       throw new Error(
-        "Браузер не дозволив завантажити XML за посиланням DROPS. Це обмеження CORS. " +
-        "Скачай XML-файл з DROPS та вибери його у полі «XML-файл» нижче."
+        "Не вдалося отримати XML через серверний проксі. " +
+        "Перевір, що функція drops-xml-proxy розгорнута в Supabase. " +
+        "Як запасний варіант скачай XML з DROPS та вибери його у полі «XML-файл»."
       );
     }
-    if (!response.ok) {
-      throw new Error("DROPS XML не завантажився: HTTP " + response.status + ". Спробуй завантажити XML-файл вручну.");
-    }
-    const text = await response.text();
-    if (!text.trim()) throw new Error("DROPS повернув порожній XML-файл.");
-    return text;
   }
 
   async function importDropsProducts() {
