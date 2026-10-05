@@ -205,11 +205,7 @@
         placeholder="Опис товару"
       ></textarea>
 
-      <input
-        type="text"
-        id="productImage"
-        placeholder="Посилання на фото товару"
-      >
+      <label><b>Фотографії товару</b></label><input type="file" id="productImages" accept="image/*" multiple><div class="small">Можна вибрати одразу кілька фото. Перше буде головним.</div><input type="text" id="productImage" placeholder="Або посилання на головне фото">
 
       <select id="productCategory">
         <option value="Для дому">Для дому</option>
@@ -238,6 +234,9 @@
 
     </div>
 
+
+    <!-- ЗАМОВЛЕННЯ -->
+    <div class="box"><h2>🛒 Замовлення</h2><button id="refreshOrdersButton">🔄 Оновити замовлення</button><div id="ordersList">Завантаження замовлень...</div></div>
 
     <!-- ТОВАРИ -->
     <div class="box">
@@ -316,6 +315,9 @@
   const userEmail =
     document.getElementById("userEmail");
 
+  const refreshOrdersButton = document.getElementById("refreshOrdersButton");
+  const ordersList = document.getElementById("ordersList");
+
 
   /* =====================================================
      ПЕРЕВІРКА СЕСІЇ
@@ -366,6 +368,7 @@
       "Ви увійшли як: " + session.user.email;
 
     loadProducts();
+    loadOrders();
 
   }
 
@@ -531,7 +534,6 @@
       } = await db
         .from("products")
         .insert([{
-
           name: name,
           price: price,
           description: description,
@@ -539,9 +541,9 @@
           category: category,
           available: available,
           is_hit: is_hit
-
         }])
-        .select();
+        .select()
+        .single();
 
 
       if (error) {
@@ -554,6 +556,18 @@
         return;
       }
 
+
+      const selectedFiles = Array.from(document.getElementById("productImages").files || []);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = data.id + "/" + Date.now() + "_" + i + "_" + safeName;
+        const upload = await db.storage.from("product-images").upload(path, file, { upsert: false });
+        if (upload.error) throw upload.error;
+        const publicUrl = db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+        const imageInsert = await db.from("product_images").insert({product_id:data.id,image_url:publicUrl,sort_order:i});
+        if (imageInsert.error) throw imageInsert.error;
+      }
 
       addStatus.textContent =
         "✅ Товар успішно додано!";
@@ -570,6 +584,7 @@
 
       document.getElementById("productImage")
         .value = "";
+      document.getElementById("productImages").value = "";
 
       document.getElementById("productCategory")
         .value = "Для дому";
@@ -794,6 +809,51 @@
 
 
   /* =====================================================
+     ЗАМОВЛЕННЯ
+     ===================================================== */
+
+  async function loadOrders() {
+    ordersList.innerHTML = "⏳ Завантаження...";
+    const result = await db.from("orders").select("*").order("created_at", {ascending:false});
+    if (result.error) { ordersList.innerHTML = "❌ " + escapeHTML(result.error.message); return; }
+    const itemResult = await db.from("order_items").select("*");
+    const items = itemResult.data || [];
+    ordersList.innerHTML = "";
+    if (!result.data || !result.data.length) { ordersList.innerHTML = "Замовлень поки немає."; return; }
+    result.data.forEach(order => {
+      const orderItems = items.filter(x => x.order_id === order.id);
+      const div = document.createElement("div");
+      div.className = "product";
+      const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
+      const itemText = orderItems.map(x => escapeHTML(x.product_name) + " × " + x.quantity + " — " + Number(x.price).toLocaleString("uk-UA") + " грн").join("<br>") || "—";
+      div.innerHTML = "<h3>🧾 Замовлення №" + order.id + "</h3>" +
+        "<p><b>Дата:</b> " + escapeHTML(created) + "</p>" +
+        "<p><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</p>" +
+        "<p><b>Телефон:</b> " + escapeHTML(order.phone) + "</p>" +
+        "<p><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</p>" +
+        "<p><b>Місто:</b> " + escapeHTML(order.city || "") + "</p>" +
+        "<p><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</p>" +
+        "<p><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</p>" +
+        "<p><b>Товари:</b><br>" + itemText + "</p>" +
+        "<p class=\"price\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</p>" +
+        "<select onchange=\"updateOrderStatus(" + order.id + ", this.value)\">" +
+        "<option value=\"new\" " + (order.status === "new" ? "selected" : "") + ">🆕 Нове</option>" +
+        "<option value=\"processing\" " + (order.status === "processing" ? "selected" : "") + ">⚙️ В обробці</option>" +
+        "<option value=\"shipped\" " + (order.status === "shipped" ? "selected" : "") + ">🚚 Відправлено</option>" +
+        "<option value=\"completed\" " + (order.status === "completed" ? "selected" : "") + ">✅ Виконано</option>" +
+        "<option value=\"cancelled\" " + (order.status === "cancelled" ? "selected" : "") + ">❌ Скасовано</option></select>";
+      ordersList.appendChild(div);
+    });
+  }
+
+  async function updateOrderStatus(id, status) {
+    const result = await db.from("orders").update({status:status}).eq("id", id);
+    if (result.error) { alert("❌ " + result.error.message); return; }
+    loadOrders();
+  }
+
+
+  /* =====================================================
      ЗАХИСТ ВІД HTML
      ===================================================== */
 
@@ -838,6 +898,11 @@
   addProductButton.addEventListener(
     "click",
     addProduct
+  );
+
+  refreshOrdersButton.addEventListener(
+    "click",
+    loadOrders
   );
 
 
