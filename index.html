@@ -73,6 +73,16 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 
 <div class="modal" id="modal"><div class="box"><button class="close" onclick="closeCart()">×</button><h2>Ваше замовлення</h2><div id="order"></div><div id="checkout"><h3>Дані для доставки</h3><input id="name" placeholder="Ваше ім'я"><input id="phone" placeholder="Номер телефону" type="tel"><select id="delivery" onchange="changeDelivery()"><option value="">Оберіть спосіб доставки</option><option value="Нова пошта">🚚 Нова пошта</option><option value="Укрпошта">📮 Укрпошта</option></select><div id="deliveryFields"></div><textarea id="comment" placeholder="Коментар до замовлення"></textarea><button class="submit" onclick="sendOrder()">Оформити замовлення</button></div></div></div>
 
+
+<div id="orderSuccessModal" class="success-modal" style="display:none;">
+  <div class="success-modal-card">
+    <div class="success-icon">🎉</div>
+    <h2>Замовлення прийнято!</h2>
+    <p id="successOrderNumber"></p>
+    <p class="success-text">Дякуємо за замовлення! Ми зв'яжемося з вами найближчим часом.</p>
+    <button class="buy" onclick="closeOrderSuccess()">🛍️ Продовжити покупки</button>
+  </div>
+</div>
 <script>
 const SUPABASE_URL="https://rzdqohedzsgcmhcdhlri.supabase.co";
 const SUPABASE_KEY="sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
@@ -343,15 +353,6 @@ document.getElementById("orderSuccessModal").style.display = "flex";
 cart=[];updateCount();closeCart();
 await loadProducts();document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("comment").value="";document.getElementById("delivery").value="";document.getElementById("deliveryFields").innerHTML="";
 }
-<div id="orderSuccessModal" class="success-modal" style="display:none;">
-  <div class="success-modal-card">
-    <div class="success-icon">🎉</div>
-    <h2>Замовлення прийнято!</h2>
-    <p id="successOrderNumber"></p>
-    <p class="success-text">Дякуємо за замовлення! Ми зв'яжемося з вами найближчим часом.</p>
-    <button class="buy" onclick="closeOrderSuccess()">🛍️ Продовжити покупки</button>
-  </div>
-</div>
 function closeOrderSuccess(){document.getElementById("orderSuccessModal").style.display="none";}
 function escapeHTML(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 updateFavoritesCount();
