@@ -566,6 +566,11 @@
         if (upload.error) throw upload.error;
         const publicUrl = db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
         const imageInsert = await db.from("product_images").insert({product_id:data.id,image_url:publicUrl,sort_order:i});
+        if(imageInsert.error){ throw new Error("Помилка збереження фото №"+(i+1)+": "+imageInsert.error.message); }
+        if(i===0){
+          const mainUpdate = await db.from("products").update({image:publicUrl}).eq("id",data.id);
+          if(mainUpdate.error){ throw new Error("Фото завантажено, але не вдалося встановити головне фото: "+mainUpdate.error.message); }
+        }
         if (imageInsert.error) throw imageInsert.error;
       }
 
