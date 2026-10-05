@@ -198,6 +198,8 @@
     .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
     .products-tools input,.products-tools select{margin:0}
     .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    .order-new-highlight{border:2px solid #f0a500;background:#fffaf0;box-shadow:0 4px 14px rgba(240,165,0,.16)}
+    .order-new-badge{display:inline-block;background:#f0a500;color:#fff;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;margin-bottom:8px}
     .order-status-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
     .order-status-actions button{width:auto;margin:0;padding:8px 10px;border:0;border-radius:9px;background:#eef2ef;color:#26352d;font-weight:700;cursor:pointer;font-size:12px}
     .order-status-actions button:hover{background:#dce8df}
@@ -1398,7 +1400,7 @@
     filtered.forEach(order => {
       const orderItems = items.filter(x => x.order_id === order.id);
       const div = document.createElement("div");
-      div.className = "product";
+      div.className = "product" + (order.status === "new" ? " order-new-highlight" : "");
       const stockMap = {};
       allProductsAdmin.forEach(p => {
         stockMap[String(p.id)] = p;
@@ -1424,7 +1426,8 @@
 
       const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
       const itemText = orderItems.map(x => escapeHTML(x.product_name) + " × " + x.quantity + " — " + Number(x.price).toLocaleString("uk-UA") + " грн").join("<br>") || "—";
-      div.innerHTML = stockWarning +
+      const newBadge = order.status === "new" ? '<div class="order-new-badge">🔔 НОВЕ ЗАМОВЛЕННЯ</div>' : '';
+      div.innerHTML = newBadge + stockWarning +
         "<h3>🧾 Замовлення №" + order.id + "</h3>" +
         "<p><b>Дата:</b> " + escapeHTML(created) + "</p>" +
         "<p><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</p>" +
