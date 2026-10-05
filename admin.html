@@ -1379,13 +1379,39 @@
   }
 
   async function updateOrderStatus(id, status) {
-    const result = await db.from("orders").update({status:status}).eq("id", id);
-    if (result.error) { alert("❌ " + result.error.message); return; }
     const order = allOrders.find(o => o.id === id);
-    if (order) order.status = status;
+    if (!order) return;
+
+    const previousStatus = order.status;
+
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      const confirmed = confirm(
+        "❌ Скасувати це замовлення?\\n\\n" +
+        "Товар автоматично повернеться на склад."
+      );
+      if (!confirmed) {
+        renderOrders();
+        return;
+      }
+    }
+
+    const result = await db.rpc("set_order_status", {
+      order_id: id,
+      new_status: status
+    });
+
+    if (result.error) {
+      alert("❌ Не вдалося змінити статус: " + result.error.message);
+      renderOrders();
+      return;
+    }
+
+    order.status = status;
+
     renderOrders();
     loadStats();
     loadSalesChart();
+    loadTopProducts();
   }
 
 
