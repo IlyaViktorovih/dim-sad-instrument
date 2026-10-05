@@ -2245,11 +2245,16 @@
       throw new Error(details || ("HTTP " + proxyResponse.status));
     } catch (proxyError) {
       console.warn("DROPS proxy error:", proxyError);
-      throw new Error(
-        "Не вдалося отримати XML через серверний проксі. " +
-        "Перевір, що функція drops-xml-proxy розгорнута в Supabase. " +
-        "Як запасний варіант скачай XML з DROPS та вибери його у полі «XML-файл»."
-      );
+      if (proxyError instanceof TypeError) {
+        throw new Error(
+          "Не вдалося зв'язатися із серверним проксі DROPS. " +
+          "Це може бути стара версія сторінки або проблема з підключенням. " +
+          "Онови сторінку адмінки та спробуй ще раз."
+        );
+      }
+      throw proxyError instanceof Error
+        ? proxyError
+        : new Error(String(proxyError));
     }
   }
 
