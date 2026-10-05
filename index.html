@@ -386,7 +386,9 @@ function renderNovaPoshtaSuggestions(type,items){
   const box=document.getElementById(type==="city"?"citySuggestions":"branchSuggestions");
   if(!box)return;
   box.innerHTML=items.length?items.map((x,i)=>{
-    const name=type==="city"?(x.Description||x.Present||""):((x.Description||"")+(x.Number?" · №"+x.Number:""));
+    const name=type==="city"
+      ? (x.Present||x.MainDescription||x.Description||x.PresentShort||"")
+      : ((x.Description||"")+(x.Number?" · №"+x.Number:""));
     return '<button type="button" class="np-suggestion" onclick="selectNovaPoshta'+(type==="city"?"City":"Branch")+"("+i+')">'+escapeHTML(name)+'</button>';
   }).join(""):'<div class="np-no-results">Нічого не знайдено</div>';
   if(type==="city")window._npCities=items; else window._npBranches=items;
@@ -401,15 +403,15 @@ async function searchNovaPoshtaCities(value){
   novaPoshtaCityTimer=setTimeout(async()=>{
     box.innerHTML='<div class="np-loading">🔎 Шукаємо населений пункт…</div>';
     try{
-      const items=await novaPoshtaRequest("getSettlements",{
-        Find:q,
+      const items=await novaPoshtaRequest("searchSettlements",{
+        CityName:q,
         Limit:20
-      },"Address");
+      },"AddressGeneral");
 
       renderNovaPoshtaSuggestions("city",items);
     }catch(error){
       console.error("Nova Poshta city search:",error);
-      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося завантажити населені пункти.")+'</div>';
+      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося знайти населений пункт.")+'</div>';
     }
   },250);
 }
@@ -417,8 +419,9 @@ async function searchNovaPoshtaCities(value){
 function selectNovaPoshtaCity(index){
   const city=window._npCities?.[index]; if(!city)return;
   const input=document.getElementById("city"),ref=document.getElementById("cityRef"),branch=document.getElementById("branch"),suggestions=document.getElementById("citySuggestions");
-  if(input)input.value=city.Description||city.Present||"";
-  novaPoshtaCityRef=city.Ref||"";
+  const name=city.Present||city.MainDescription||city.Description||city.PresentShort||"";
+  if(input)input.value=name;
+  novaPoshtaCityRef=city.DeliveryCity||city.Ref||"";
   if(ref)ref.value=novaPoshtaCityRef;
   if(suggestions)suggestions.innerHTML="";
   if(branch){branch.disabled=!novaPoshtaCityRef;branch.value="";branch.placeholder="Почніть вводити номер або назву відділення";}
