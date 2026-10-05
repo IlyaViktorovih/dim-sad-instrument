@@ -180,38 +180,21 @@ if(!list.length){document.getElementById("grid").innerHTML="<p>Товарів н
 document.getElementById("grid").innerHTML=list.map(p=>productCardHTML(p)).join("");
 }
 function productCardHTML(p){
-
-let gallery=productImages[p.id]||[];
-if(!gallery.length&&p.image)gallery=[p.image];
-let image=gallery[0]||"";
-let stockKnown = p.stock_quantity !== null && p.stock_quantity !== undefined;
-let stock = stockKnown ? Math.max(0, Number(p.stock_quantity)||0) : null;
-let inStock = p.available !== false && (!stockKnown || stock > 0);
-let stockBadge = inStock
-  ? (stockKnown ? '<span class="stock-badge">✓ В наявності • '+stock+' шт.</span>' : '<span class="stock-badge">✓ В наявності</span>')
-  : '<span class="stock-badge out">✕ Немає в наявності</span>';
-let badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+stockBadge;
-let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>':'<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
-let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':'';
-let isFav=favorites.includes(Number(p.id));
-let stockInfo = stockKnown ? (stock > 0 ? '<div class="stock-info">📦 Залишилось: <b>'+stock+' шт.</b></div>' : '<div class="stock-info out">Немає в наявності</div>') : "";
-let buyDisabled = !inStock ? ' disabled aria-disabled="true"' : "";
-return '<article class="product">'+'<button class="favorite-btn '+(isFav?"active":"")+'" onclick="toggleFavorite('+p.id+')" aria-label="'+(isFav?"Видалити з обраного":"Додати в обране")+'">'+(isFav?"♥":"♡")+'</button>'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+(p.old_price?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':'')+'<span class="'+(p.old_price?'discount-price':'')+'">'+Number(p.price).toLocaleString("uk-UA")+' грн</span>'+(p.discount?'<span class="discount-badge">−'+p.discount+'%</span>':'')+'</div>'+stockInfo+'<button class="buy"'+buyDisabled+' onclick="addToCart('+p.id+')">'+(inStock?'Додати в кошик':'Немає в наявності')+'</button></div></article>';
-}).join("");
+  const gallery=(productImages[p.id]||[]).slice();
+  if(!gallery.length&&p.image)gallery.push(p.image);
+  const image=gallery[0]||"";
+  const badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+
+    (p.available!==false?'<span class="stock-badge">✓ В наявності</span>':'<span class="stock-badge out">✕ Немає в наявності</span>');
+  const galleryHTML=image
+    ? '<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>'
+    : '<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
+  const thumbs=gallery.length>1
+    ? '<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>'
+    : "";
+  const discount=Number(p.discount)>0&&Number(p.old_price)>Number(p.price);
+  const timer=discount?saleTimerHTML(p):"";
+  return `<article class="product">${galleryHTML}${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}<button class="details" onclick="openProduct(${p.id},0)">👁️ Детальніше</button><button class="buy" onclick="addToCart(${p.id})">🛒 Додати в кошик</button><button class="details" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
 }
-function productCardHTML(p){
-let gallery=productImages[p.id]||[];
-if(!gallery.length&&p.image)gallery=[p.image];
-let image=gallery[0]||"";
-let badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+(p.available!==false?'<span class="stock-badge">✓ В наявності</span>':"");
-let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>':'<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
-let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':"";
-let discount=Number(p.discount)>0&&Number(p.old_price)>Number(p.price);
-let timer=discount?saleTimerHTML(p):"";
-return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+(discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':'')+'<span class="'+(discount?'discount-price':'')+'">'+Number(p.price).toLocaleString("uk-UA")+' грн</span>'+(discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':'')+'</div>'+timer+'<button class="details" onclick="openProduct('+p.id+',0)">👁️ Детальніше</button><button class="buy" onclick="addToCart('+p.id+')">🛒 Додати в кошик</button><button class="details" onclick="buyNow('+p.id+')">⚡ Купити зараз</button></div></article>';
-}
-
-
 function toggleDiscountFilter(){discountOnly=!discountOnly;const btn=document.getElementById("discountFilter");if(btn)btn.classList.toggle("active",discountOnly);render();document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});}
 function saveFavorites(){localStorage.setItem("dimSadFavorites",JSON.stringify(favorites));updateFavoritesCount();}
 function updateFavoritesCount(){const el=document.getElementById("favoritesCount");if(el)el.textContent=favorites.length;}
