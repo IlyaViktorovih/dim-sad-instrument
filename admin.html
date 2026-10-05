@@ -171,7 +171,7 @@
       margin: 8px 0 12px;
     }
 
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
     .stat-card{background:#f6faf7;border:1px solid #e1ebe5;border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;min-width:0}
     .stat-icon{font-size:28px}.stat-card span{display:block;color:#68766f;font-size:12px}.stat-card b{display:block;font-size:20px;color:#176b38;margin-top:3px}
     @media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
@@ -296,7 +296,10 @@
         <div class="stat-card"><div class="stat-icon">📦</div><div><span>Товарів</span><b>—</b></div></div>
         <div class="stat-card"><div class="stat-icon">🛒</div><div><span>Замовлень</span><b>—</b></div></div>
         <div class="stat-card"><div class="stat-icon">🆕</div><div><span>Нових</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">💰</div><div><span>Сума замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div><span>Сума всіх замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div><span>Сьогодні</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div><span>За 7 днів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">🗓️</div><div><span>За 30 днів</span><b>—</b></div></div>
         <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
       </div>
       <button id="refreshStatsButton">🔄 Оновити статистику</button>
@@ -1846,7 +1849,7 @@
     try {
       const [productsResult, ordersResult, reviewsResult] = await Promise.all([
         db.from("products").select("id"),
-        db.from("orders").select("id,status,total"),
+        db.from("orders").select("id,status,total,created_at"),
         db.from("product_reviews").select("id,approved")
       ]);
 
@@ -1860,11 +1863,34 @@
       const newOrders = orders.filter(o => o.status === "new").length;
       const total = orders.reduce((sum,o) => sum + (Number(o.total) || 0), 0);
 
+      const now = new Date();
+      const startToday = new Date(now);
+      startToday.setHours(0,0,0,0);
+
+      const start7 = new Date(startToday);
+      start7.setDate(start7.getDate() - 6);
+
+      const start30 = new Date(startToday);
+      start30.setDate(start30.getDate() - 29);
+
+      const sumFrom = start => orders.reduce((sum,o) => {
+        const created = o.created_at ? new Date(o.created_at) : null;
+        if (!created || Number.isNaN(created.getTime()) || created < start) return sum;
+        return sum + (Number(o.total) || 0);
+      }, 0);
+
+      const todayTotal = sumFrom(startToday);
+      const weekTotal = sumFrom(start7);
+      const monthTotal = sumFrom(start30);
+
       grid.innerHTML =
         statCard("📦","Товарів",productsCount.toLocaleString("uk-UA")) +
         statCard("🛒","Замовлень",orders.length.toLocaleString("uk-UA")) +
         statCard("🆕","Нових",newOrders.toLocaleString("uk-UA")) +
-        statCard("💰","Сума замовлень",total.toLocaleString("uk-UA") + " грн") +
+        statCard("💰","Сума всіх замовлень",total.toLocaleString("uk-UA") + " грн") +
+        statCard("📅","Сьогодні",todayTotal.toLocaleString("uk-UA") + " грн") +
+        statCard("📈","За 7 днів",weekTotal.toLocaleString("uk-UA") + " грн") +
+        statCard("🗓️","За 30 днів",monthTotal.toLocaleString("uk-UA") + " грн") +
         statCard("⭐","Відгуків",reviews.length.toLocaleString("uk-UA"));
 
     } catch (error) {
