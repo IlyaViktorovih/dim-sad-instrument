@@ -399,20 +399,17 @@ async function searchNovaPoshtaCities(value){
   if(q.length<2){box.innerHTML="";return;}
   clearTimeout(novaPoshtaCityTimer);
   novaPoshtaCityTimer=setTimeout(async()=>{
-    box.innerHTML='<div class="np-loading">🔎 Шукаємо міста…</div>';
+    box.innerHTML='<div class="np-loading">🔎 Шукаємо населений пункт…</div>';
     try{
-      let items=await novaPoshtaRequest("getCities",{Find:q,Limit:20},"Address");
-      if(!items.length){
-        try{
-          items=await novaPoshtaRequest("getSettlements",{Find:q,Limit:20},"Address");
-        }catch(fallbackError){
-          console.warn("getSettlements fallback:",fallbackError);
-        }
-      }
+      const items=await novaPoshtaRequest("getSettlements",{
+        Find:q,
+        Limit:20
+      },"Address");
+
       renderNovaPoshtaSuggestions("city",items);
     }catch(error){
       console.error("Nova Poshta city search:",error);
-      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося завантажити міста.")+'</div>';
+      box.innerHTML='<div class="np-no-results">⚠️ '+escapeHTML(error.message||"Не вдалося завантажити населені пункти.")+'</div>';
     }
   },250);
 }
