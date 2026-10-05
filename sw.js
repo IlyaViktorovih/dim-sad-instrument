@@ -1,4 +1,4 @@
-const CACHE_NAME = "dim-sad-v5";
+const CACHE_NAME = "dim-sad-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
