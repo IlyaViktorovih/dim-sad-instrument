@@ -36,7 +36,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 .thumbs button{border:2px solid transparent;padding:0;background:transparent;border-radius:7px;flex:0 0 auto;cursor:pointer}
 .thumbs button.active{border-color:#168a4a}.thumbs img{width:48px;height:48px;object-fit:cover;border-radius:5px;display:block}
 .pic{height:210px;background:#eef7f1;display:grid;place-items:center;overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover}.no-image{font-size:60px}
-.info{padding:15px}.info h3{font-size:17px;margin:0 0 8px}.price{font-size:21px;font-weight:900;margin:10px 0}.old-price{font-size:14px;color:#888;text-decoration:line-through;margin-right:7px}.discount-price{color:#c62828}.discount-badge{display:inline-block;background:#c62828;color:white;padding:4px 7px;border-radius:7px;font-size:11px;font-weight:900;margin-left:7px;vertical-align:middle}
+.info{padding:15px}.info h3{font-size:17px;margin:0 0 8px}.price{font-size:21px;font-weight:900;margin:10px 0}.old-price{font-size:14px;color:#888;text-decoration:line-through;margin-right:7px}.discount-price{color:#c62828}.discount-badge{display:inline-block;background:#c62828;color:white;padding:4px 7px;border-radius:7px;font-size:11px;font-weight:900;margin-left:7px;vertical-align:middle}.sale-timer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:8px 10px;background:#fff3e8;border:1px solid #ffd8b5;border-radius:9px;color:#c65a00;font-size:12px;font-weight:800}.sale-time{font-size:14px;letter-spacing:.3px;color:#b83e00}
 .buy{width:100%;border:0;background:#168a4a;color:white;padding:11px;border-radius:10px;font-weight:800}.details{width:100%;border:1px solid #168a4a;background:white;color:#168a4a;padding:10px;border-radius:10px;font-weight:800;margin-bottom:8px}.product-modal{display:none;position:fixed;inset:0;background:#0009;z-index:30;padding:15px;overflow-y:auto}.product-box{max-width:900px;margin:3vh auto;background:white;border-radius:24px;padding:20px}.product-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}.product-main-photo{height:430px;background:#eef7f1;border-radius:18px;overflow:hidden}.product-main-photo img{width:100%;height:100%;object-fit:contain}.product-gallery{display:flex;gap:8px;overflow-x:auto;margin-top:10px}.product-gallery button{border:2px solid transparent;background:white;padding:0;border-radius:8px}.product-gallery button.active{border-color:#168a4a}.product-gallery img{width:70px;height:70px;object-fit:cover;border-radius:7px}.product-description{white-space:pre-line;color:#596861;line-height:1.55}.big-buy{font-size:18px;padding:15px}.product-close{float:right;border:0;background:#f2f5f3;border-radius:50%;width:40px;height:40px;font-size:25px}.buy:active{transform:scale(.98)}
 .about{margin-top:45px;background:#f4f8f5;border-radius:22px;padding:28px}.contact{margin-top:25px;padding:28px;border-radius:22px;background:#15352a;color:white}
 .footer{text-align:center;color:#7a8881;padding:30px 18px;border-top:1px solid #e7eee9;margin-top:40px}
@@ -176,8 +176,11 @@ let image=gallery[0]||"";
 let badges=(p.is_hit===true?'<span class="badge hit-badge">⭐ Хіт продажу</span>':"")+(p.available!==false?'<span class="stock-badge">✓ В наявності</span>':"");
 let galleryHTML=image?'<div class="product-media">'+badges+'<div class="gallery" id="gallery-'+p.id+'"><img id="main-image-'+p.id+'" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'" onclick="openImage('+p.id+',0)"></div></div>':'<div class="product-media">'+badges+'<div class="pic"><div class="no-image">📦</div></div></div>';
 let thumbs=gallery.length>1?'<div class="thumbs">'+gallery.slice(0,8).map((url,i)=>'<button class="'+(i===0?'active':'')+'" onclick="changeImage('+p.id+','+i+')" aria-label="Фото '+(i+1)+'"><img src="'+escapeHTML(url)+'" alt=""></button>').join('')+'</div>':"";
-return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+Number(p.price).toLocaleString("uk-UA")+' грн</div><button class="details" onclick="openProduct('+p.id+',0)">👁️ Детальніше</button><button class="buy" onclick="addToCart('+p.id+')">Додати в кошик</button></div></article>';
+let discount=Number(p.discount)>0&&Number(p.old_price)>Number(p.price);
+let timer=discount?saleTimerHTML(p):"";
+return '<article class="product">'+galleryHTML+thumbs+'<div class="info"><h3>'+escapeHTML(p.name)+'</h3><small>'+escapeHTML(p.category||"Товар")+'</small><div class="price">'+(discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':'')+'<span class="'+(discount?'discount-price':'')+'">'+Number(p.price).toLocaleString("uk-UA")+' грн</span>'+(discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':'')+'</div>'+timer+'<button class="details" onclick="openProduct('+p.id+',0)">👁️ Детальніше</button><button class="buy" onclick="addToCart('+p.id+')">Додати в кошик</button></div></article>';
 }
+
 
 function changeImage(productId,index){
 const gallery=productImages[productId]||[];
@@ -194,6 +197,28 @@ thumbs.forEach((b,i)=>b.classList.toggle("active",i===index));
 }
 
 function openImage(productId,index=0){openProduct(productId,index);}
+function saleTimerHTML(p){
+  if(!p.created_at)return '<div class="sale-timer">🔥 Акція <span>обмежена</span></div>';
+  const end=new Date(p.created_at).getTime()+48*60*60*1000;
+  if(Date.now()>=end)return "";
+  const id="sale-timer-"+p.id;
+  setTimeout(()=>updateSaleTimer(p.id,end),0);
+  return '<div class="sale-timer" id="'+id+'">🔥 Акція до <span class="sale-time">завантаження…</span></div>';
+}
+function updateSaleTimer(id,end){
+  const el=document.getElementById("sale-timer-"+id);
+  if(!el)return;
+  const tick=()=>{
+    const left=Math.max(0,end-Date.now());
+    if(left<=0){el.remove();return;}
+    const total=Math.floor(left/1000),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;
+    const text=(d?d+"д ":"")+String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+    const span=el.querySelector(".sale-time"); if(span)span.textContent=text;
+    setTimeout(tick,1000);
+  };
+  tick();
+}
+
 function openProduct(productId,index=0){
   const p=products.find(x=>x.id===productId); if(!p)return;
   let gallery=productImages[p.id]||[]; if(!gallery.length&&p.image)gallery=[p.image]; if(!gallery.length)gallery=[""];
