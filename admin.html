@@ -261,7 +261,7 @@
       autocomplete="current-password"
     >
 
-    <button id="loginButton">
+    <button id="loginButton" type="button">
       Увійти
     </button>
 
@@ -533,7 +533,17 @@
   const SUPABASE_KEY =
     "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
 
-  const db = window.supabase.createClient(
+  let db;
+
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    const status = document.getElementById("loginStatus");
+    if (status) {
+      status.textContent = "❌ Не завантажився модуль авторизації Supabase. Онови сторінку.";
+    }
+    throw new Error("Supabase JS library is unavailable.");
+  }
+
+  db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
   );
@@ -582,21 +592,18 @@
      ===================================================== */
 
   async function checkSession() {
+    try {
+      const { data: { session } } = await db.auth.getSession();
 
-    const {
-      data: {
-        session
+      if (session) {
+        showAdmin(session);
+      } else {
+        showLogin();
       }
-    } = await db.auth.getSession();
-
-    if (session) {
-
-      showAdmin(session);
-
-    } else {
-
+    } catch (error) {
+      console.error("Supabase session check:", error);
       showLogin();
-
+      loginStatus.textContent = "❌ Не вдалося перевірити сесію: " + (error.message || "невідома помилка");
     }
   }
 
