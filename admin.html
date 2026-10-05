@@ -391,12 +391,24 @@
 
       <label><b>Фотографії товару</b></label><input type="file" id="productImages" accept="image/*" multiple><div class="small">Можна вибрати одразу кілька фото. Перше буде головним.</div><input type="text" id="productImage" placeholder="Або посилання на головне фото">
 
-      <select id="productCategory">
-        <option value="Для дому">Для дому</option>
-        <option value="Для саду">Для саду</option>
-        <option value="Інструменти">Інструменти</option>
-        <option value="Корисні товари">Корисні товари</option>
-      </select>
+      <select id="productCategory">      <option value="Для дому">Для дому</option>
+      <option value="Для саду">Для саду</option>
+      <option value="Товари для авто">Товари для авто</option>
+      <option value="Інструменти">Інструменти</option>
+      <option value="Корисні товари">Корисні товари</option>
+      <option value="Одяг">Одяг</option>
+      <option value="Чоловічий одяг">Чоловічий одяг</option>
+      <option value="Жіночий одяг">Жіночий одяг</option>
+      <option value="Футболки">Футболки</option>
+      <option value="Штани">Штани</option>
+      <option value="Куртки">Куртки</option>
+      <option value="Взуття">Взуття</option>
+      <option value="Светри">Светри</option>
+      <option value="Аксесуари">Аксесуари</option>
+      <option value="Нижня білизна">Нижня білизна</option>
+      <option value="Клатчі">Клатчі</option>
+      <option value="Портфелі">Портфелі</option>
+      <option value="Сумки">Сумки</option></select>
 
       <select id="productAvailable">
         <option value="true">Є в наявності</option>
@@ -514,12 +526,24 @@
 
     <div id="editPhotoPreview" class="photoPreview"></div>
 
-    <select id="editProductCategory">
-      <option value="Для дому">Для дому</option>
+    <select id="editProductCategory">      <option value="Для дому">Для дому</option>
       <option value="Для саду">Для саду</option>
+      <option value="Товари для авто">Товари для авто</option>
       <option value="Інструменти">Інструменти</option>
       <option value="Корисні товари">Корисні товари</option>
-    </select>
+      <option value="Одяг">Одяг</option>
+      <option value="Чоловічий одяг">Чоловічий одяг</option>
+      <option value="Жіночий одяг">Жіночий одяг</option>
+      <option value="Футболки">Футболки</option>
+      <option value="Штани">Штани</option>
+      <option value="Куртки">Куртки</option>
+      <option value="Взуття">Взуття</option>
+      <option value="Светри">Светри</option>
+      <option value="Аксесуари">Аксесуари</option>
+      <option value="Нижня білизна">Нижня білизна</option>
+      <option value="Клатчі">Клатчі</option>
+      <option value="Портфелі">Портфелі</option>
+      <option value="Сумки">Сумки</option></select>
 
     <select id="editProductAvailable">
       <option value="true">Є в наявності</option>
@@ -1072,6 +1096,7 @@
         "<h3>" + escapeHTML(p.name) + "</h3>" +
         "<div class='quick-product-row'>" +
           "<label>💰 Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \"price\", this.value)'></label>" +
+          "<label>📦 Залишок <input class='quick-price' type='number' min='0' step='1' value='" + (p.stock_quantity == null ? 0 : Number(p.stock_quantity)) + "' onchange='quickUpdateProduct(" + p.id + ", \"stock_quantity\", this.value)'></label>" +
           "<label>📦 <select onchange='quickUpdateProduct(" + p.id + ", \"available\", this.value === \"true\")'>" +
             "<option value='true' " + (p.available !== false ? "selected" : "") + ">Є в наявності</option>" +
             "<option value='false' " + (p.available === false ? "selected" : "") + ">Немає</option>" +
@@ -1098,8 +1123,8 @@
     const low = tracked.filter(p => Number(p.stock_quantity) > 0 && Number(p.stock_quantity) <= 3);
 
     summary.textContent = out.length || low.length
-      ? "🔴 Закінчились: " + out.length + " • ⚠️ Мало: " + low.length
-      : "✅ Критичних залишків немає.";
+      ? "🔴 Закінчились: " + out.length + " • ⚠️ Мало: " + low.length + " • 📦 Контролюється: " + tracked.length
+      : "✅ Критичних залишків немає. • 📦 Контролюється: " + tracked.length;
 
     box.innerHTML =
       out.map(p => "<div class='stock-alert out'><b>🔴 " + escapeHTML(p.name) + "</b>Товар закінчився — 0 шт.</div>").join("") +
@@ -1134,6 +1159,16 @@
         return;
       }
       patch.price = price;
+      const product = allProductsAdmin.find(p => p.id === id);
+      if (product) {
+        const oldPrice = Number(product.old_price);
+        if (Number.isFinite(oldPrice) && oldPrice > price) {
+          patch.discount = Math.round((1 - price / oldPrice) * 100);
+        } else {
+          patch.old_price = null;
+          patch.discount = null;
+        }
+      }
     } else if (field === "available" || field === "is_hit") {
       patch[field] = Boolean(value);
     } else if (field === "stock_quantity") {
