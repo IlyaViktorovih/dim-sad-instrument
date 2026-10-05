@@ -653,6 +653,25 @@
 
 
   /* =====================================================
+     НАДІЙНІСТЬ ЗАПИТІВ
+     ===================================================== */
+
+  function withTimeout(promise, label, ms = 15000) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label + " — перевищено час очікування (" + Math.round(ms / 1000) + " с).")), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function showLoadError(element, error, fallbackLabel) {
+    if (!element) return;
+    const message = error?.message || "Невідома помилка.";
+    element.innerHTML = "❌ Не вдалося " + fallbackLabel + ": " + escapeHTML(message) +
+      "<br><button type="button" onclick="location.reload()">🔄 Перезавантажити адмінку</button>";
+  }
+
+    /* =====================================================
      ПЕРЕВІРКА СЕСІЇ
      ===================================================== */
 
@@ -1057,14 +1076,20 @@
 
   async function loadProducts() {
     productsList.innerHTML = "⏳ Завантаження товарів...";
-    const result = await db.from("products").select("*").order("id", {ascending:false});
-    if (result.error) {
-      productsList.innerHTML = "❌ " + escapeHTML(result.error.message);
-      return;
+    try {
+      const result = await withTimeout(
+        db.from("products").select("*").order("id", {ascending:false}),
+        "Завантаження товарів",
+        15000
+      );
+      if (result.error) throw result.error;
+      allProductsAdmin = result.data || [];
+      renderAdminProducts();
+      renderStockAlerts();
+    } catch (error) {
+      console.error("loadProducts:", error);
+      showLoadError(productsList, error, "завантажити товари");
     }
-    allProductsAdmin = result.data || [];
-    renderAdminProducts();
-    renderStockAlerts();
   }
 
   async function quickUpdateProduct(id, field, value) {
@@ -1449,13 +1474,29 @@
 
 
   async function loadOrders() {
-    ordersList.innerHTML = "⏳ Завантаження...";
-    const result = await db.from("orders").select("*").order("created_at", {ascending:false});
-    if (result.error) { ordersList.innerHTML = "❌ " + escapeHTML(result.error.message); return; }
-    const itemResult = await db.from("order_items").select("*");
-    allOrders = result.data || [];
-    allOrderItems = itemResult.data || [];
-    renderOrders();
+    ordersList.innerHTML = "⏳ Завантаження замовлень...";
+    try {
+      const result = await withTimeout(
+        db.from("orders").select("*").order("created_at", {ascending:false}),
+        "Завантаження замовлень",
+        15000
+      );
+      if (result.error) throw result.error;
+
+      const itemResult = await withTimeout(
+        db.from("order_items").select("*"),
+        "Завантаження товарів у замовленнях",
+        15000
+      );
+      if (itemResult.error) throw itemResult.error;
+
+      allOrders = result.data || [];
+      allOrderItems = itemResult.data || [];
+      renderOrders();
+    } catch (error) {
+      console.error("loadOrders:", error);
+      showLoadError(ordersList, error, "завантажити замовлення");
+    }
   }
 
   function renderOrders() {
@@ -1657,7 +1698,7 @@
     const box = document.getElementById("topProductsList");
     box.innerHTML = "⏳ Завантаження...";
     try {
-      const result = await db.from("order_items").select("product_id,product_name,price,quantity");
+      const result = await withTimeout(db.from("order_items").select("product_id,product_name,price,quantity"), "Завантаження популярних товарів", 15000);
       if (result.error) throw result.error;
 
       const map = {};
@@ -1813,14 +1854,14 @@
   async function loadReviewsAdmin() {
     const box = document.getElementById("reviewsAdminList");
     box.innerHTML = "⏳ Завантаження...";
-    const result = await db.from("product_reviews")
-      .select("*")
-      .order("created_at", {ascending:false});
+    try {
+      const result = await withTimeout(
+        db.from("product_reviews").select("*").order("created_at", {ascending:false}),
+        "Завантаження відгуків",
+        15000
+      );
 
-    if (result.error) {
-      box.innerHTML = "❌ " + escapeHTML(result.error.message);
-      return;
-    }
+      if (result.error) throw result.error;
 
     if (!result.data || !result.data.length) {
       box.innerHTML = "Відгуків поки немає.";
@@ -1832,7 +1873,7 @@
     (productResult.data || []).forEach(p => productMap[p.id] = p.name);
 
     box.innerHTML = "";
-    result.data.forEach(review => {
+      result.data.forEach(review => {
       const div = document.createElement("div");
       div.className = "product";
       const stars = "★".repeat(Number(review.rating)) + "☆".repeat(5 - Number(review.rating));
@@ -1849,7 +1890,11 @@
         "</button>" +
         "<button class='danger' onclick='deleteReview(" + review.id + ")'>🗑 Видалити</button>";
       box.appendChild(div);
-    });
+      });
+    } catch(error) {
+      console.error("loadReviewsAdmin:", error);
+      showLoadError(box, error, "завантажити відгуки");
+    }
   }
 
   async function toggleReviewApproval(id, approved) {
