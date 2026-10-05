@@ -216,7 +216,7 @@ function toggleDiscountFilter(){discountOnly=!discountOnly;const btn=document.ge
 function saveFavorites(){localStorage.setItem("dimSadFavorites",JSON.stringify(favorites));updateFavoritesCount();}
 function updateFavoritesCount(){const el=document.getElementById("favoritesCount");if(el)el.textContent=favorites.length;}
 function toggleFavorite(id){id=Number(id);const i=favorites.indexOf(id);if(i>=0)favorites.splice(i,1);else favorites.push(id);saveFavorites();render();}
-function showFavorites(){if(!favorites.length){alert("❤️ Обране порожнє. Додайте товари сердечком.");return;}selectedCategory="";const q=document.getElementById("search");if(q)q.value="";const list=products.filter(p=>favorites.includes(Number(p.id)));document.getElementById("grid").innerHTML=list.length?list.map(p=>productCardHTML(p)).join(""):"<p>Обраних товарів не знайдено.</p>";document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start");}
+function showFavorites(){if(!favorites.length){alert("❤️ Обране порожнє. Додайте товари сердечком.");return;}selectedCategory="";const q=document.getElementById("search");if(q)q.value="";const list=products.filter(p=>favorites.includes(Number(p.id)));document.getElementById("grid").innerHTML=list.length?list.map(p=>productCardHTML(p)).join(""):"<p>Обраних товарів не знайдено.</p>";document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});}
 function changeImage(productId,index){
 const gallery=productImages[productId]||[];
 const p=products.find(x=>x.id===productId);
