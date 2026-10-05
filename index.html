@@ -307,6 +307,12 @@ async function sendOrder(){
 if(!cart.length){alert("Кошик порожній.");return;}
 let name=document.getElementById("name").value.trim(),phone=document.getElementById("phone").value.trim(),delivery=document.getElementById("delivery").value,city=document.getElementById("city")?.value.trim()||"",branch=document.getElementById("branch")?.value.trim()||"",postal=document.getElementById("postal")?.value.trim()||"",comment=document.getElementById("comment").value.trim();
 if(!name||!phone){alert("Вкажіть ім'я та номер телефону.");return}
+const phoneDigits = phone.replace(/\D/g,"");
+if(phoneDigits.length < 10 || phoneDigits.length > 15){
+  alert("📞 Вкажіть правильний номер телефону.");
+  document.getElementById("phone").focus();
+  return;
+}
 if(!delivery){alert("Оберіть спосіб доставки.");return}
 if(!city||!branch){alert("Вкажіть місто та відділення.");return}
 if(delivery==="Укрпошта"&&!postal){alert("Вкажіть поштовий індекс.");return}
