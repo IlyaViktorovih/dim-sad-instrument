@@ -261,7 +261,7 @@
       autocomplete="current-password"
     >
 
-    <button id="loginButton" type="button">
+    <button id="loginButton" type="button" onclick="adminLoginFallback(event)">
       Увійти
     </button>
 
@@ -515,6 +515,45 @@
   </div>
 </div>
 
+
+<script>
+  async function adminLoginFallback(event) {
+    if (event) event.preventDefault();
+    const status = document.getElementById("loginStatus");
+    const button = document.getElementById("loginButton");
+    const email = (document.getElementById("email")?.value || "").trim();
+    const password = document.getElementById("password")?.value || "";
+    if (!email || !password) {
+      if (status) status.textContent = "❌ Введи email та пароль.";
+      return;
+    }
+    if (button) { button.disabled = true; button.textContent = "Вхід..."; }
+    if (status) status.textContent = "Перевіряємо дані...";
+    try {
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        throw new Error("Supabase JS не завантажився.");
+      }
+      const client = window.supabase.createClient(
+        "https://rzdqohedzsgcmhcdhlri.supabase.co",
+        "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ"
+      );
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (!data?.session) throw new Error("Сесію не створено.");
+      if (status) status.textContent = "✅ Успішний вхід! Завантажуємо адмінку...";
+      if (typeof window.showAdmin === "function") {
+        window.showAdmin(data.session);
+      } else {
+        location.reload();
+      }
+    } catch (error) {
+      console.error("Admin fallback login:", error);
+      if (status) status.textContent = "❌ " + (error?.message || "Помилка входу.");
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "Увійти"; }
+    }
+  }
+</script>
 
 <script>
 
