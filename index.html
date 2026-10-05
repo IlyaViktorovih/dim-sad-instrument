@@ -281,7 +281,7 @@ let total=cart.reduce((sum,item)=>sum+Number(item.product.price)*item.quantity,0
 order.innerHTML='<div class="cart-list">'+cart.map((item,index)=>{
 let p=item.product, img=productImages[p.id]?.[0]||p.image||"";
 return '<div class="cart-item"><div class="cart-product">'+(img?'<img class="cart-thumb" src="'+escapeHTML(img)+'" alt="'+escapeHTML(p.name)+'">':'<div class="cart-thumb cart-placeholder">🛍️</div>')+'<div class="cart-product-info"><b>'+escapeHTML(p.name)+'</b><span>'+Number(p.price).toLocaleString("uk-UA")+' грн / шт.</span></div></div><div class="cart-actions"><div class="qty"><button aria-label="Зменшити" onclick="changeQty('+index+',-1)">−</button><b>'+item.quantity+'</b><button aria-label="Збільшити" onclick="changeQty('+index+',1)">+</button></div><button class="remove-cart" onclick="removeFromCart('+index+')" aria-label="Видалити">🗑️</button></div></div>';
-}).join("")+'</div><div class="cart-summary"><span>Разом</span><strong>'+total.toLocaleString("uk-UA")+' грн</strong></div><button class="buy cart-checkout" onclick="document.getElementById("checkoutForm")?.scrollIntoView({behavior:"smooth"})">Оформити замовлення →</button>';
+}).join("")+'</div><div class="cart-summary"><span>Разом</span><strong>'+total.toLocaleString("uk-UA")+' грн</strong></div><button class="buy cart-checkout" onclick="document.getElementById("name")?.focus()">Оформити замовлення →</button>';
 }
 function removeFromCart(index){cart.splice(index,1);updateCount();renderCart();}
 function changeQty(index,change){
@@ -327,8 +327,9 @@ if(error){
   alert(error.message && error.message.includes("Недостатньо") ? "❌ " + error.message : "❌ Не вдалося оформити замовлення. Спробуйте ще раз.");
   return;
 }
-alert("✅ Дякуємо!\n\nВаше замовлення прийнято.\nМи зв'яжемося з вами найближчим часом.");
-cart=[];updateCount();closeCart();document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("comment").value="";document.getElementById("delivery").value="";document.getElementById("deliveryFields").innerHTML="";
+alert("✅ Дякуємо!\n\nЗамовлення №" + order + " прийнято.\nМи зв'яжемося з вами найближчим часом.");
+cart=[];updateCount();closeCart();
+await loadProducts();document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("comment").value="";document.getElementById("delivery").value="";document.getElementById("deliveryFields").innerHTML="";
 }
 function escapeHTML(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 updateFavoritesCount();
