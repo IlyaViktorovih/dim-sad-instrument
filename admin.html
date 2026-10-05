@@ -198,6 +198,9 @@
     .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
     .products-tools input,.products-tools select{margin:0}
     .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    .order-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+    .order-contact-actions a,.order-contact-actions button{display:inline-block;width:auto;margin:0;padding:9px 12px;border:0;border-radius:9px;text-decoration:none;background:#168a4a;color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+    .order-contact-actions button{background:#eef2ef;color:#26352d}
     .new-order-alert{position:sticky;top:10px;z-index:100;background:#fff7e6;border:2px solid #f0a500;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:12px}
     .new-order-alert.hidden{display:none}
     .new-order-alert b{color:#9a6200}
@@ -1298,6 +1301,10 @@
         "<p><b>Дата:</b> " + escapeHTML(created) + "</p>" +
         "<p><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</p>" +
         "<p><b>Телефон:</b> " + escapeHTML(order.phone) + "</p>" +
+        "<div class=\"order-contact-actions\">" +
+        "<a href=\"tel:" + encodeURIComponent(order.phone || "") + "\">📞 Подзвонити</a>" +
+        "<button type=\"button\" onclick=\"copyOrderPhone('" + String(order.phone || "").replace(/'/g, "\\'") + "')\">📋 Копіювати</button>" +
+        "</div>" +
         "<p><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</p>" +
         "<p><b>Місто:</b> " + escapeHTML(order.city || "") + "</p>" +
         "<p><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</p>" +
@@ -1312,6 +1319,15 @@
         "<option value=\"cancelled\" " + (order.status === "cancelled" ? "selected" : "") + ">❌ Скасовано</option></select>";
       ordersList.appendChild(div);
     });
+  }
+
+  async function copyOrderPhone(phone) {
+    try {
+      await navigator.clipboard.writeText(phone);
+      alert("✅ Номер скопійовано");
+    } catch(error) {
+      prompt("Скопіюй номер телефону:", phone);
+    }
   }
 
   async function updateOrderStatus(id, status) {
