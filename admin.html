@@ -935,7 +935,7 @@
           description: description,
           image: image,
           category: category,
-          available: available && availableByStock,
+          available: available,
           is_hit: is_hit,
           stock_quantity: stock_quantity,
           old_price: old_price,
@@ -1144,7 +1144,6 @@
         return;
       }
       patch.stock_quantity = stock;
-      patch.available = stock > 0;
     }
 
     try {
@@ -1267,7 +1266,7 @@
           description,
           image,
           category,
-          available: available && availableByStock,
+          available: available,
           is_hit,
           stock_quantity,
           old_price,
