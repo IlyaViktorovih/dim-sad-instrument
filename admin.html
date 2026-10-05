@@ -680,8 +680,8 @@
       const { data: { session } } = await db.auth.getSession();
 
       if (session) {
-        showAdmin(session);
-      } else if (!window.adminLoginInProgress) {
+        if (!window.adminPanelActive) showAdmin(session);
+      } else if (!window.adminLoginInProgress && !window.adminLoginCompleted) {
         showLogin();
       }
     } catch (error) {
@@ -698,6 +698,8 @@
 
   function showLogin() {
 
+    window.adminPanelActive = false;
+    window.adminLoginCompleted = false;
     loginBox.classList.remove("hidden");
     adminPanel.classList.add("hidden");
 
@@ -710,6 +712,11 @@
 
   function showAdmin(session) {
 
+    if (!session?.user) return;
+    if (window.adminPanelActive && window.adminPanelSessionId === session.user.id) return;
+
+    window.adminPanelActive = true;
+    window.adminPanelSessionId = session.user.id;
     loginBox.classList.add("hidden");
     adminPanel.classList.remove("hidden");
 
@@ -1235,8 +1242,9 @@
           description,
           image,
           category,
-          available,
+          available: available && availableByStock,
           is_hit,
+          stock_quantity,
           old_price,
           discount
         })
@@ -1260,9 +1268,13 @@
           const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
           const path = id + "/" + Date.now() + "_edit_" + i + "_" + safeName;
 
-          const upload = await db.storage
-            .from("product-images")
-            .upload(path, file, {upsert:false});
+          const upload = await withTimeout(
+            db.storage
+              .from("product-images")
+              .upload(path, file, {upsert:false}),
+            "Завантаження фото",
+            30000
+          );
 
           if (upload.error) throw upload.error;
 
