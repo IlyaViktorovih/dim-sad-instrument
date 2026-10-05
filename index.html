@@ -299,7 +299,7 @@ function buyNow(id){
   if(!product)return;
   let stockKnown=product.stock_quantity!==null&&product.stock_quantity!==undefined;
   let stock=stockKnown?Math.max(0,Number(product.stock_quantity)||0):null;
-  if(product.available===false){alert("❌ Цього товару зараз немає в наявності.");return;}
+  if(product.available===false||(stockKnown&&stock<=0)){alert("❌ Цього товару зараз немає в наявності.");return;}
   let item=cart.find(x=>x.product.id===id);
   if(!item)cart.push({product,quantity:1});
   updateCount();
