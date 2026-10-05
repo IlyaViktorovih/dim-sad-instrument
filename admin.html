@@ -188,6 +188,13 @@
     .sales-empty{text-align:center;padding:30px 10px;color:#68766f}
     .sales-note{margin-top:8px}
     @media(max-width:600px){.sales-head{align-items:stretch;flex-direction:column}.sales-period{width:100%}.sales-chart{min-width:650px}}
+.customer-stats{font-size:15px;color:#555;margin:8px 0 14px}
+    .customer-row{border:1px solid #ddd;border-radius:12px;padding:13px;margin-top:10px;background:#fafafa}
+    .customer-row h3{margin:0 0 7px;color:#176b38}
+    .customer-meta{font-size:13px;color:#666}
+    .top-product{border:1px solid #ddd;border-radius:12px;padding:13px;margin-top:10px;background:#fafafa}
+    .top-product-line{display:flex;justify-content:space-between;gap:10px;font-weight:bold}
+    .top-product-bar{height:8px;background:#176b38;border-radius:5px;margin-top:9px}
     .photoPreview img {
       width: 78px;
       height: 78px;
@@ -260,6 +267,21 @@
         <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
       </div>
       <button id="refreshStatsButton">🔄 Оновити статистику</button>
+    </div>
+
+    <!-- КЛІЄНТИ -->
+    <div class="box">
+      <h2>👥 Клієнти</h2>
+      <div class="customer-stats" id="customerStats">⏳ Завантаження...</div>
+      <div id="customersList">Завантаження клієнтів...</div>
+      <button id="refreshCustomersButton">🔄 Оновити клієнтів</button>
+    </div>
+
+    <!-- ПОПУЛЯРНІ ТОВАРИ -->
+    <div class="box">
+      <h2>🔥 Популярні товари</h2>
+      <div id="topProductsList">Завантаження...</div>
+      <button id="refreshTopProductsButton">🔄 Оновити товари</button>
     </div>
 
     <!-- ПРОДАЖІ -->
@@ -528,6 +550,8 @@
     loadReviewsAdmin();
     loadStats();
     loadSalesChart();
+    loadCustomers();
+    loadTopProducts();
 
   }
 
@@ -1186,6 +1210,89 @@
 
 
   /* =====================================================
+     КЛІЄНТИ ТА ПОПУЛЯРНІ ТОВАРИ
+     ===================================================== */
+
+  async function loadCustomers() {
+    const box = document.getElementById("customersList");
+    const stats = document.getElementById("customerStats");
+    box.innerHTML = "⏳ Завантаження...";
+    stats.textContent = "";
+
+    try {
+      const result = await db.from("orders")
+        .select("customer_name,phone,city,created_at,total,status")
+        .order("created_at",{ascending:false});
+      if (result.error) throw result.error;
+
+      const map = {};
+      (result.data || []).forEach(o => {
+        const key = ((o.phone || "") + "|" + (o.customer_name || "")).toLowerCase();
+        if (!map[key]) map[key] = {name:o.customer_name || "Без імені",phone:o.phone || "—",city:o.city || "—",orders:0,total:0,last:o.created_at,status:o.status};
+        map[key].orders++;
+        map[key].total += Number(o.total) || 0;
+        if (new Date(o.created_at) > new Date(map[key].last)) map[key].last = o.created_at;
+      });
+
+      const customers = Object.values(map).sort((a,b)=>b.total-a.total);
+      stats.textContent = "Унікальних клієнтів: " + customers.length + " • Усього замовлень: " + (result.data || []).length;
+
+      if (!customers.length) {
+        box.innerHTML = "Клієнтів поки немає.";
+        return;
+      }
+
+      box.innerHTML = customers.map(c =>
+        '<div class="customer-row">' +
+        '<h3>👤 ' + escapeHTML(c.name) + '</h3>' +
+        '<div class="customer-meta">📞 ' + escapeHTML(c.phone) + ' • 📍 ' + escapeHTML(c.city) + '</div>' +
+        '<p><b>Замовлень:</b> ' + c.orders + ' • <b>Сума:</b> ' + c.total.toLocaleString("uk-UA") + ' грн</p>' +
+        '<div class="customer-meta">Останнє замовлення: ' + escapeHTML(new Date(c.last).toLocaleString("uk-UA")) + '</div>' +
+        '</div>'
+      ).join("");
+    } catch(error) {
+      console.error(error);
+      box.innerHTML = "❌ " + escapeHTML(error.message);
+    }
+  }
+
+  async function loadTopProducts() {
+    const box = document.getElementById("topProductsList");
+    box.innerHTML = "⏳ Завантаження...";
+    try {
+      const result = await db.from("order_items").select("product_id,product_name,price,quantity");
+      if (result.error) throw result.error;
+
+      const map = {};
+      (result.data || []).forEach(item => {
+        const key = item.product_id + "|" + (item.product_name || "");
+        if (!map[key]) map[key] = {name:item.product_name || "Товар",quantity:0,revenue:0};
+        map[key].quantity += Number(item.quantity) || 0;
+        map[key].revenue += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      });
+
+      const products = Object.values(map).sort((a,b)=>b.quantity-a.quantity);
+      if (!products.length) {
+        box.innerHTML = "Продажів товарів поки немає.";
+        return;
+      }
+
+      const max = products[0].quantity || 1;
+      box.innerHTML = products.slice(0,10).map((p,i) =>
+        '<div class="top-product">' +
+        '<div class="top-product-line"><span>' + (i+1) + '. ' + escapeHTML(p.name) + '</span><span>' + p.quantity + ' шт.</span></div>' +
+        '<div class="top-product-bar" style="width:' + Math.max(5,Math.round(p.quantity/max*100)) + '%"></div>' +
+        '<div class="small">Продано на ' + p.revenue.toLocaleString("uk-UA") + ' грн</div>' +
+        '</div>'
+      ).join("");
+    } catch(error) {
+      console.error(error);
+      box.innerHTML = "❌ " + escapeHTML(error.message);
+    }
+  }
+
+
+  /* =====================================================
      ПРОДАЖІ
      ===================================================== */
 
@@ -1435,6 +1542,16 @@
   document.getElementById("salesPeriod").addEventListener(
     "change",
     loadSalesChart
+  );
+
+  document.getElementById("refreshCustomersButton").addEventListener(
+    "click",
+    loadCustomers
+  );
+
+  document.getElementById("refreshTopProductsButton").addEventListener(
+    "click",
+    loadTopProducts
   );
 
   document.getElementById("closeEditButton").addEventListener(
