@@ -19,7 +19,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#17352a;background:#fff}
 header{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid #e5eee9}
 .nav{max-width:1180px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-size:20px;font-weight:800}.logo span{color:#168a4a}
-.cart{border:0;background:#168a4a;color:white;padding:11px 16px;border-radius:12px;font-weight:700}
+.cart{border:0;background:#168a4a;color:white;padding:11px 16px;border-radius:12px;font-weight:700}.install{border:1px solid #168a4a;background:#fff;color:#168a4a;padding:10px 13px;border-radius:12px;font-weight:800}
 .hero{background:linear-gradient(135deg,#e8f7ee,#fff8ed);padding:55px 18px}
 .hero-inner{max-width:1180px;margin:auto;display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center}
 .hero h1{font-size:46px;line-height:1.05;margin:0 0 18px}.hero p{font-size:19px;color:#68766f}
@@ -51,7 +51,7 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 </style>
 </head>
 <body>
-<header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></header>
+<header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><div style="display:flex;gap:8px;align-items:center"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div></header>
 <section class="hero"><div class="hero-inner"><div><h1>Товари для дому, саду та інструменти</h1><p>Практичні товари для щоденних справ, ремонту, саду та господарства. Обирайте потрібне — замовляйте просто.</p><a class="cta" href="#products">Переглянути товари</a></div><div class="hero-card">🛠️<br><small style="font-size:18px">Все потрібне — в одному місці</small></div></div></section>
 <main>
 <h2 class="section-title">Категорії</h2>
@@ -70,6 +70,31 @@ main{max-width:1180px;margin:auto;padding:35px 18px}.section-title{font-size:30p
 const SUPABASE_URL="https://rzdqohedzsgcmhcdhlri.supabase.co";
 const SUPABASE_KEY="sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let deferredInstallPrompt=null;
+window.addEventListener("beforeinstallprompt",(event)=>{
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  const btn=document.getElementById("installBtn");
+  if(btn)btn.style.display="block";
+});
+async function installApp(){
+  if(!deferredInstallPrompt){
+    alert("На iPhone встановлення робиться через Safari: натисніть «Поділитися» → «На екран Домівки» → увімкніть «Відкрити як веб‑додаток» → «Додати».");
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  const btn=document.getElementById("installBtn");
+  if(btn)btn.style.display="none";
+}
+window.addEventListener("appinstalled",()=>{
+  const btn=document.getElementById("installBtn");
+  if(btn)btn.style.display="none";
+});
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(err=>console.log("Service worker:",err)));
+}
 let products=[],productImages={},cart=[];
 
 async function loadProducts(){
