@@ -264,6 +264,28 @@
     <button id="loginButton" type="button" onclick="adminLoginFallback(event)">
       Увійти
     </button>
+    <button type="button" onclick="showPasswordReset()">
+  🔑 Забули пароль?
+</button>
+
+<div id="passwordResetBox" style="display:none; margin-top:15px;">
+  <input
+    type="email"
+    id="resetEmail"
+    placeholder="Введіть ваш email"
+    autocomplete="email"
+  >
+
+  <button type="button" onclick="sendPasswordReset()">
+    📧 Надіслати посилання
+  </button>
+
+  <button type="button" onclick="hidePasswordReset()">
+    Скасувати
+  </button>
+
+  <div id="resetStatus" class="status"></div>
+</div>
 
     <div id="loginStatus" class="status">
       Введи дані адміністратора.
