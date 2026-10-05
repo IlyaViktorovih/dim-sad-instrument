@@ -346,6 +346,7 @@
       >
 
       <input type="number" id="productOldPrice" placeholder="Стара ціна (необов'язково), грн" min="0">
+      <input type="number" id="productStock" placeholder="📦 Кількість на складі, шт." min="0" step="1" value="0">
 
       <textarea
         id="productDescription"
@@ -456,6 +457,7 @@
     <input type="text" id="editProductName" placeholder="Назва товару">
     <input type="number" id="editProductPrice" placeholder="Ціна, грн" min="0">
     <input type="number" id="editProductOldPrice" placeholder="Стара ціна (необов'язково), грн" min="0">
+    <input type="number" id="editProductStock" placeholder="📦 Кількість на складі, шт." min="0" step="1">
     <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
 
     <label><b>Головне фото (посилання)</b></label>
@@ -746,6 +748,8 @@
     const is_hit =
       document.getElementById("productHit")
         .value === "true";
+    const stock_quantity = Math.max(0, Math.floor(Number(document.getElementById("productStock").value) || 0));
+    const availableByStock = stock_quantity > 0;
 
 
     if (!name) {
@@ -786,8 +790,9 @@
           description: description,
           image: image,
           category: category,
-          available: available,
+          available: available && availableByStock,
           is_hit: is_hit,
+          stock_quantity: stock_quantity,
           old_price: old_price,
           discount: discount
         }])
@@ -849,6 +854,7 @@
 
       document.getElementById("productHit")
         .value = "false";
+      document.getElementById("productStock").value = "0";
 
 
       loadProducts();
@@ -926,7 +932,7 @@
             "<option value='true' " + (p.is_hit ? "selected" : "") + ">Хіт</option>" +
           "</select></label>" +
         "</div>" +
-        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
+        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • 📦 Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
         "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
         "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
       productsList.appendChild(card);
@@ -956,6 +962,15 @@
       patch.price = price;
     } else if (field === "available" || field === "is_hit") {
       patch[field] = Boolean(value);
+    } else if (field === "stock_quantity") {
+      const stock = Math.floor(Number(value));
+      if (!Number.isFinite(stock) || stock < 0) {
+        alert("❌ Вкажи правильний залишок.");
+        renderAdminProducts();
+        return;
+      }
+      patch.stock_quantity = stock;
+      patch.available = stock > 0;
     }
 
     const result = await db.from("products").update(patch).eq("id", id);
@@ -989,6 +1004,7 @@
     document.getElementById("editProductName").value = product.name || "";
     document.getElementById("editProductPrice").value = product.price || "";
     document.getElementById("editProductOldPrice").value = product.old_price || "";
+    document.getElementById("editProductStock").value = product.stock_quantity ?? 0;
     document.getElementById("editProductDescription").value = product.description || "";
     document.getElementById("editProductImage").value = product.image || "";
     document.getElementById("editProductCategory").value = product.category || "Для дому";
@@ -1026,6 +1042,8 @@
     const id = Number(document.getElementById("editProductId").value);
     const name = document.getElementById("editProductName").value.trim();
     const price = Number(document.getElementById("editProductPrice").value);
+    const stock_quantity = Math.max(0, Math.floor(Number(document.getElementById("editProductStock").value) || 0));
+    const availableByStock = stock_quantity > 0;
     const oldPriceValue = Number(document.getElementById("editProductOldPrice").value);
     const old_price = oldPriceValue > price ? oldPriceValue : null;
     const discount = old_price ? Math.round((1 - price / old_price) * 100) : null;
