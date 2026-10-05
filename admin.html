@@ -198,6 +198,12 @@
     .products-tools{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:12px 0 4px}
     .products-tools input,.products-tools select{margin:0}
     .products-filter-summary{font-size:13px;color:#68766f;margin:8px 0 12px}
+    .new-order-alert{position:sticky;top:10px;z-index:100;background:#fff7e6;border:2px solid #f0a500;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .new-order-alert.hidden{display:none}
+    .new-order-alert b{color:#9a6200}
+    .new-order-alert button{width:auto;margin:0;padding:10px 14px;background:#f0a500}
+    .new-order-alert button:hover{background:#d98f00}
+
     .quick-product-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
     .quick-product-row label{font-size:12px;color:#68766f}
     .quick-product-row input,.quick-product-row select{margin:4px 0 0;padding:9px;font-size:14px}
@@ -253,6 +259,10 @@
 
   <!-- АДМІНКА -->
   <div id="adminPanel" class="hidden">
+    <div id="newOrderAlert" class="new-order-alert hidden">
+      <div>🔔 <b id="newOrderAlertText">Нове замовлення!</b></div>
+      <button id="newOrderAlertButton">Переглянути</button>
+    </div>
 
     <div class="box">
       <h2>👤 Адміністратор</h2>
@@ -597,6 +607,9 @@
     loadSalesChart();
     loadCustomers();
     loadTopProducts();
+    requestOrderNotifications();
+    setTimeout(() => checkForNewOrders(), 1000);
+    startOrderWatcher();
 
   }
 
@@ -1174,6 +1187,83 @@
 
   let allOrders = [];
   let allOrderItems = [];
+  let lastKnownOrderIds = new Set();
+  let orderWatcherStarted = false;
+
+  function playNewOrderSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.36);
+    } catch (e) {
+      console.log("Звук сповіщення недоступний:", e);
+    }
+  }
+
+  function showNewOrderAlert(count) {
+    const alertBox = document.getElementById("newOrderAlert");
+    const textBox = document.getElementById("newOrderAlertText");
+    textBox.textContent = count === 1 ? "Нове замовлення!" : "Нових замовлень: " + count;
+    alertBox.classList.remove("hidden");
+    playNewOrderSound();
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Дім Сад Інструмент", {
+        body: count === 1 ? "Надійшло нове замовлення." : "Надійшло " + count + " нових замовлень."
+      });
+    }
+  }
+
+  async function requestOrderNotifications() {
+    if ("Notification" in window && Notification.permission === "default") {
+      try { await Notification.requestPermission(); } catch(e) {}
+    }
+  }
+
+  async function checkForNewOrders() {
+    try {
+      const result = await db.from("orders").select("id,status,created_at").order("created_at",{ascending:false}).limit(50);
+      if (result.error) return;
+      const orders = result.data || [];
+      const currentIds = new Set(orders.map(o => String(o.id)));
+
+      if (!lastKnownOrderIds.size) {
+        lastKnownOrderIds = currentIds;
+        return;
+      }
+
+      const newOrders = orders.filter(o => !lastKnownOrderIds.has(String(o.id)) && o.status === "new");
+      if (newOrders.length) {
+        showNewOrderAlert(newOrders.length);
+        await loadOrders();
+        loadStats();
+        loadSalesChart();
+      }
+
+      lastKnownOrderIds = currentIds;
+    } catch(error) {
+      console.error("Помилка перевірки нових замовлень:", error);
+    }
+  }
+
+  function startOrderWatcher() {
+    if (orderWatcherStarted) return;
+    orderWatcherStarted = true;
+    setInterval(checkForNewOrders, 30000);
+  }
+
 
   async function loadOrders() {
     ordersList.innerHTML = "⏳ Завантаження...";
@@ -1560,6 +1650,12 @@
     "click",
     loadOrders
   );
+
+  document.getElementById("newOrderAlertButton").addEventListener("click", function() {
+    document.getElementById("newOrderAlert").classList.add("hidden");
+    document.getElementById("ordersList").scrollIntoView({behavior:"smooth",block:"start"});
+    loadOrders();
+  });
 
   document.getElementById("refreshReviewsButton").addEventListener(
     "click",
