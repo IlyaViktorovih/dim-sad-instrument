@@ -403,10 +403,11 @@ async function searchNovaPoshtaCities(value){
   novaPoshtaCityTimer=setTimeout(async()=>{
     box.innerHTML='<div class="np-loading">🔎 Шукаємо населений пункт…</div>';
     try{
-      const items=await novaPoshtaRequest("searchSettlements",{
+      const result=await novaPoshtaRequest("searchSettlements",{
         CityName:q,
         Limit:20
-      },"AddressGeneral");
+      },"Address");
+      const items=(result||[]).flatMap(x=>Array.isArray(x.Addresses)?x.Addresses:[x]);
 
       renderNovaPoshtaSuggestions("city",items);
     }catch(error){
