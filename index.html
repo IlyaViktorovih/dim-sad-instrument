@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta name="description" content="Дім Сад Інструмент — товари для дому, саду та інструменти. Практичні товари за доступними цінами.">
+<meta name="description" content="Дім Сад Інструмент — товари для дому, саду та інструменти.">
 
 <title>Дім Сад Інструмент — товари для дому, саду та інструменти</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 * {
@@ -17,7 +19,7 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   color: #17352a;
-  background: #ffffff;
+  background: #fff;
 }
 
 header {
@@ -161,11 +163,21 @@ main {
 }
 
 .pic {
-  height: 150px;
+  height: 210px;
   background: #eef7f1;
   display: grid;
   place-items: center;
-  font-size: 58px;
+  overflow: hidden;
+}
+
+.pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  font-size: 60px;
 }
 
 .info {
@@ -193,6 +205,10 @@ main {
   font-weight: 800;
 }
 
+.buy:active {
+  transform: scale(.98);
+}
+
 .about {
   margin-top: 45px;
   background: #f4f8f5;
@@ -205,10 +221,6 @@ main {
   padding: 28px;
   border-radius: 22px;
   background: #15352a;
-  color: white;
-}
-
-.contact a {
   color: white;
 }
 
@@ -226,31 +238,34 @@ main {
   inset: 0;
   background: #0008;
   z-index: 20;
-  padding: 20px;
+  padding: 15px;
+  overflow-y: auto;
 }
 
 .box {
-  max-width: 520px;
-  margin: 8vh auto;
+  max-width: 550px;
+  margin: 5vh auto;
   background: white;
   border-radius: 20px;
   padding: 24px;
-}
-
-.box input,
-.box textarea {
-  width: 100%;
-  padding: 13px;
-  margin: 7px 0 12px;
-  border: 1px solid #dbe5df;
-  border-radius: 10px;
 }
 
 .close {
   float: right;
   border: 0;
   background: none;
-  font-size: 25px;
+  font-size: 28px;
+}
+
+.box input,
+.box textarea,
+.box select {
+  width: 100%;
+  padding: 13px;
+  margin: 7px 0 12px;
+  border: 1px solid #dbe5df;
+  border-radius: 10px;
+  font-size: 16px;
 }
 
 .submit {
@@ -261,6 +276,42 @@ main {
   background: #ff8a00;
   color: white;
   font-weight: 800;
+  font-size: 16px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty button {
+  border: 0;
+  background: #e8f7ee;
+  border-radius: 7px;
+  width: 30px;
+  height: 30px;
+  font-weight: bold;
+}
+
+.delivery-box {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #68766f;
 }
 
 @media(max-width:800px) {
@@ -290,12 +341,19 @@ main {
   }
 
   .pic {
-    height: 120px;
-    font-size: 45px;
+    height: 140px;
   }
 
   .logo {
     font-size: 17px;
+  }
+
+  .hero {
+    padding: 35px 18px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
   }
 
 }
@@ -385,7 +443,7 @@ main {
 </div>
 
 <h2 class="section-title" id="products">
-Популярні товари
+Наші товари
 </h2>
 
 <div class="toolbar">
@@ -399,7 +457,13 @@ oninput="render()"
 
 </div>
 
-<div class="products" id="grid"></div>
+<div class="products" id="grid">
+
+<div class="loading">
+Завантаження товарів...
+</div>
+
+</div>
 
 <div class="about">
 
@@ -426,10 +490,6 @@ oninput="render()"
 характеристики та умови доставки.
 </p>
 
-<p>
-📞 +38 (000) 000-00-00
-</p>
-
 </div>
 
 </main>
@@ -440,6 +500,9 @@ oninput="render()"
 Товари для дому, саду та інструменти
 
 </div>
+
+
+<!-- КОШИК -->
 
 <div class="modal" id="modal">
 
@@ -453,6 +516,10 @@ oninput="render()"
 
 <div id="order"></div>
 
+<div id="checkout">
+
+<h3>Дані для доставки</h3>
+
 <input
 id="name"
 placeholder="Ваше ім'я"
@@ -461,11 +528,30 @@ placeholder="Ваше ім'я"
 <input
 id="phone"
 placeholder="Номер телефону"
+type="tel"
 >
+
+<select id="delivery" onchange="changeDelivery()">
+
+<option value="">
+Оберіть спосіб доставки
+</option>
+
+<option value="Нова пошта">
+🚚 Нова пошта
+</option>
+
+<option value="Укрпошта">
+📮 Укрпошта
+</option>
+
+</select>
+
+<div id="deliveryFields"></div>
 
 <textarea
 id="comment"
-placeholder="Коментар"
+placeholder="Коментар до замовлення"
 ></textarea>
 
 <button
@@ -479,69 +565,58 @@ onclick="sendOrder()"
 
 </div>
 
+</div>
+
+
 <script>
 
-const products = [
+const SUPABASE_URL =
+"https://rzdqohedzsgcmhcdhlri.supabase.co";
 
-{
-name:"Електросекатор Domotec 8500",
-price:1499,
-icon:"✂️",
-cat:"Сад"
-},
+const SUPABASE_KEY =
+"sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
 
-{
-name:"Акумуляторна повітродувка",
-price:1299,
-icon:"🍃",
-cat:"Сад"
-},
+const supabaseClient =
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
-{
-name:"Кавоварка",
-price:899,
-icon:"☕",
-cat:"Дім"
-},
 
-{
-name:"Автомобільний пилосос",
-price:699,
-icon:"🚗",
-cat:"Дім"
-},
+let products = [];
+let cart = [];
 
-{
-name:"Набір інструментів",
-price:1199,
-icon:"🧰",
-cat:"Інструменти"
-},
 
-{
-name:"Садові ножиці",
-price:349,
-icon:"🌿",
-cat:"Сад"
-},
+/* ЗАВАНТАЖЕННЯ ТОВАРІВ */
 
-{
-name:"Акумуляторний шуруповерт",
-price:1399,
-icon:"🔩",
-cat:"Інструменти"
-},
+async function loadProducts() {
 
-{
-name:"Корисний товар для дому",
-price:499,
-icon:"🏠",
-cat:"Дім"
+const { data, error } =
+await supabaseClient
+.from("products")
+.select("*")
+.eq("available", true)
+.order("id", { ascending:false });
+
+if(error) {
+
+console.error(error);
+
+document.getElementById("grid").innerHTML =
+"<p>Не вдалося завантажити товари.</p>";
+
+return;
+
 }
 
-];
+products = data || [];
 
-let cart = [];
+render();
+
+}
+
+
+/* ПОКАЗ ТОВАРІВ */
 
 function render(){
 
@@ -551,40 +626,59 @@ document.getElementById("search")
 .toLowerCase();
 
 let list =
-products.filter(
-p =>
-(p.name+" "+p.cat)
+products.filter(p =>
+((p.name || "") + " " + (p.category || ""))
 .toLowerCase()
 .includes(q)
 );
 
+if(!list.length){
+
 document.getElementById("grid").innerHTML =
-list.map(
-p => `
+"<p>Товарів не знайдено.</p>";
+
+return;
+
+}
+
+document.getElementById("grid").innerHTML =
+list.map(p => {
+
+let image = p.image || "";
+
+return `
 
 <article class="product">
 
 <div class="pic">
-${p.icon}
+
+${
+image
+?
+`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}">`
+:
+`<div class="no-image">📦</div>`
+}
+
 </div>
 
 <div class="info">
 
 <h3>
-${p.name}
+${escapeHTML(p.name)}
 </h3>
 
 <small>
-${p.cat}
+${escapeHTML(p.category || "Товар")}
 </small>
 
 <div class="price">
-${p.price.toLocaleString("uk-UA")} грн
+${Number(p.price).toLocaleString("uk-UA")} грн
 </div>
 
 <button
 class="buy"
-onclick="add(${products.indexOf(p)})"
+onclick="addToCart(${p.id})"
 >
 Додати в кошик
 </button>
@@ -593,42 +687,72 @@ onclick="add(${products.indexOf(p)})"
 
 </article>
 
-`
-).join("");
+`;
+
+}).join("");
 
 }
 
-function add(i){
 
-cart.push(products[i]);
+/* ДОДАТИ В КОШИК */
+
+function addToCart(id){
+
+let product =
+products.find(p => p.id === id);
+
+if(!product) return;
+
+let item =
+cart.find(x => x.product.id === id);
+
+if(item){
+
+item.quantity++;
+
+} else {
+
+cart.push({
+product: product,
+quantity: 1
+});
+
+}
+
+updateCount();
+
+alert("Товар додано до кошика 🛒");
+
+}
+
+
+/* КІЛЬКІСТЬ */
+
+function updateCount(){
+
+let count =
+cart.reduce(
+(sum,item) => sum + item.quantity,
+0
+);
 
 document.getElementById("count")
-.textContent = cart.length;
+.textContent = count;
 
 }
+
+
+/* КОШИК */
 
 function openCart(){
 
 document.getElementById("modal")
 .style.display = "block";
 
-document.getElementById("order")
-.innerHTML = cart.length
-
-? cart.map(
-p =>
-"• "+p.name+" — "+p.price+" грн"
-).join("<br>")
-+
-"<hr><b>Разом: "+
-cart.reduce(
-(s,p)=>s+p.price,0
-)
-+" грн</b>"
-
-: "Кошик порожній.";
+renderCart();
 
 }
+
 
 function closeCart(){
 
@@ -637,41 +761,379 @@ document.getElementById("modal")
 
 }
 
-function sendOrder(){
+
+function renderCart(){
+
+let order =
+document.getElementById("order");
 
 if(!cart.length){
 
+order.innerHTML =
+"<p>🛒 Кошик порожній.</p>";
+
+return;
+
+}
+
+let total =
+cart.reduce(
+(sum,item) =>
+sum + Number(item.product.price) * item.quantity,
+0
+);
+
+order.innerHTML =
+
+cart.map((item,index) => `
+
+<div class="cart-item">
+
+<div>
+
+<b>
+${escapeHTML(item.product.name)}
+</b>
+
+<br>
+
+${Number(item.product.price).toLocaleString("uk-UA")} грн
+
+</div>
+
+<div class="qty">
+
+<button onclick="changeQty(${index},-1)">
+−
+</button>
+
+<b>
+${item.quantity}
+</b>
+
+<button onclick="changeQty(${index},1)">
++
+</button>
+
+</div>
+
+</div>
+
+`).join("")
+
++
+
+`<hr>
+
+<h3>
+Разом: ${total.toLocaleString("uk-UA")} грн
+</h3>`;
+
+}
+
+
+function changeQty(index,change){
+
+cart[index].quantity += change;
+
+if(cart[index].quantity <= 0){
+
+cart.splice(index,1);
+
+}
+
+updateCount();
+
+renderCart();
+
+}
+
+
+/* ДОСТАВКА */
+
+function changeDelivery(){
+
+let method =
+document.getElementById("delivery").value;
+
+let fields =
+document.getElementById("deliveryFields");
+
+if(method === "Нова пошта"){
+
+fields.innerHTML = `
+
+<div class="delivery-box">
+
+<label>
+Місто / населений пункт
+</label>
+
+<input
+id="city"
+placeholder="Наприклад: Нововолинськ"
+>
+
+<label>
+Відділення Нової пошти
+</label>
+
+<input
+id="branch"
+placeholder="Наприклад: Відділення №1"
+>
+
+</div>
+
+`;
+
+}
+
+else if(method === "Укрпошта"){
+
+fields.innerHTML = `
+
+<div class="delivery-box">
+
+<label>
+Місто / населений пункт
+</label>
+
+<input
+id="city"
+placeholder="Наприклад: Нововолинськ"
+>
+
+<label>
+Поштовий індекс
+</label>
+
+<input
+id="postal"
+placeholder="Наприклад: 45400"
+>
+
+<label>
+Відділення Укрпошти
+</label>
+
+<input
+id="branch"
+placeholder="Наприклад: Відділення №1"
+>
+
+</div>
+
+`;
+
+}
+
+else {
+
+fields.innerHTML = "";
+
+}
+
+}
+
+
+/* ВІДПРАВКА ЗАМОВЛЕННЯ */
+
+async function sendOrder(){
+
+if(!cart.length){
+
+alert("Кошик порожній.");
+
+return;
+
+}
+
+let name =
+document.getElementById("name").value.trim();
+
+let phone =
+document.getElementById("phone").value.trim();
+
+let delivery =
+document.getElementById("delivery").value;
+
+let city =
+document.getElementById("city")?.value.trim() || "";
+
+let branch =
+document.getElementById("branch")?.value.trim() || "";
+
+let postal =
+document.getElementById("postal")?.value.trim() || "";
+
+let comment =
+document.getElementById("comment").value.trim();
+
+
+if(!name || !phone){
+
+alert("Вкажіть ім'я та номер телефону.");
+
+return;
+
+}
+
+if(!delivery){
+
+alert("Оберіть спосіб доставки.");
+
+return;
+
+}
+
+if(!city || !branch){
+
+alert("Вкажіть місто та відділення.");
+
+return;
+
+}
+
+if(
+delivery === "Укрпошта"
+&& !postal
+){
+
+alert("Вкажіть поштовий індекс.");
+
+return;
+
+}
+
+
+let total =
+cart.reduce(
+(sum,item) =>
+sum + Number(item.product.price) * item.quantity,
+0
+);
+
+
+/* СТВОРЮЄМО ЗАМОВЛЕННЯ */
+
+const { data: order, error } =
+await supabaseClient
+.from("orders")
+.insert({
+
+customer_name: name,
+
+phone: phone,
+
+delivery_method: delivery,
+
+city: city,
+
+branch: branch,
+
+postal_code: postal,
+
+comment: comment,
+
+total: total,
+
+status: "new"
+
+})
+.select()
+.single();
+
+
+if(error){
+
+console.error(error);
+
 alert(
-"Спочатку додайте товар у кошик."
+"Не вдалося оформити замовлення. Спробуйте ще раз."
 );
 
 return;
 
 }
 
-let n =
-document.getElementById("name").value;
 
-let p =
-document.getElementById("phone").value;
+/* ДОДАЄМО ТОВАРИ */
 
-if(!n || !p){
+const items =
+cart.map(item => ({
+
+order_id: order.id,
+
+product_id: item.product.id,
+
+product_name: item.product.name,
+
+price: Number(item.product.price),
+
+quantity: item.quantity
+
+}));
+
+
+const { error: itemsError } =
+await supabaseClient
+.from("order_items")
+.insert(items);
+
+
+if(itemsError){
+
+console.error(itemsError);
 
 alert(
-"Вкажіть імʼя та номер телефону."
+"Замовлення створене, але виникла помилка з товарами."
 );
 
 return;
 
 }
 
+
+/* УСПІШНО */
+
 alert(
-"Дякуємо! Ваше замовлення прийнято."
+"✅ Дякуємо!\n\nВаше замовлення прийнято.\nМи зв'яжемося з вами найближчим часом."
 );
+
+cart = [];
+
+updateCount();
+
+closeCart();
+
+document.getElementById("name").value = "";
+document.getElementById("phone").value = "";
+document.getElementById("comment").value = "";
+document.getElementById("delivery").value = "";
+
+document.getElementById("deliveryFields").innerHTML = "";
 
 }
 
-render();
+
+/* ЗАХИСТ HTML */
+
+function escapeHTML(value){
+
+return String(value ?? "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+/* СТАРТ */
+
+loadProducts();
 
 </script>
 
