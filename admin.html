@@ -1306,9 +1306,11 @@
       const newOrders = orders.filter(o => !lastKnownOrderIds.has(String(o.id)) && o.status === "new");
       if (newOrders.length) {
         showNewOrderAlert(newOrders.length);
+        await loadProducts();
         await loadOrders();
         loadStats();
         loadSalesChart();
+        loadTopProducts();
       }
 
       lastKnownOrderIds = currentIds;
@@ -1351,13 +1353,29 @@
       const orderItems = items.filter(x => x.order_id === order.id);
       const div = document.createElement("div");
       div.className = "product";
-      const stockKnown = product.stock_quantity !== null && product.stock_quantity !== undefined;
-      const stockValue = stockKnown ? Math.max(0, Number(product.stock_quantity) || 0) : null;
-      const stockWarning = stockKnown && stockValue === 0
-        ? '<div class="stock-out">🔴 Товар закінчився — залишок 0 шт.</div>'
-        : stockKnown && stockValue <= 3
-          ? '<div class="stock-warning">⚠️ Закінчується — залишилось ' + stockValue + ' шт.</div>'
-          : '';
+      const stockMap = {};
+      allProductsAdmin.forEach(p => {
+        stockMap[String(p.id)] = p;
+      });
+
+      const lowStockItems = orderItems.map(item => {
+        const product = stockMap[String(item.product_id)];
+        if (!product || product.stock_quantity === null || product.stock_quantity === undefined) return null;
+        const stock = Math.max(0, Number(product.stock_quantity) || 0);
+        if (stock === 0) return {name: product.name, stock: 0};
+        if (stock <= 3) return {name: product.name, stock: stock};
+        return null;
+      }).filter(Boolean);
+
+      const stockWarning = lowStockItems.length
+        ? '<div class="stock-alert-box">' +
+          lowStockItems.map(item => item.stock === 0
+            ? '<div class="stock-out">🔴 <b>' + escapeHTML(item.name) + '</b> — товар закінчився (0 шт.)</div>'
+            : '<div class="stock-warning">⚠️ <b>' + escapeHTML(item.name) + '</b> — залишилось ' + item.stock + ' шт.</div>'
+          ).join('') +
+          '</div>'
+        : '';
+
       const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
       const itemText = orderItems.map(x => escapeHTML(x.product_name) + " × " + x.quantity + " — " + Number(x.price).toLocaleString("uk-UA") + " грн").join("<br>") || "—";
       div.innerHTML = stockWarning +
