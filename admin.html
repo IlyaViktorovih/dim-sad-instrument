@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-gallery</title>
+  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-desc-v2</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1148,19 +1148,29 @@
   }
 
   async function ensureRichDescriptions() {
-    const candidates = (allProductsAdmin || []).filter(p => !String(p.description || "").includes("🧹 Опис оновлено"));
+    const candidates = (allProductsAdmin || []).filter(p => !String(p.description || "").includes("🧹 Опис v2"));
     if (!candidates.length) return;
     const status = document.getElementById("dropsImportStatus");
     if (status) status.textContent = "✨ Оновлюю описи товарів українською...";
+    let updatedCount = 0;
+    let errorCount = 0;
     for (let i = 0; i < candidates.length; i += 8) {
-      await Promise.all(candidates.slice(i, i + 8).map(async p => {
-        const description = dropsDescription(p.name, p.category, "");
+      const results = await Promise.all(candidates.slice(i, i + 8).map(async p => {
+        const description = dropsDescription(p.name, p.category, "") + "\n\n🧹 Опис v2";
         const result = await withTimeout(db.from("products").update({description}).eq("id", p.id), "Оновлення опису товару", 15000);
-        if (result.error) console.warn("Не вдалося оновити опис товару", p.id, result.error);
-        else p.description = description;
+        if (result.error) {
+          console.warn("Не вдалося оновити опис товару", p.id, result.error);
+          return { ok: false, id: p.id, error: result.error };
+        }
+        p.description = description;
+        return { ok: true, id: p.id };
       }));
+      updatedCount += results.filter(r => r?.ok).length;
+      errorCount += results.filter(r => r && !r.ok).length;
     }
-    if (status) status.textContent = "✅ Описи товарів оновлено українською.";
+    if (status) status.textContent = errorCount
+      ? "⚠️ Описи: оновлено " + updatedCount + ", помилок " + errorCount + "."
+      : "✅ Описи товарів оновлено українською: " + updatedCount + ".";
   }
 
   async function loadProducts() {
