@@ -1191,7 +1191,7 @@
     if (!missing.length) return {updated:0, unmatched:0};
 
     const xml = await dropsGetXml();
-    const parsed = dropsParse(xml);
+    const parsed = dropsParse(xml).filter(p => !dropsIsExcludedProduct(p.name));
     const byName = new Map(products.map(p => [dropsMatchKey(p.name), p]));
     const byModel = new Map();
     for (const p of products) {
@@ -2321,6 +2321,11 @@
     return ["true","1","yes","y","так","в наличии","в наявності"].includes(s);
   }
 
+  function dropsIsExcludedProduct(name) {
+    const s = String(name || "").toLowerCase();
+    return /(мастурб|вібратор|дилдо|фалоімітатор|анальн|лубрикант|презерватив|секс|інтим|вагін|гідропомп|стимулятор|стимулювальний гель|спрей-міст.*intimate|sex toy|fleshlight|tenga|satisfyer|we-vibe|dorcel|lelo|svakom|nexus|bathmate|fun factory|doc johnson|men powerup|real body|obsessive kisselie|rocks off)/i.test(s);
+  }
+
   function dropsCategory(name, sourceCategory) {
     const s = ((name || "") + " " + (sourceCategory || "")).toLowerCase();
 
@@ -2685,7 +2690,7 @@
     try {
       const xml = await dropsGetXml();
       status.textContent = "⏳ XML завантажено. Аналізую товари...";
-      const parsed = dropsParse(xml).slice(0, limit);
+      const parsed = dropsParse(xml).filter(p => !dropsIsExcludedProduct(p.name)).slice(0, limit);
 
       if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
 
