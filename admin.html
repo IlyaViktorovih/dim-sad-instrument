@@ -2272,7 +2272,7 @@
     ];
 
     for (const [from,to] of phrases) {
-      name = name.replace(new RegExp(from.replace(/[.*+?^$\\{}()|[\\]\\]/g,"\\$&"),"gi"), to);
+      name = name.replace(new RegExp(from, "gi"), to);
     }
 
     const words = {
