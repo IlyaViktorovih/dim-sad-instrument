@@ -2820,14 +2820,23 @@
         if (imageResult.error) throw imageResult.error;
       }
 
-      const costRows = [];
+      // Один товар може зустрічатися у XML кілька разів. Перед upsert
+      // залишаємо лише один запис на product_id, інакше PostgreSQL повертає:
+      // "ON CONFLICT DO UPDATE command cannot affect row a second time".
+      const costByProductId = new Map();
       for (const p of parsed) {
         const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
         const existing = existingUpdates.find(item => item.id && dropsMatchKey(item.sourceName || "") === dropsMatchKey(p.name || ""));
         const productId = insertedRow?.id || existing?.id;
         if (!productId) continue;
-        costRows.push({product_id: productId, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
+        costByProductId.set(String(productId), {
+          product_id: productId,
+          purchase_price: p.cost,
+          sku: p.sku || null,
+          source: "DROPS"
+        });
       }
+      const costRows = Array.from(costByProductId.values());
       if (costRows.length) {
         for (let i = 0; i < costRows.length; i += 500) {
           const batch = costRows.slice(i, i + 500);
