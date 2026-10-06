@@ -2300,11 +2300,22 @@
       );
       if (existingResult.error) throw existingResult.error;
 
-      const existingNames = new Set((existingResult.data || []).map(p => String(p.name || "").trim().toLowerCase()));
+      const existingByName = new Map((existingResult.data || []).map(p => [String(p.name || "").trim().toLowerCase(), p]));
       const rows = [];
+      const existingUpdates = [];
 
       for (const p of parsed) {
-        if (existingNames.has(p.name.toLowerCase())) continue;
+        const key = p.name.toLowerCase();
+        const existing = existingByName.get(key);
+
+        if (existing) {
+          existingUpdates.push({
+            id: existing.id,
+            stock_quantity: p.stock,
+            available: p.stock == null ? existing.available !== false : p.stock > 0
+          });
+          continue;
+        }
 
         const category = dropsCategory(p.name, p.sourceCategory);
         const retail = dropsRetailPrice(p.cost);
@@ -2322,14 +2333,29 @@
         });
       }
 
-      if (!rows.length) throw new Error("Усі вибрані товари вже є у магазині.");
+      if (!rows.length && !existingUpdates.length) throw new Error("У XML не знайдено нових або знайомих товарів для оновлення.");
 
-      status.textContent = "⏳ Додаю " + rows.length + " товарів...";
-      const result = await withTimeout(
-        db.from("products").insert(rows).select("id,name"),
-        "Додавання товарів",
-        30000
-      );
+      status.textContent = "⏳ Оновлюю залишки " + existingUpdates.length + " та додаю " + rows.length + " нових товарів...";
+
+      for (const item of existingUpdates) {
+        const updateResult = await withTimeout(
+          db.from("products").update({
+            stock_quantity: item.stock_quantity,
+            available: item.available
+          }).eq("id", item.id),
+          "Оновлення залишку товару",
+          15000
+        );
+        if (updateResult.error) throw updateResult.error;
+      }
+
+      const result = rows.length
+        ? await withTimeout(
+            db.from("products").insert(rows).select("id,name"),
+            "Додавання товарів",
+            30000
+          )
+        : {data: [], error: null};
       if (result.error) throw result.error;
 
       const inserted = result.data || [];
@@ -2349,7 +2375,7 @@
         if (costResult.error) throw costResult.error;
       }
 
-      status.textContent = "✅ Готово! Додано " + inserted.length + " товарів. Закупівельна ціна DROPS збережена лише в адмінці, клієнт її не бачить.";
+      status.textContent = "✅ Готово! Оновлено залишки: " + existingUpdates.length + " • Додано нових: " + inserted.length + ". Закупівельна ціна DROPS збережена лише в адмінці.";
       await loadProducts();
     } catch (error) {
       console.error("importDropsProducts:", error);
