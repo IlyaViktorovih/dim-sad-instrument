@@ -439,7 +439,7 @@
       <input id="dropsXmlFile" type="file" accept=".xml,text/xml,application/xml">
       <div class="small">Якщо браузер не дозволить завантажити XML за посиланням, просто скачай XML з DROPS і вибери файл тут.</div>
       <input id="dropsImportLimit" type="number" min="1" max="1000" value="1000" placeholder="Кількість товарів">
-      <button id="dropsImportButton" type="button" onclick="importDropsProducts()">🚀 Імпортувати 1000 товарів</button>
+      <button id="dropsImportButton" type="button">🚀 Імпортувати 1000 товарів</button>
       <button type="button" onclick="openDropsSite()">🌐 Відкрити сайт DROPS</button>
       <div class="small">Для замовлення натисни «📦 Для DROPS» у потрібному замовленні — дані клієнта та товарів скопіюються одним повідомленням.</div>
       <div id="dropsImportStatus" class="status">Готово до імпорту.</div>
@@ -2755,11 +2755,23 @@
       const inserted = result.data || [];
       const insertedByName = new Map(inserted.map(row => [String(row.name || "").trim().toLowerCase(), row]));
 
+      // Масовий імпорт: фото нових товарів зберігаємо пакетами, а не 1000 окремими запитами.
+      const imageRows = [];
       for (const p of parsed) {
         const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
-        if (insertedRow && p.images?.length) {
-          await syncDropsProductImages(insertedRow.id, p.images);
-        }
+        if (!insertedRow || !p.images?.length) continue;
+        p.images.forEach((url, index) => {
+          if (url) imageRows.push({product_id: insertedRow.id, image_url: url, sort_order: index});
+        });
+      }
+      for (let i = 0; i < imageRows.length; i += 200) {
+        const batch = imageRows.slice(i, i + 200);
+        const imageResult = await withTimeout(
+          db.from("product_images").insert(batch),
+          "Збереження фото товарів (" + Math.min(i + batch.length, imageRows.length) + "/" + imageRows.length + ")",
+          30000
+        );
+        if (imageResult.error) throw imageResult.error;
       }
 
       const costRows = [];
@@ -2771,12 +2783,15 @@
         costRows.push({product_id: productId, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
       }
       if (costRows.length) {
-        const costResult = await withTimeout(
-          db.from("drops_product_costs").upsert(costRows, {onConflict: "product_id"}),
-          "Збереження закупівельних цін DROPS",
-          15000
-        );
-        if (costResult.error) throw costResult.error;
+        for (let i = 0; i < costRows.length; i += 500) {
+          const batch = costRows.slice(i, i + 500);
+          const costResult = await withTimeout(
+            db.from("drops_product_costs").upsert(batch, {onConflict: "product_id"}),
+            "Збереження закупівельних цін DROPS (" + Math.min(i + batch.length, costRows.length) + "/" + costRows.length + ")",
+            30000
+          );
+          if (costResult.error) throw costResult.error;
+        }
       }
 
       status.textContent = "✅ Готово! Оновлено залишки: " + existingUpdates.length + " • Додано нових: " + inserted.length + ". Закупівельна ціна DROPS збережена лише в адмінці.";
