@@ -2112,10 +2112,10 @@
         .replace(/&#39;/gi, "'")
         .replace(/&lt;/gi, "<")
         .replace(/&gt;/gi, ">");
-      const matches = raw.match(/https?:\\/\\/[^\\s"'<>]+/gi) || [];
+      const matches = raw.match(/https?:\/\/[^\s"'<>]+/gi) || [];
       for (const value of matches) {
         const url = String(value).replace(/[),.;]+$/g, "").trim();
-        if (/^https?:\\/\\//i.test(url)) urls.push(url);
+      if (/^https?:\/\//i.test(url)) urls.push(url);
       }
     };
 
