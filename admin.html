@@ -2298,7 +2298,7 @@
     const products = [];
 
     for (const node of nodes) {
-      const name = dropsText(node, ["name","title","product_name"]);
+      const name = dropsUkrainianName(dropsText(node, ["name","title","product_name"]));
       const categorySource = dropsText(node, ["category","categoryName","category_name","group"]);
       const description = dropsText(node, ["description","description_ua","description_uk"]);
       const images = dropsImages(node);
