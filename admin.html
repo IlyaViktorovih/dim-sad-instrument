@@ -1147,6 +1147,22 @@
       low.map(p => "<div class='stock-alert'><b>⚠️ " + escapeHTML(p.name) + "</b>Залишилось: " + Number(p.stock_quantity) + " шт.</div>").join("");
   }
 
+  async function ensureRichDescriptions() {
+    const candidates = (allProductsAdmin || []).filter(p => !String(p.description || "").includes("🔥 **Чому варто обрати:**"));
+    if (!candidates.length) return;
+    const status = document.getElementById("dropsImportStatus");
+    if (status) status.textContent = "✨ Оновлюю описи товарів українською...";
+    for (let i = 0; i < candidates.length; i += 8) {
+      await Promise.all(candidates.slice(i, i + 8).map(async p => {
+        const description = dropsDescription(p.name, p.category, p.description);
+        const result = await withTimeout(db.from("products").update({description}).eq("id", p.id), "Оновлення опису товару", 15000);
+        if (result.error) console.warn("Не вдалося оновити опис товару", p.id, result.error);
+        else p.description = description;
+      }));
+    }
+    if (status) status.textContent = "✅ Описи товарів оновлено українською.";
+  }
+
   async function loadProducts() {
     productsList.innerHTML = "⏳ Завантаження товарів...";
     try {
@@ -1178,6 +1194,8 @@
         );
         if (!refreshed.error) allProductsAdmin = refreshed.data || allProductsAdmin;
       }
+      await ensureRichDescriptions();
+
       dropsCostByProductId = {};
       try {
         const costResult = await withTimeout(
