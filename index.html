@@ -227,35 +227,52 @@ let products=[],productImages={},cart=[],selectedCategory="",discountOnly=false;
 let favorites=JSON.parse(localStorage.getItem("dimSadFavorites")||"[]").map(Number);
 
 async function loadProducts(){
-const {data,error}=await supabaseClient.from("products").select("*").order("id",{ascending:false});
-if(error){
-  console.error("Помилка завантаження товарів:",error);
-  document.getElementById("grid").innerHTML="<p>Не вдалося завантажити товари.</p>";
-  return;
-}
-products=(data||[]).filter(p=>p.available!==false);
-productImages={};
+  const grid=document.getElementById("grid");
+  const hitsGrid=document.getElementById("hitsGrid");
+  if(grid)grid.innerHTML='<div class="loading">Завантажуємо товари…</div>';
+  if(hitsGrid)hitsGrid.innerHTML='';
 
-for(const p of products){
+  const {data,error}=await supabaseClient
+    .from("products")
+    .select("*")
+    .eq("available",true)
+    .order("id",{ascending:false});
+
+  if(error){
+    console.error("Помилка завантаження товарів:",error);
+    if(grid)grid.innerHTML="<p>Не вдалося завантажити товари. Спробуйте оновити сторінку.</p>";
+    if(hitsGrid)hitsGrid.innerHTML="";
+    return;
+  }
+
+  products=data||[];
+  productImages={};
+
+  if(!products.length){
+    if(grid)grid.innerHTML="<p>Поки що немає товарів у наявності.</p>";
+    if(hitsGrid)hitsGrid.innerHTML="";
+    return;
+  }
+
+  const productIds=products.map(p=>p.id);
   const {data:images,error:imageError}=await supabaseClient
     .from("product_images")
     .select("product_id,image_url,sort_order")
-    .eq("product_id",p.id)
+    .in("product_id",productIds)
     .order("sort_order",{ascending:true});
 
   if(imageError){
-    console.error("Помилка фото товару",p.id,imageError);
-    continue;
+    console.error("Помилка завантаження фото каталогу:",imageError);
+  }else{
+    for(const x of (images||[])){
+      if(!x.image_url)continue;
+      const key=String(x.product_id);
+      if(!productImages[key])productImages[key]=[];
+      productImages[key].push(x.image_url);
+    }
   }
 
-  if(images&&images.length){
-    productImages[p.id]=images
-      .filter(x=>x.image_url)
-      .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0))
-      .map(x=>x.image_url);
-  }
-}
-render();
+  render();
 }
 
 function setCategory(category,element){
