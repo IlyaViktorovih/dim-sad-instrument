@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-ua-v3</title>
+  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-ua-v4</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -2451,17 +2451,16 @@
     if (doc.querySelector("parsererror")) throw new Error("XML пошкоджений або має неправильний формат.");
 
     let nodes = Array.from(doc.querySelectorAll("offer, item"));
-    if (!nodes.length) {
-      nodes = Array.from(doc.getElementsByTagNameNS("*", "offer"));
-    }
-    if (!nodes.length) {
-      nodes = Array.from(doc.getElementsByTagNameNS("*", "item"));
-    }
+    if (!nodes.length) nodes = Array.from(doc.getElementsByTagNameNS("*", "offer"));
+    if (!nodes.length) nodes = Array.from(doc.getElementsByTagNameNS("*", "item"));
     if (!nodes.length) {
       throw new Error("У XML не знайдено товарів. Очікувався YML/XML з тегами <offer> або <item>.");
     }
 
     const products = [];
+    let rejectedNoName = 0;
+    let rejectedNoPrice = 0;
+    let rejectedUnavailable = 0;
 
     for (const node of nodes) {
       const name = dropsUkrainianName(dropsText(node, ["name","title","product_name"]));
@@ -2470,18 +2469,54 @@
       const images = dropsImages(node);
       const image = images[0] || dropsText(node, ["picture","image","image_url"]);
       const price = dropsNumber(dropsText(node, ["price","purchase_price","cost","price_purchase","price_retail"]));
-      const stockText = dropsText(node, ["quantity_in_stock","stock_quantity","stock","quantity","qty","count","available_quantity","остаток","залишок"]);
-      const stockAttr = node.getAttribute("quantity_in_stock") || node.getAttribute("stock_quantity") || node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
-      const stock = Math.max(0, Math.floor(dropsNumber(stockText || stockAttr)));
+
+      const stockText = dropsText(node, [
+        "quantity_in_stock","stock_quantity","stock","quantity","qty","count",
+        "available_quantity","остаток","залишок"
+      ]);
+      const stockAttr = node.getAttribute("quantity_in_stock") ||
+        node.getAttribute("stock_quantity") ||
+        node.getAttribute("stock") ||
+        node.getAttribute("quantity") ||
+        node.getAttribute("qty") || "";
+
+      const hasStockSignal = !!(stockText || stockAttr);
+      const stock = hasStockSignal
+        ? Math.max(0, Math.floor(dropsNumber(stockText || stockAttr)))
+        : null;
+
       const availableAttr = node.getAttribute("available");
       const availableText = dropsText(node, ["available","availability","in_stock","stock_status"]);
-      const hasStockSignal = !!(stockText || stockAttr);
-      const available = availableAttr !== null ? dropsBool(availableAttr) : (availableText ? dropsBool(availableText) : stock > 0);
-      const sku = node.getAttribute("id") || node.getAttribute("sku") || dropsText(node, ["sku","vendorCode","vendor_code","article","Артикул"]);
+      const hasAvailabilitySignal = availableAttr !== null || !!availableText;
 
-      if (!name || price <= 0) continue;
-      if (!available) continue;
-      if (hasStockSignal && stock <= 0) continue;
+      // Важливо: якщо DROPS не передає поле залишку/наявності, товар
+      // не можна автоматично вважати відсутнім. Саме це раніше обрізало
+      // каталог з тисяч товарів до кількох десятків.
+      let available = true;
+      if (availableAttr !== null) {
+        available = dropsBool(availableAttr);
+      } else if (availableText) {
+        available = dropsBool(availableText);
+      } else if (hasStockSignal) {
+        available = stock > 0;
+      }
+
+      const sku = node.getAttribute("id") ||
+        node.getAttribute("sku") ||
+        dropsText(node, ["sku","vendorCode","vendor_code","article","Артикул"]);
+
+      if (!name) {
+        rejectedNoName++;
+        continue;
+      }
+      if (price <= 0) {
+        rejectedNoPrice++;
+        continue;
+      }
+      if (!available) {
+        rejectedUnavailable++;
+        continue;
+      }
 
       products.push({
         name,
@@ -2490,10 +2525,22 @@
         image,
         images,
         cost: price,
-        stock: hasStockSignal ? stock : null,
+        stock,
+        supplierAvailable: available,
+        hasStockSignal,
+        hasAvailabilitySignal,
         sku: sku || ""
       });
     }
+
+    dropsParse.lastStats = {
+      total: nodes.length,
+      valid: products.length,
+      rejectedNoName,
+      rejectedNoPrice,
+      rejectedUnavailable
+    };
+
     return products;
   }
 
@@ -2503,7 +2550,7 @@
 
     if (file) return await file.text();
     if (!url) {
-      url = "https://" + "drops.in.ua/xml/u1017_f455_prom_3ec48e9c53.xml";
+      url = "https://" + "drops.in.ua/xml/u1017_f460_prom_7ef278b381.xml";
       const input = document.getElementById("dropsXmlUrl");
       if (input) input.value = url;
     }
@@ -2645,7 +2692,7 @@
       const result = await withTimeout(
         db.from("products").update({
           stock_quantity: p.stock,
-          available: p.stock == null ? existing.available !== false : p.stock > 0
+          available: p.supplierAvailable !== false && (p.stock == null || p.stock > 0)
         }).eq("id", existing.id),
         "Оновлення залишку",
         15000
@@ -2690,9 +2737,26 @@
     try {
       const xml = await dropsGetXml();
       status.textContent = "⏳ XML завантажено. Аналізую товари...";
-      const parsed = dropsParse(xml).filter(p => !dropsIsExcludedProduct(p.name)).slice(0, limit);
+      const parsedAll = dropsParse(xml);
+      const parseStats = dropsParse.lastStats || {};
+      const excludedCount = parsedAll.filter(p => dropsIsExcludedProduct(p.name)).length;
+      const parsed = parsedAll.filter(p => !dropsIsExcludedProduct(p.name)).slice(0, limit);
 
-      if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
+      status.textContent =
+        "⏳ XML містить " + (parseStats.total || 0) +
+        " позицій. Валідних: " + (parseStats.valid || 0) +
+        ". Після фільтра: " + parsedAll.length + " → " + parsed.length +
+        " товарів до імпорту.";
+
+      if (!parsed.length) {
+        throw new Error(
+          "Не знайшов товарів для імпорту. XML: " + (parseStats.total || 0) +
+          ", без назви: " + (parseStats.rejectedNoName || 0) +
+          ", без ціни: " + (parseStats.rejectedNoPrice || 0) +
+          ", недоступних: " + (parseStats.rejectedUnavailable || 0) +
+          ", виключено фільтром: " + excludedCount + "."
+        );
+      }
 
       const existingResult = await withTimeout(
         db.from("products").select("id,name,available"),
@@ -2746,7 +2810,7 @@
             name: existing.name,
             sourceName: p.name,
             stock_quantity: p.stock,
-            available: p.stock == null ? existing.available !== false : p.stock > 0,
+            available: p.supplierAvailable !== false && (p.stock == null || p.stock > 0),
             images: p.images || [],
             cost: p.cost,
             sku: p.sku || ""
@@ -2762,7 +2826,7 @@
           description: dropsDescription(p.name, category, p.description),
           image: p.image || "",
           category,
-          available: p.stock == null ? true : p.stock > 0,
+          available: p.supplierAvailable !== false && (p.stock == null || p.stock > 0),
           is_hit: false,
           stock_quantity: p.stock,
           old_price: null,
