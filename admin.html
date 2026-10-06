@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-ua-v4</title>
+  <title>Адмін-панель — Дім Сад Інструмент • v2026-10-06-ua-v5</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -441,6 +441,8 @@
       <input id="dropsImportLimit" type="number" min="1" max="1000" value="1000" placeholder="Кількість товарів">
       <button id="dropsImportButton" type="button">🚀 Імпортувати 1000 товарів</button>
       <button type="button" onclick="openDropsSite()">🌐 Відкрити сайт DROPS</button>
+      <button id="dropsCleanCatalogButton" type="button" onclick="cleanAndPerfectDropsCatalog()">🧹 Очистити та ідеально відредагувати каталог</button>
+      <div class="small">Кнопка видаляє 18+, прибирає фото-заглушки/посилання зі знаком питання та автоматично приводить кожен товар до української назви, опису й категорії.</div>
       <div class="small">Для замовлення натисни «📦 Для DROPS» у потрібному замовленні — дані клієнта та товарів скопіюються одним повідомленням.</div>
       <div id="dropsImportStatus" class="status">Готово до імпорту.</div>
     </div>
@@ -2720,6 +2722,136 @@
       alert("❌ Не вдалося перевірити залишки DROPS.\n\n" + message);
     } finally {
       if (button) { button.disabled = false; button.textContent = "🔄 Перевірити залишки"; }
+    }
+  }
+
+  function dropsCatalogHas18Plus(name, description, category) {
+    const text = String(name || "") + " " + String(description || "") + " " + String(category || "");
+    return dropsIsExcludedProduct(text) ||
+      /(?:18\+|18\s*років|для\s*дорослих|інтим|секс|ерот|вібратор|мастурб|фалос|пеніс|вагін|аналь|презерватив|лубрикант|стимулятор|dildo|vibrator|masturb|sex toy|adult)/i.test(text);
+  }
+
+  function dropsCleanImageUrl(url) {
+    const value = String(url || "").trim();
+    if (!value) return "";
+    if (/[?]$/.test(value) || /[?](?:w|h|width|height|size|quality|q)=/i.test(value)) return "";
+    if (/\b(?:question|placeholder|no[-_ ]?image|no[-_ ]?photo|default[-_ ]?image)\b/i.test(value)) return "";
+    if (/^(?:data:|blob:)/i.test(value)) return "";
+    return value;
+  }
+
+  function dropsPerfectName(name) {
+    let value = dropsUkrainianName(String(name || ""));
+    value = value.replace(/[|•]+/g, " • ").replace(/\s{2,}/g, " ").trim();
+    if (!value) return "Товар для дому та саду";
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function dropsPerfectCategory(name, sourceCategory) {
+    const text = (String(name || "") + " " + String(sourceCategory || "")).toLowerCase();
+    if (/(авто|автомоб|машин|акумулятор|компресор.*шин|пилосос.*авто|зарядн.*авто|відеореєстратор|fm[- ]?модулятор|органайзер.*багаж)/i.test(text)) return "Товари для авто";
+    if (/(сад|город|газон|рослин|квіт|насін|теплиц|секатор|обприскувач|полив|шланг|лопат|грабл|сап|садов)/i.test(text)) return "Для саду";
+    if (/(дриль|шуруповерт|болгар|перфоратор|паяльник|мультиметр|інструмент|ключі|набір.*інструмент|степлер будів|зварюв)/i.test(text)) return "Інструменти";
+    if (/(одяг|футболк|штани|куртк|светр|взут|кросів|черевик|сумк|рюкзак|капелюх|рукавичк)/i.test(text)) return "Одяг";
+    return "Для дому";
+  }
+
+  function dropsPerfectDescription(name, category, sourceDescription) {
+    const base = String(sourceDescription || "").replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim();
+    const clean = dropsPerfectName(name);
+    const prefix =
+      category === "Для саду" ? "Практичний товар для саду та городу." :
+      category === "Товари для авто" ? "Практичний товар для автомобіля та щоденного використання." :
+      category === "Інструменти" ? "Надійний інструмент для ремонту, монтажу та побутових робіт." :
+      category === "Одяг" ? "Зручний товар для щоденного використання." :
+      "Практичний товар для дому та щоденних потреб.";
+    const details = base && base.length > 40 ? " " + base.slice(0, 1400) : "";
+    return (prefix + " " + clean + "." + details).replace(/\s{2,}/g, " ").trim();
+  }
+
+  async function cleanAndPerfectDropsCatalog() {
+    const status = document.getElementById("dropsImportStatus");
+    const button = document.getElementById("dropsCleanCatalogButton");
+    if (button) { button.disabled = true; button.textContent = "⏳ Очищаю каталог..."; }
+    if (status) status.textContent = "⏳ Перевіряю всі товари та фотографії...";
+
+    try {
+      const result = await withTimeout(
+        db.from("products").select("id,name,price,description,image,category,available,stock_quantity"),
+        "Завантаження каталогу для очищення",
+        30000
+      );
+      if (result.error) throw result.error;
+
+      const products = result.data || [];
+      let removed = 0, edited = 0, imagesRemoved = 0;
+
+      for (const p of products) {
+        if (dropsCatalogHas18Plus(p.name, p.description, p.category)) {
+          const delImages = await withTimeout(db.from("product_images").delete().eq("product_id", p.id), "Видалення фото 18+", 15000);
+          if (delImages.error) throw delImages.error;
+          const delProduct = await withTimeout(db.from("products").delete().eq("id", p.id), "Видалення товару 18+", 15000);
+          if (delProduct.error) throw delProduct.error;
+          removed++;
+          continue;
+        }
+
+        const cleanName = dropsPerfectName(p.name);
+        const cleanCategory = dropsPerfectCategory(cleanName, p.category);
+        const cleanDescription = dropsPerfectDescription(cleanName, cleanCategory, p.description);
+        const cleanMain = dropsCleanImageUrl(p.image);
+
+        const upd = await withTimeout(
+          db.from("products").update({
+            name: cleanName,
+            category: cleanCategory,
+            description: cleanDescription,
+            image: cleanMain || "",
+            price: Math.max(1, Math.round(Number(p.price) || 1))
+          }).eq("id", p.id),
+          "Редагування товару",
+          15000
+        );
+        if (upd.error) throw upd.error;
+        edited++;
+
+        const imgs = await withTimeout(
+          db.from("product_images").select("id,image_url,sort_order").eq("product_id", p.id).order("sort_order", {ascending:true}),
+          "Перевірка фото товару",
+          15000
+        );
+        if (imgs.error) throw imgs.error;
+
+        const bad = (imgs.data || []).filter(x => !dropsCleanImageUrl(x.image_url));
+        const good = (imgs.data || []).filter(x => dropsCleanImageUrl(x.image_url));
+
+        if (bad.length) {
+          const badIds = bad.map(x => x.id);
+          const del = await withTimeout(db.from("product_images").delete().in("id", badIds), "Видалення битих фото", 15000);
+          if (del.error) throw del.error;
+          imagesRemoved += bad.length;
+        }
+
+        if (cleanMain && !good.some(x => x.image_url === cleanMain)) {
+          const ins = await withTimeout(
+            db.from("product_images").insert([{product_id:p.id,image_url:cleanMain,sort_order:0}]),
+            "Додавання головного фото",
+            15000
+          );
+          if (ins.error) throw ins.error;
+        }
+      }
+
+      await loadProducts();
+      if (status) status.textContent = "✅ Каталог очищено та відредаговано: видалено 18+ — " + removed + ", відредаговано — " + edited + ", видалено проблемних фото — " + imagesRemoved + ".";
+      alert("✅ Готово!\n\nВидалено 18+: " + removed + "\nВідредаговано товарів: " + edited + "\nВидалено фото зі знаком питання/заглушок: " + imagesRemoved);
+    } catch (error) {
+      console.error("cleanAndPerfectDropsCatalog:", error);
+      const message = error?.message || String(error);
+      if (status) status.textContent = "❌ " + message;
+      alert("❌ Очищення не виконано.\n\n" + message);
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "🧹 Очистити та ідеально відредагувати каталог"; }
     }
   }
 
