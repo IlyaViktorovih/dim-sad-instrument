@@ -1064,6 +1064,7 @@
      ===================================================== */
 
   let allProductsAdmin = [];
+  let dropsCostByProductId = {};
 
   function renderAdminProducts() {
     const search = document.getElementById("productSearch").value.trim().toLowerCase();
@@ -1103,6 +1104,8 @@
       card.className = "product";
       const price = Number(p.price || 0).toLocaleString("uk-UA");
       const oldPrice = p.old_price ? Number(p.old_price).toLocaleString("uk-UA") : "";
+      const dropsCost = dropsCostByProductId[p.id] ? Number(dropsCostByProductId[p.id].purchase_price || 0) : null;
+      const profit = dropsCost !== null ? Number(p.price || 0) - dropsCost : null;
       const availabilityText = p.available !== false ? "🟢 Є в наявності" : "🔴 Немає в наявності";
       card.innerHTML =
         "<h3>" + escapeHTML(p.name) + "</h3>" +
@@ -1118,6 +1121,7 @@
             "<option value='true' " + (p.is_hit ? "selected" : "") + ">Хіт</option>" +
           "</select></label>" +
         "</div>" +
+        (dropsCost !== null ? "<p>🛒 Закупівля DROPS: <b>" + dropsCost.toLocaleString("uk-UA") + " грн</b> • 💰 Прибуток: <b>" + profit.toLocaleString("uk-UA") + " грн</b></p>" : "") +
         "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • 📦 Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
         "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
         "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
@@ -1153,6 +1157,19 @@
       );
       if (result.error) throw result.error;
       allProductsAdmin = result.data || [];
+      dropsCostByProductId = {};
+      try {
+        const costResult = await withTimeout(
+          db.from("drops_product_costs").select("product_id,purchase_price,sku,source"),
+          "Завантаження закупівельних цін",
+          10000
+        );
+        if (!costResult.error) {
+          for (const row of (costResult.data || [])) dropsCostByProductId[row.product_id] = row;
+        }
+      } catch (costError) {
+        console.warn("Не вдалося завантажити закупівельні ціни DROPS:", costError);
+      }
       renderAdminProducts();
       renderStockAlerts();
     } catch (error) {
@@ -2309,13 +2326,30 @@
 
       status.textContent = "⏳ Додаю " + rows.length + " товарів...";
       const result = await withTimeout(
-        db.from("products").insert(rows),
+        db.from("products").insert(rows).select("id,name"),
         "Додавання товарів",
         30000
       );
       if (result.error) throw result.error;
 
-      status.textContent = "✅ Готово! Додано " + rows.length + " товарів. Ціни DROPS у магазин не записуються — клієнт їх не бачить.";
+      const inserted = result.data || [];
+      const insertedByName = new Map(inserted.map(row => [String(row.name || "").trim().toLowerCase(), row]));
+      const costRows = [];
+      for (const p of parsed) {
+        const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
+        if (!insertedRow) continue;
+        costRows.push({product_id: insertedRow.id, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
+      }
+      if (costRows.length) {
+        const costResult = await withTimeout(
+          db.from("drops_product_costs").upsert(costRows, {onConflict: "product_id"}),
+          "Збереження закупівельних цін DROPS",
+          15000
+        );
+        if (costResult.error) throw costResult.error;
+      }
+
+      status.textContent = "✅ Готово! Додано " + inserted.length + " товарів. Закупівельна ціна DROPS збережена лише в адмінці, клієнт її не бачить.";
       await loadProducts();
     } catch (error) {
       console.error("importDropsProducts:", error);
