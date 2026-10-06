@@ -447,7 +447,7 @@
           <label><input type="checkbox" class="dropsImportCategory" value="Товари для авто"> 🚗 Товари для авто</label>
           <label><input type="checkbox" class="dropsImportCategory" value="Інструменти" checked> 🛠️ Інструменти</label>
         </div>
-        <div class="small" style="margin-top:6px">Імпортуються тільки вибрані категорії. Одяг та інші категорії автоматично пропускаються.</div>
+        <div class="small" style="margin-top:6px">Імпортуються тільки: <b>товари для дому, авто та інструменти</b>. 18+, інтим, одяг, білизна та інші сторонні товари блокуються автоматично.</div>
       </div>
       <button id="dropsImportButton" type="button">🚀 Імпортувати 1000 товарів</button>
       <button type="button" onclick="openDropsSite()">🌐 Відкрити сайт DROPS</button>
@@ -2750,6 +2750,24 @@
     return value;
   }
 
+  // Жорсткий фільтр для імпорту DROPS: інтим, 18+, одяг та інші непотрібні групи не потрапляють у магазин.
+  function dropsForbiddenImportProduct(name, description, sourceCategory) {
+    const text = (String(name || "") + " " + String(description || "") + " " + String(sourceCategory || "")).toLowerCase();
+    return /(?:18\s*\+|18\s*рок|для\s*доросл|інтим|інтимн|секс|ерот|вібратор|вібруюч|мастурб|фалос|пеніс|член|вагін|вагiн|аналь|анальн|презерватив|лубрикант|стимулятор|насадк.{0,20}(?:член|пеніс|фалос)|член.{0,20}насадк|dildo|vibrator|masturb|sex\s*toy|adult\s*toy|blow\s*job|fleshlight|sextoy|эрот|взросл|надувн.{0,20}(?:лял|жінк|чоловік)|лял.{0,20}надувн|секс\s*лял)/i.test(text)
+      || /(?:нижн[яєї]|білизн|трус|бюстгальтер|панчох|колгот|шкарпет|купальник|пеньюар|халат.{0,10}(?:жіноч|чоловіч)|одяг|футболк|штани|куртк|светр|взут|кросів|черевик|сумк|рюкзак|клатч|портфел)/i.test(text);
+  }
+
+  function dropsImportAllowedCategory(name, description, sourceCategory) {
+    if (dropsForbiddenImportProduct(name, description, sourceCategory)) return "";
+    const text = (String(name || "") + " " + String(description || "") + " " + String(sourceCategory || "")).toLowerCase();
+
+    if (/(авто|автомоб|машин|акумулятор.*авто|автомобільн|компресор.*шин|пилосос.*авто|зарядн.*авто|відеореєстратор|fm[- ]?модулятор|органайзер.*багаж|трима[чч].*телефон.*авто|автоаксесуар)/i.test(text)) return "Товари для авто";
+    if (/(дриль|шуруповерт|шурупокрут|болгар|перфоратор|паяльник|мультиметр|інструмент|ключі|набір.*інструмент|степлер.*будів|зварюв|лобзик|фрезер|рівень|рулетк|викрут|пасат|плоскогуб|ножівк|свердл|біт[аи]|насадк.*дриль|насадк.*шуруповерт)/i.test(text)) return "Інструменти";
+    if (/(дім|дом|кухн|посуд|прибиран|ванн|туалет|душ|господар|зберіган|органайзер|контейнер|кошик|сушар|вішал|прасув|прас|освітлен|світильник|ламп|подовжувач|розетк|зарядк|кабель|тримач|полиц|мебл|декор|текстил|подуш|ковдр|плед|постіль|матрац|швабр|губк|щіт|відро|мис|термос|чайник|кавовар|блендер|ваги|терез|засіб.*чист|побутов)/i.test(text)) return "Для дому";
+
+    return "";
+  }
+
   function dropsPerfectName(name) {
     let value = dropsUkrainianName(String(name || ""));
     value = value.replace(/[|•]+/g, " • ").replace(/\s{2,}/g, " ").trim();
@@ -2941,8 +2959,8 @@
 
       const parsedFiltered = parsedAll.filter(p => {
         if (dropsIsExcludedProduct(p.name)) return false;
-        const category = dropsCategory(p.name, p.sourceCategory);
-        return selectedCategories.includes(category);
+        const category = dropsImportAllowedCategory(p.name, p.description, p.sourceCategory);
+        return category && selectedCategories.includes(category);
       });
       const parsed = parsedFiltered.slice(0, limit);
 
