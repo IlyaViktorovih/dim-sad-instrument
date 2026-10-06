@@ -1173,6 +1173,63 @@
     if(status)status.textContent=errorCount?"⚠️ Українська мова: оновлено "+updatedCount+", помилок "+errorCount+".":"✅ Назви та описи українською оновлено: "+updatedCount+".";
   }
 
+  async function repairMissingDropsCosts() {
+    const products = allProductsAdmin || [];
+    if (!products.length) return {updated:0, unmatched:0};
+
+    const costResult = await withTimeout(
+      db.from("drops_product_costs").select("product_id"),
+      "Перевірка закупівельних цін",
+      10000
+    );
+    if (costResult.error) throw costResult.error;
+
+    const known = new Set((costResult.data || []).map(row => Number(row.product_id)));
+    const missing = products.filter(p => !known.has(Number(p.id)));
+    if (!missing.length) return {updated:0, unmatched:0};
+
+    const xml = await dropsGetXml();
+    const parsed = dropsParse(xml);
+    const byName = new Map(products.map(p => [dropsMatchKey(p.name), p]));
+    const byModel = new Map();
+    for (const p of products) {
+      for (const key of dropsModelKeys(p.name)) if (!byModel.has(key)) byModel.set(key, p);
+    }
+
+    const costRows = [];
+    let unmatched = 0;
+    for (const p of parsed) {
+      let existing = byName.get(dropsMatchKey(p.name));
+      if (!existing) {
+        for (const key of dropsModelKeys(p.name)) {
+          if (byModel.has(key)) {
+            existing = byModel.get(key);
+            break;
+          }
+        }
+      }
+      if (!existing || known.has(Number(existing.id))) continue;
+      costRows.push({
+        product_id: existing.id,
+        purchase_price: p.cost,
+        sku: p.sku || null,
+        source: "DROPS"
+      });
+      known.add(Number(existing.id));
+    }
+
+    unmatched = missing.length - costRows.length;
+    if (costRows.length) {
+      const save = await withTimeout(
+        db.from("drops_product_costs").upsert(costRows, {onConflict:"product_id"}),
+        "Відновлення закупівельних цін DROPS",
+        20000
+      );
+      if (save.error) throw save.error;
+    }
+    return {updated:costRows.length, unmatched};
+  }
+
   async function loadProducts() {
     productsList.innerHTML = "⏳ Завантаження товарів...";
     try {
@@ -1216,8 +1273,30 @@
         if (!costResult.error) {
           for (const row of (costResult.data || [])) dropsCostByProductId[row.product_id] = row;
         }
+
+        const missingCosts = allProductsAdmin.filter(p => !dropsCostByProductId[p.id]).length;
+        if (missingCosts) {
+          const repair = await repairMissingDropsCosts();
+          if (repair.updated) {
+            const refreshedCosts = await withTimeout(
+              db.from("drops_product_costs").select("product_id,purchase_price,sku,source"),
+              "Оновлення закупівельних цін",
+              10000
+            );
+            if (!refreshedCosts.error) {
+              dropsCostByProductId = {};
+              for (const row of (refreshedCosts.data || [])) dropsCostByProductId[row.product_id] = row;
+            }
+          }
+          if (repair.updated || repair.unmatched) {
+            const status = document.getElementById("dropsImportStatus");
+            if (status) status.textContent = repair.unmatched
+              ? "⚠️ Закупівельні ціни: відновлено " + repair.updated + ", не знайдено у XML: " + repair.unmatched + "."
+              : "✅ Закупівельні ціни DROPS відновлено: " + repair.updated + ".";
+          }
+        }
       } catch (costError) {
-        console.warn("Не вдалося завантажити закупівельні ціни DROPS:", costError);
+        console.warn("Не вдалося завантажити/відновити закупівельні ціни DROPS:", costError);
       }
       renderAdminProducts();
       renderStockAlerts();
