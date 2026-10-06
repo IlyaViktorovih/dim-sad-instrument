@@ -2275,7 +2275,7 @@
 
   function dropsImages(node) {
     const urls = [];
-    const addUrls = value => {
+    const addUrl = value => {
       if (!value) return;
       const raw = String(value)
         .replace(/&amp;/gi, "&")
@@ -2283,43 +2283,41 @@
         .replace(/&#39;/gi, "'")
         .replace(/&lt;/gi, "<")
         .replace(/&gt;/gi, ">");
-      const matches = raw.match(/https?:\/\/[^\s"'<>]+/gi) || [];
+      const matches = raw.match(/https?:\\/\\/[^\\s"'<>]+/gi) || [];
       for (const value of matches) {
         const url = String(value).replace(/[),.;]+$/g, "").trim();
-      if (/^https?:\/\//i.test(url)) urls.push(url);
+        if (!/^https?:\\/\\//i.test(url)) continue;
+        // Never import description/content images. Prefer only actual product-image fields.
+        if (/\\/img\\/desc\\//i.test(url)) continue;
+        if (/https?:\\/\\/.*https?:\\/\\//i.test(url)) continue;
+        urls.push(url);
       }
     };
 
+    // DROPS/Prom feeds can contain unrelated URLs in descriptions.
+    // Read only explicit product-image fields and attributes.
     const selectors = [
       "picture", "image", "image_url", "imageurl", "photo", "photo_url",
       "additional_image", "additional_image_url", "additionalImage",
       "picture_url", "picture_url_1", "picture_url_2", "picture_url_3",
       "picture_url_4", "picture_url_5", "picture_url_6", "picture_url_7",
       "picture_url_8", "picture_url_9", "picture_url_10",
-      "image_link", "additional_image_link", "gallery", "gallery_image"
+      "image_link", "additional_image_link", "gallery_image"
     ];
 
     for (const selector of selectors) {
       node.querySelectorAll(selector).forEach(el => {
-        addUrls(el.getAttribute("url"));
-        addUrls(el.getAttribute("src"));
-        addUrls(el.getAttribute("href"));
-        addUrls(el.textContent);
+        addUrl(el.getAttribute("url"));
+        addUrl(el.getAttribute("src"));
+        addUrl(el.getAttribute("href"));
+        addUrl(el.textContent);
       });
     }
 
-    node.querySelectorAll("*").forEach(el => {
-      for (const attr of Array.from(el.attributes || [])) {
-        if (/^(src|url|href|image|photo|picture|link|value)/i.test(attr.name)) {
-          addUrls(attr.value);
-        }
-      }
-    });
-
-    addUrls(node.textContent);
+    // Do not scan node.textContent or arbitrary attributes: that was the source
+    // of foreign/description photos being attached to unrelated products.
     return Array.from(new Set(urls));
   }
-
   function dropsNumber(value) {
     if (value === null || value === undefined) return 0;
     const s = String(value).replace(/\s/g, "").replace(",", ".");
