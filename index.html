@@ -274,6 +274,24 @@ async function loadProducts(){
   }
 
   render();
+
+  const productParam = new URLSearchParams(window.location.search).get("product");
+  if(productParam){
+    const seoProduct = products.find(p=>String(p.id)===String(productParam));
+    if(seoProduct){
+      const cleanDescription = String(seoProduct.description||"").replace(/<[^>]*>/g," ").replace(/\\s+/g," ").trim();
+      document.title = (seoProduct.name||"Товар") + " — Дім Сад Інструмент";
+      let meta=document.querySelector('meta[name="description"]');
+      if(meta) meta.setAttribute("content", cleanDescription.slice(0,155) || ((seoProduct.name||"Товар")+" — купити в Дім Сад Інструмент."));
+      let canonical=document.querySelector('link[rel="canonical"]');
+      if(!canonical){canonical=document.createElement("link");canonical.rel="canonical";document.head.appendChild(canonical);}
+      canonical.href=window.location.href.split("#")[0];
+      let ld=document.getElementById("product-schema");
+      if(!ld){ld=document.createElement("script");ld.type="application/ld+json";ld.id="product-schema";document.head.appendChild(ld);}
+      ld.textContent=JSON.stringify({"@context":"https://schema.org","@type":"Product","name":seoProduct.name||"Товар","description":cleanDescription.slice(0,500),"image":(productImages[seoProduct.id]||[]).slice(0,5),"offers":{"@type":"Offer","priceCurrency":"UAH","price":Number(seoProduct.price)||0,"availability":seoProduct.available===false?"https://schema.org/OutOfStock":"https://schema.org/InStock","url":window.location.href.split("#")[0]}});
+      setTimeout(()=>openProduct(seoProduct.id,0),0);
+    }
+  }
 }
 
 function setCategory(category,element){
