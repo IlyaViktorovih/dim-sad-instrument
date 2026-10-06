@@ -2225,10 +2225,14 @@
 
   async function dropsGetXml() {
     const file = document.getElementById("dropsXmlFile")?.files?.[0];
-    const url = document.getElementById("dropsXmlUrl")?.value?.trim();
+    let url = document.getElementById("dropsXmlUrl")?.value?.trim();
 
     if (file) return await file.text();
-    if (!url) throw new Error("Встав посилання на XML DROPS або вибери XML-файл.");
+    if (!url) {
+      url = "https://" + "drops.in.ua/xml/u1017_f455_prom_3ec48e9c53.xml";
+      const input = document.getElementById("dropsXmlUrl");
+      if (input) input.value = url;
+    }
 
     // Спочатку пробуємо наш Supabase-проксі: браузер напряму не може
     // прочитати XML DROPS через CORS.
