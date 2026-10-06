@@ -2728,52 +2728,53 @@
   function dropsCatalogHas18Plus(name, description, category) {
     const text = String(name || "") + " " + String(description || "") + " " + String(category || "");
     return dropsIsExcludedProduct(text) ||
-      /(?:18\+|18\s*років|для\s*дорослих|інтим|секс|ерот|вібратор|мастурб|фалос|пеніс|вагін|аналь|презерватив|лубрикант|стимулятор|dildo|vibrator|masturb|sex toy|adult)/i.test(text);
+      /(?:18\\+|18\\s*років|для\\s*дорослих|інтим|секс|ерот|вібратор|мастурб|фалос|пеніс|вагін|аналь|презерватив|лубрикант|стимулятор|dildo|vibrator|masturb|sex\\s*toy|adult)/i.test(text);
   }
 
   function dropsCleanImageUrl(url) {
     const value = String(url || "").trim();
     if (!value) return "";
-    if (/[?]$/.test(value) || /[?](?:w|h|width|height|size|quality|q)=/i.test(value)) return "";
-    if (/\b(?:question|placeholder|no[-_ ]?image|no[-_ ]?photo|default[-_ ]?image)\b/i.test(value)) return "";
     if (/^(?:data:|blob:)/i.test(value)) return "";
+    if (/\\b(?:question|placeholder|no[-_ ]?image|no[-_ ]?photo|default[-_ ]?image|missing[-_ ]?image)\\b/i.test(value)) return "";
+    if (/(?:\\/|^)(?:no[-_ ]?image|no[-_ ]?photo|placeholder|default[-_ ]?image)(?:\\.|\\/|$)/i.test(value)) return "";
     return value;
   }
 
   function dropsPerfectName(name) {
     let value = dropsUkrainianName(String(name || ""));
-    value = value.replace(/[|•]+/g, " • ").replace(/\s{2,}/g, " ").trim();
+    value = value.replace(/[|•]+/g, " • ").replace(/\\s{2,}/g, " ").trim();
     if (!value) return "Товар для дому та саду";
+    value = value.replace(/^[«»"'\\s]+|[«»"'\\s]+$/g, "");
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
   function dropsPerfectCategory(name, sourceCategory) {
     const text = (String(name || "") + " " + String(sourceCategory || "")).toLowerCase();
-    if (/(авто|автомоб|машин|акумулятор|компресор.*шин|пилосос.*авто|зарядн.*авто|відеореєстратор|fm[- ]?модулятор|органайзер.*багаж)/i.test(text)) return "Товари для авто";
-    if (/(сад|город|газон|рослин|квіт|насін|теплиц|секатор|обприскувач|полив|шланг|лопат|грабл|сап|садов)/i.test(text)) return "Для саду";
-    if (/(дриль|шуруповерт|болгар|перфоратор|паяльник|мультиметр|інструмент|ключі|набір.*інструмент|степлер будів|зварюв)/i.test(text)) return "Інструменти";
-    if (/(одяг|футболк|штани|куртк|светр|взут|кросів|черевик|сумк|рюкзак|капелюх|рукавичк)/i.test(text)) return "Одяг";
+    if (/(авто|автомоб|машин|акумулятор|компресор.*шин|пилосос.*авто|зарядн.*авто|відеореєстратор|fm[- ]?модулятор|органайзер.*багаж|автомобільн)/i.test(text)) return "Товари для авто";
+    if (/(сад|город|газон|рослин|квіт|насін|теплиц|секатор|обприскувач|полив|шланг|лопат|грабл|сап|садов|добрив|компост|тример|косар|агро)/i.test(text)) return "Для саду";
+    if (/(дриль|шуруповерт|болгар|перфоратор|паяльник|мультиметр|інструмент|ключі|набір.*інструмент|степлер.*будів|зварюв|лобзик|рубанок|фрезер|шліфув|гайковерт)/i.test(text)) return "Інструменти";
+    if (/(одяг|футболк|штани|куртк|светр|взут|кросів|черевик|сумк|рюкзак|капелюх|рукавичк|сорочк|білизн|піжам|халат|жилет|пальто|платт)/i.test(text)) return "Одяг";
     return "Для дому";
   }
 
   function dropsPerfectDescription(name, category, sourceDescription) {
-    const base = String(sourceDescription || "").replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim();
     const clean = dropsPerfectName(name);
+    const raw = String(sourceDescription || "").replace(/<script[\\s\\S]*?<\\/script>/gi, " ").replace(/<style[\\s\\S]*?<\\/style>/gi, " ").replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/\\s{2,}/g, " ").trim();
     const prefix =
       category === "Для саду" ? "Практичний товар для саду та городу." :
       category === "Товари для авто" ? "Практичний товар для автомобіля та щоденного використання." :
       category === "Інструменти" ? "Надійний інструмент для ремонту, монтажу та побутових робіт." :
       category === "Одяг" ? "Зручний товар для щоденного використання." :
       "Практичний товар для дому та щоденних потреб.";
-    const details = base && base.length > 40 ? " " + base.slice(0, 1400) : "";
-    return (prefix + " " + clean + "." + details).replace(/\s{2,}/g, " ").trim();
+    const source = raw.length > 20 ? raw.slice(0, 1800).replace(/[.\\s]+$/, "") + "." : "";
+    return [prefix, clean + ".", source].filter(Boolean).join(" ").replace(/\\s{2,}/g, " ").trim();
   }
 
   async function cleanAndPerfectDropsCatalog() {
     const status = document.getElementById("dropsImportStatus");
     const button = document.getElementById("dropsCleanCatalogButton");
     if (button) { button.disabled = true; button.textContent = "⏳ Очищаю каталог..."; }
-    if (status) status.textContent = "⏳ Перевіряю всі товари та фотографії...";
+    if (status) status.textContent = "⏳ Завантажую товари та всі фотографії...";
 
     try {
       const result = await withTimeout(
@@ -2783,31 +2784,49 @@
       );
       if (result.error) throw result.error;
 
+      const imgResult = await withTimeout(
+        db.from("product_images").select("id,product_id,image_url,sort_order").order("sort_order", {ascending:true}),
+        "Завантаження фотографій каталогу",
+        30000
+      );
+      if (imgResult.error) throw imgResult.error;
+
       const products = result.data || [];
-      let removed = 0, edited = 0, imagesRemoved = 0;
+      const allImages = imgResult.data || [];
+      const imagesByProduct = new Map();
+      for (const img of allImages) {
+        const key = String(img.product_id);
+        if (!imagesByProduct.has(key)) imagesByProduct.set(key, []);
+        imagesByProduct.get(key).push(img);
+      }
+
+      let removed = 0, edited = 0, imagesRemoved = 0, imagesPromoted = 0, costsRemoved = 0;
+      const adultIds = [];
 
       for (const p of products) {
         if (dropsCatalogHas18Plus(p.name, p.description, p.category)) {
-          const delImages = await withTimeout(db.from("product_images").delete().eq("product_id", p.id), "Видалення фото 18+", 15000);
-          if (delImages.error) throw delImages.error;
-          const delProduct = await withTimeout(db.from("products").delete().eq("id", p.id), "Видалення товару 18+", 15000);
-          if (delProduct.error) throw delProduct.error;
-          removed++;
+          adultIds.push(p.id);
           continue;
         }
+
+        const gallery = imagesByProduct.get(String(p.id)) || [];
+        const good = gallery.filter(x => dropsCleanImageUrl(x.image_url));
+        const bad = gallery.filter(x => !dropsCleanImageUrl(x.image_url));
+        const currentMain = dropsCleanImageUrl(p.image);
+        const fallbackMain = currentMain || dropsCleanImageUrl(good[0]?.image_url) || "";
 
         const cleanName = dropsPerfectName(p.name);
         const cleanCategory = dropsPerfectCategory(cleanName, p.category);
         const cleanDescription = dropsPerfectDescription(cleanName, cleanCategory, p.description);
-        const cleanMain = dropsCleanImageUrl(p.image);
+        const cleanPrice = Math.max(1, Math.round(Number(p.price) || 1));
 
         const upd = await withTimeout(
           db.from("products").update({
             name: cleanName,
             category: cleanCategory,
             description: cleanDescription,
-            image: cleanMain || "",
-            price: Math.max(1, Math.round(Number(p.price) || 1))
+            image: fallbackMain,
+            price: cleanPrice
           }).eq("id", p.id),
           "Редагування товару",
           15000
@@ -2815,41 +2834,71 @@
         if (upd.error) throw upd.error;
         edited++;
 
-        const imgs = await withTimeout(
-          db.from("product_images").select("id,image_url,sort_order").eq("product_id", p.id).order("sort_order", {ascending:true}),
-          "Перевірка фото товару",
-          15000
-        );
-        if (imgs.error) throw imgs.error;
-
-        const bad = (imgs.data || []).filter(x => !dropsCleanImageUrl(x.image_url));
-        const good = (imgs.data || []).filter(x => dropsCleanImageUrl(x.image_url));
+        if (!currentMain && fallbackMain) imagesPromoted++;
 
         if (bad.length) {
           const badIds = bad.map(x => x.id);
-          const del = await withTimeout(db.from("product_images").delete().in("id", badIds), "Видалення битих фото", 15000);
+          const del = await withTimeout(
+            db.from("product_images").delete().in("id", badIds),
+            "Видалення битих фото",
+            15000
+          );
           if (del.error) throw del.error;
           imagesRemoved += bad.length;
         }
 
-        if (cleanMain && !good.some(x => x.image_url === cleanMain)) {
+        if (fallbackMain && !good.some(x => x.image_url === fallbackMain)) {
           const ins = await withTimeout(
-            db.from("product_images").insert([{product_id:p.id,image_url:cleanMain,sort_order:0}]),
+            db.from("product_images").insert([{product_id:p.id,image_url:fallbackMain,sort_order:0}]),
             "Додавання головного фото",
             15000
           );
           if (ins.error) throw ins.error;
         }
+
+        if (edited % 25 === 0 && status) {
+          status.textContent = "⏳ Оброблено " + edited + " / " + products.length + " товарів...";
+        }
+      }
+
+      // Спочатку прибираємо залежності, щоб видалення 18+ не зламалося через FK.
+      for (const id of adultIds) {
+        const costDel = await withTimeout(
+          db.from("drops_product_costs").delete().eq("product_id", id),
+          "Видалення закупівельної ціни 18+",
+          15000
+        );
+        if (costDel.error) throw costDel.error;
+        costsRemoved++;
+
+        const imgDel = await withTimeout(
+          db.from("product_images").delete().eq("product_id", id),
+          "Видалення фото 18+",
+          15000
+        );
+        if (imgDel.error) throw imgDel.error;
+
+        const productDel = await withTimeout(
+          db.from("products").delete().eq("id", id),
+          "Видалення товару 18+",
+          15000
+        );
+        if (productDel.error) throw productDel.error;
+        removed++;
       }
 
       await loadProducts();
-      if (status) status.textContent = "✅ Каталог очищено та відредаговано: видалено 18+ — " + removed + ", відредаговано — " + edited + ", видалено проблемних фото — " + imagesRemoved + ".";
-      alert("✅ Готово!\n\nВидалено 18+: " + removed + "\nВідредаговано товарів: " + edited + "\nВидалено фото зі знаком питання/заглушок: " + imagesRemoved);
+      const summary = "✅ Готово! Видалено 18+: " + removed +
+        " • відредаговано: " + edited +
+        " • видалено проблемних фото: " + imagesRemoved +
+        " • відновлено головних фото: " + imagesPromoted + ".";
+      if (status) status.textContent = summary;
+      alert(summary);
     } catch (error) {
       console.error("cleanAndPerfectDropsCatalog:", error);
       const message = error?.message || String(error);
       if (status) status.textContent = "❌ " + message;
-      alert("❌ Очищення не виконано.\n\n" + message);
+      alert("❌ Очищення не виконано.\\n\\n" + message);
     } finally {
       if (button) { button.disabled = false; button.textContent = "🧹 Очистити та ідеально відредагувати каталог"; }
     }
