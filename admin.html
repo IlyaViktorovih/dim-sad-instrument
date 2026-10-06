@@ -2432,19 +2432,34 @@
       if (!parsed.length) throw new Error("Не знайшов жодного товару в наявності.");
 
       const existingResult = await withTimeout(
-        db.from("products").select("id,name"),
+        db.from("products").select("id,name,available"),
         "Перевірка існуючих товарів",
         15000
       );
       if (existingResult.error) throw existingResult.error;
 
-      const existingByName = new Map((existingResult.data || []).map(p => [String(p.name || "").trim().toLowerCase(), p]));
+      const existingProducts = existingResult.data || [];
+      const existingByName = new Map(existingProducts.map(p => [dropsMatchKey(p.name), p]));
+      const existingByModel = new Map();
+      for (const p of existingProducts) {
+        for (const key of dropsModelKeys(p.name)) {
+          if (!existingByModel.has(key)) existingByModel.set(key, p);
+        }
+      }
+
       const rows = [];
       const existingUpdates = [];
 
       for (const p of parsed) {
-        const key = p.name.toLowerCase();
-        const existing = existingByName.get(key);
+        let existing = existingByName.get(dropsMatchKey(p.name));
+        if (!existing) {
+          for (const key of dropsModelKeys(p.name)) {
+            if (existingByModel.has(key)) {
+              existing = existingByModel.get(key);
+              break;
+            }
+          }
+        }
 
         if (existing) {
           existingUpdates.push({
