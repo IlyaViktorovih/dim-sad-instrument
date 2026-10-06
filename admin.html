@@ -3054,6 +3054,37 @@
         });
       }
 
+      // Захист від дублювання в одному XML. У базі є унікальність за lower(name),
+      // тому різні позиції DROPS з однаковою назвою не можна вставляти одним batch.
+      // Також повторно звіряємо нормалізовану назву з уже наявними товарами.
+      const uniqueRows = [];
+      const reservedNames = new Set(existingProducts.map(p => dropsMatchKey(p.name)));
+      for (const row of rows) {
+        const key = dropsMatchKey(row.name);
+        if (!key) continue;
+        if (reservedNames.has(key)) {
+          const existing = existingByName.get(key);
+          if (existing && !existingUpdates.some(x => String(x.id) === String(existing.id))) {
+            const source = parsed.find(p => dropsMatchKey(p.name) === key);
+            existingUpdates.push({
+              id: existing.id,
+              name: existing.name,
+              sourceName: source?.name || row.name,
+              stock_quantity: source?.stock ?? existing.stock_quantity ?? 0,
+              available: source ? (source.supplierAvailable !== false && (source.stock == null || source.stock > 0)) : existing.available !== false,
+              images: source?.images || [],
+              cost: source?.cost ?? null,
+              sku: source?.sku || ""
+            });
+          }
+          continue;
+        }
+        reservedNames.add(key);
+        uniqueRows.push(row);
+      }
+      rows.length = 0;
+      rows.push(...uniqueRows);
+
       if (!rows.length && !existingUpdates.length) throw new Error("У XML не знайдено нових або знайомих товарів для оновлення.");
 
       status.textContent = "⏳ Оновлюю залишки " + existingUpdates.length + " та додаю " + rows.length + " нових товарів...";
