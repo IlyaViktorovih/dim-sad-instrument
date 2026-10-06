@@ -2125,7 +2125,7 @@
           el.textContent
         ].filter(Boolean).join("\n");
 
-        raw.split(/\\s+/).forEach(value => {
+        raw.split(/\s+/).forEach(value => {
           const url = String(value || "").trim();
           if (/^https?:\\/\\//i.test(url)) urls.push(url);
         });
