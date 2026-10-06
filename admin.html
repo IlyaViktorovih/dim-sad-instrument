@@ -3054,18 +3054,26 @@
         });
       }
 
-      // Захист від дублювання в одному XML. У базі є унікальність за lower(name),
-      // тому різні позиції DROPS з однаковою назвою не можна вставляти одним batch.
-      // Також повторно звіряємо нормалізовану назву з уже наявними товарами.
+      // У БД унікальний індекс: lower(trim(name)).
+      // Тому дедуплікація тут повинна використовувати ТОЧНО такий самий ключ,
+      // а не dropsMatchKey(), який додатково нормалізує назву.
+      const exactNameKey = value => String(value || "").trim().toLowerCase();
       const uniqueRows = [];
-      const reservedNames = new Set(existingProducts.map(p => dropsMatchKey(p.name)));
+      const reservedNames = new Set(existingProducts.map(p => exactNameKey(p.name)).filter(Boolean));
+      const existingByExactName = new Map(
+        existingProducts
+          .map(p => [exactNameKey(p.name), p])
+          .filter(([key]) => key)
+      );
+
       for (const row of rows) {
-        const key = dropsMatchKey(row.name);
+        const key = exactNameKey(row.name);
         if (!key) continue;
+
         if (reservedNames.has(key)) {
-          const existing = existingByName.get(key);
+          const existing = existingByExactName.get(key);
           if (existing && !existingUpdates.some(x => String(x.id) === String(existing.id))) {
-            const source = parsed.find(p => dropsMatchKey(p.name) === key);
+            const source = parsed.find(p => exactNameKey(p.name) === key);
             existingUpdates.push({
               id: existing.id,
               name: existing.name,
@@ -3079,9 +3087,11 @@
           }
           continue;
         }
+
         reservedNames.add(key);
         uniqueRows.push(row);
       }
+
       rows.length = 0;
       rows.push(...uniqueRows);
 
