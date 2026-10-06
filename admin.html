@@ -439,6 +439,16 @@
       <input id="dropsXmlFile" type="file" accept=".xml,text/xml,application/xml">
       <div class="small">Якщо браузер не дозволить завантажити XML за посиланням, просто скачай XML з DROPS і вибери файл тут.</div>
       <input id="dropsImportLimit" type="number" min="1" max="1000" value="1000" placeholder="Кількість товарів">
+      <div style="margin:10px 0;padding:12px;border:1px solid #dfe7e2;border-radius:10px;background:#f7faf8">
+        <b>📂 Категорії для імпорту</b>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <label><input type="checkbox" class="dropsImportCategory" value="Для дому" checked> 🏠 Для дому</label>
+          <label><input type="checkbox" class="dropsImportCategory" value="Для саду"> 🌱 Для саду</label>
+          <label><input type="checkbox" class="dropsImportCategory" value="Товари для авто"> 🚗 Товари для авто</label>
+          <label><input type="checkbox" class="dropsImportCategory" value="Інструменти" checked> 🛠️ Інструменти</label>
+        </div>
+        <div class="small" style="margin-top:6px">Імпортуються тільки вибрані категорії. Одяг та інші категорії автоматично пропускаються.</div>
+      </div>
       <button id="dropsImportButton" type="button">🚀 Імпортувати 1000 товарів</button>
       <button type="button" onclick="openDropsSite()">🌐 Відкрити сайт DROPS</button>
       <button id="dropsCleanCatalogButton" type="button" onclick="cleanAndPerfectDropsCatalog()">🧹 Очистити та ідеально відредагувати каталог</button>
@@ -2920,13 +2930,27 @@
       const parsedAll = dropsParse(xml);
       const parseStats = dropsParse.lastStats || {};
       const excludedCount = parsedAll.filter(p => dropsIsExcludedProduct(p.name)).length;
-      const parsed = parsedAll.filter(p => !dropsIsExcludedProduct(p.name)).slice(0, limit);
+
+      const selectedCategories = Array.from(document.querySelectorAll(".dropsImportCategory:checked"))
+        .map(el => String(el.value || "").trim())
+        .filter(Boolean);
+
+      if (!selectedCategories.length) {
+        throw new Error("Вибери хоча б одну категорію для імпорту.");
+      }
+
+      const parsedFiltered = parsedAll.filter(p => {
+        if (dropsIsExcludedProduct(p.name)) return false;
+        const category = dropsCategory(p.name, p.sourceCategory);
+        return selectedCategories.includes(category);
+      });
+      const parsed = parsedFiltered.slice(0, limit);
 
       status.textContent =
         "⏳ XML містить " + (parseStats.total || 0) +
         " позицій. Валідних: " + (parseStats.valid || 0) +
-        ". Після фільтра: " + parsedAll.length + " → " + parsed.length +
-        " товарів до імпорту.";
+        ". Після фільтра категорій (" + selectedCategories.join(", ") + "): " + parsedFiltered.length +
+        " → " + parsed.length + " товарів до імпорту.";
 
       if (!parsed.length) {
         throw new Error(
@@ -2934,7 +2958,7 @@
           ", без назви: " + (parseStats.rejectedNoName || 0) +
           ", без ціни: " + (parseStats.rejectedNoPrice || 0) +
           ", недоступних: " + (parseStats.rejectedUnavailable || 0) +
-          ", виключено фільтром: " + excludedCount + "."
+          ", виключено фільтром: " + excludedCount + ", не у вибраних категоріях: " + (parsedAll.length - parsedFiltered.length) + "."
         );
       }
 
