@@ -1104,7 +1104,8 @@
       card.className = "product";
       const price = Number(p.price || 0).toLocaleString("uk-UA");
       const oldPrice = p.old_price ? Number(p.old_price).toLocaleString("uk-UA") : "";
-      const dropsCost = dropsCostByProductId[p.id] ? Number(dropsCostByProductId[p.id].purchase_price || 0) : null;
+      const costRow = dropsCostByProductId[p.id];
+      const dropsCost = costRow && costRow.purchase_price !== null && costRow.purchase_price !== undefined ? Number(costRow.purchase_price) : null;
       const profit = dropsCost !== null ? Number(p.price || 0) - dropsCost : null;
       const availabilityText = p.available !== false ? "🟢 Є в наявності" : "🔴 Немає в наявності";
       card.innerHTML =
@@ -1121,7 +1122,7 @@
             "<option value='true' " + (p.is_hit ? "selected" : "") + ">Хіт</option>" +
           "</select></label>" +
         "</div>" +
-        (dropsCost !== null ? "<p>🛒 Закупівля DROPS: <b>" + dropsCost.toLocaleString("uk-UA") + " грн</b> • 💰 Прибуток: <b>" + profit.toLocaleString("uk-UA") + " грн</b></p>" : "") +
+        "<div class='price-info'><p>💵 Ціна продажу: <b>" + price + " грн</b></p><p>🛒 Ціна закупівлі: <b>" + (dropsCost !== null ? dropsCost.toLocaleString("uk-UA") + " грн" : "—") + "</b>" + (costRow?.sku ? " • SKU: " + escapeHTML(costRow.sku) : "") + "</p><p>💰 Ваш заробіток: <b>" + (profit !== null ? profit.toLocaleString("uk-UA") + " грн" : "—") + "</b></p></div>" +
         "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • 📦 Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
         "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
         "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
@@ -2581,9 +2582,12 @@
         if (existing) {
           existingUpdates.push({
             id: existing.id,
+            name: existing.name,
             stock_quantity: p.stock,
             available: p.stock == null ? existing.available !== false : p.stock > 0,
-            images: p.images || []
+            images: p.images || [],
+            cost: p.cost,
+            sku: p.sku || ""
           });
           continue;
         }
@@ -2645,8 +2649,10 @@
       const costRows = [];
       for (const p of parsed) {
         const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
-        if (!insertedRow) continue;
-        costRows.push({product_id: insertedRow.id, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
+        const existing = existingUpdates.find(item => item.id && dropsMatchKey(item.name || "") === dropsMatchKey(p.name || ""));
+        const productId = insertedRow?.id || existing?.id;
+        if (!productId) continue;
+        costRows.push({product_id: productId, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
       }
       if (costRows.length) {
         const costResult = await withTimeout(
