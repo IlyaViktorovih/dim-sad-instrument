@@ -2283,13 +2283,13 @@
         .replace(/&#39;/gi, "'")
         .replace(/&lt;/gi, "<")
         .replace(/&gt;/gi, ">");
-      const matches = raw.match(/https?:\\/\\/[^\\s"'<>]+/gi) || [];
+      const matches = raw.match(/https?:\/\/[^\s"'<>]+/gi) || [];
       for (const value of matches) {
         const url = String(value).replace(/[),.;]+$/g, "").trim();
-        if (!/^https?:\\/\\//i.test(url)) continue;
+        if (!/^https?:\/\//i.test(url)) continue;
         // Never import description/content images. Prefer only actual product-image fields.
-        if (/\\/img\\/desc\\//i.test(url)) continue;
-        if (/https?:\\/\\/.*https?:\\/\\//i.test(url)) continue;
+        if (/\/img\/desc\//i.test(url)) continue;
+        if (/https?:\/\/.*https?:\/\//i.test(url)) continue;
         urls.push(url);
       }
     };
