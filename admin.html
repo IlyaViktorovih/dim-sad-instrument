@@ -2102,6 +2102,39 @@
     return "";
   }
 
+  function dropsImages(node) {
+    const selectors = [
+      "picture",
+      "image",
+      "image_url",
+      "imageurl",
+      "photo",
+      "photo_url",
+      "additional_image",
+      "additional_image_url",
+      "additionalImage"
+    ];
+    const urls = [];
+
+    for (const selector of selectors) {
+      node.querySelectorAll(selector).forEach(el => {
+        const raw = [
+          el.getAttribute("url"),
+          el.getAttribute("src"),
+          el.getAttribute("href"),
+          el.textContent
+        ].filter(Boolean).join("\n");
+
+        raw.split(/\\s+/).forEach(value => {
+          const url = String(value || "").trim();
+          if (/^https?:\\/\\//i.test(url)) urls.push(url);
+        });
+      });
+    }
+
+    return Array.from(new Set(urls));
+  }
+
   function dropsNumber(value) {
     if (value === null || value === undefined) return 0;
     const s = String(value).replace(/\s/g, "").replace(",", ".");
@@ -2195,7 +2228,8 @@
       const name = dropsText(node, ["name","title","product_name"]);
       const categorySource = dropsText(node, ["category","categoryName","category_name","group"]);
       const description = dropsText(node, ["description","description_ua","description_uk"]);
-      const image = dropsText(node, ["picture","image","image_url","url"]);
+      const images = dropsImages(node);
+      const image = images[0] || dropsText(node, ["picture","image","image_url"]);
       const price = dropsNumber(dropsText(node, ["price","purchase_price","cost","price_purchase","price_retail"]));
       const stockText = dropsText(node, ["quantity_in_stock","stock_quantity","stock","quantity","qty","count","available_quantity","остаток","залишок"]);
       const stockAttr = node.getAttribute("quantity_in_stock") || node.getAttribute("stock_quantity") || node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
@@ -2215,6 +2249,7 @@
         sourceCategory: categorySource,
         description,
         image,
+        images,
         cost: price,
         stock: hasStockSignal ? stock : null,
         sku: sku || ""
@@ -2286,6 +2321,32 @@
   function dropsModelKeys(value) {
     const tokens = dropsMatchKey(value).split(/\s+/).filter(Boolean);
     return Array.from(new Set(tokens.filter(t => /\d/.test(t) && t.length >= 3)));
+  }
+
+  async function syncDropsProductImages(productId, images) {
+    const urls = Array.from(new Set((images || []).filter(Boolean)));
+    if (!productId || !urls.length) return 0;
+
+    const deleteResult = await withTimeout(
+      db.from("product_images").delete().eq("product_id", productId),
+      "Очищення старих фото товару",
+      15000
+    );
+    if (deleteResult.error) throw deleteResult.error;
+
+    const rows = urls.map((url, index) => ({
+      product_id: productId,
+      image_url: url,
+      sort_order: index
+    }));
+
+    const insertResult = await withTimeout(
+      db.from("product_images").insert(rows),
+      "Збереження фото товару",
+      15000
+    );
+    if (insertResult.error) throw insertResult.error;
+    return rows.length;
   }
 
   async function syncDropsStockFromXml() {
@@ -2389,7 +2450,8 @@
           existingUpdates.push({
             id: existing.id,
             stock_quantity: p.stock,
-            available: p.stock == null ? existing.available !== false : p.stock > 0
+            available: p.stock == null ? existing.available !== false : p.stock > 0,
+            images: p.images || []
           });
           continue;
         }
@@ -2424,6 +2486,9 @@
           15000
         );
         if (updateResult.error) throw updateResult.error;
+        if (item.images.length) {
+          await syncDropsProductImages(item.id, item.images);
+        }
       }
 
       const result = rows.length
@@ -2437,6 +2502,14 @@
 
       const inserted = result.data || [];
       const insertedByName = new Map(inserted.map(row => [String(row.name || "").trim().toLowerCase(), row]));
+
+      for (const p of parsed) {
+        const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
+        if (insertedRow && p.images?.length) {
+          await syncDropsProductImages(insertedRow.id, p.images);
+        }
+      }
+
       const costRows = [];
       for (const p of parsed) {
         const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
