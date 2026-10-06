@@ -2306,7 +2306,7 @@
       "шерсти":"шерсті","животных":"тварин","с":"з","и":"і","для":"для","из":"із","в":"у","на":"на"
     };
 
-    name = name.replace(/[^\\s,.:;()\\[\\]{}\\/\\+\\-]+/g, token => {
+    name = name.replace(/[A-Za-zА-Яа-яІіЇїЄєЁё0-9]+(?:[-'][A-Za-zА-Яа-яІіЇїЄєЁё0-9]+)*/g, token => {
       const lower = token.toLowerCase();
       return Object.prototype.hasOwnProperty.call(words, lower) ? words[lower] : token;
     });
