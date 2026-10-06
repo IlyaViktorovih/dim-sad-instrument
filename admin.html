@@ -2197,8 +2197,8 @@
       const description = dropsText(node, ["description","description_ua","description_uk"]);
       const image = dropsText(node, ["picture","image","image_url","url"]);
       const price = dropsNumber(dropsText(node, ["price","purchase_price","cost","price_purchase","price_retail"]));
-      const stockText = dropsText(node, ["stock","quantity","qty","count","available_quantity","остаток","залишок"]);
-      const stockAttr = node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
+      const stockText = dropsText(node, ["quantity_in_stock","stock_quantity","stock","quantity","qty","count","available_quantity","остаток","залишок"]);
+      const stockAttr = node.getAttribute("quantity_in_stock") || node.getAttribute("stock_quantity") || node.getAttribute("stock") || node.getAttribute("quantity") || node.getAttribute("qty") || "";
       const stock = Math.max(0, Math.floor(dropsNumber(stockText || stockAttr)));
       const availableAttr = node.getAttribute("available");
       const availableText = dropsText(node, ["available","availability","in_stock","stock_status"]);
@@ -2216,7 +2216,7 @@
         description,
         image,
         cost: price,
-        stock: hasStockSignal ? stock : 1,
+        stock: hasStockSignal ? stock : null,
         sku: sku || ""
       });
     }
@@ -2314,7 +2314,7 @@
           description: dropsDescription(p.name, category, p.description),
           image: p.image || "",
           category,
-          available: true,
+          available: p.stock == null ? true : p.stock > 0,
           is_hit: false,
           stock_quantity: p.stock,
           old_price: null,
