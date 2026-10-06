@@ -2275,6 +2275,79 @@
     }
   }
 
+  function dropsMatchKey(value) {
+    return String(value || "").toLowerCase().replace(/ё/g,"е").replace(/[^a-zа-яіїє0-9]+/gi," ").trim();
+  }
+
+  function dropsModelKeys(value) {
+    const tokens = dropsMatchKey(value).split(/\s+/).filter(Boolean);
+    return Array.from(new Set(tokens.filter(t => /\d/.test(t) && t.length >= 3)));
+  }
+
+  async function syncDropsStockFromXml() {
+    const xml = await dropsGetXml();
+    const parsed = dropsParse(xml);
+    if (!parsed.length) throw new Error("У XML не знайдено товарів із доступним залишком.");
+
+    const existingResult = await withTimeout(
+      db.from("products").select("id,name,available,stock_quantity"),
+      "Завантаження товарів магазину",
+      15000
+    );
+    if (existingResult.error) throw existingResult.error;
+
+    const products = existingResult.data || [];
+    const byName = new Map(products.map(p => [dropsMatchKey(p.name), p]));
+    const byModel = new Map();
+    for (const p of products) {
+      for (const key of dropsModelKeys(p.name)) if (!byModel.has(key)) byModel.set(key, p);
+    }
+
+    let updated = 0;
+    let unmatched = 0;
+    for (const p of parsed) {
+      let existing = byName.get(dropsMatchKey(p.name));
+      if (!existing) {
+        for (const key of dropsModelKeys(p.name)) {
+          if (byModel.has(key)) { existing = byModel.get(key); break; }
+        }
+      }
+      if (!existing) { unmatched++; continue; }
+
+      const result = await withTimeout(
+        db.from("products").update({
+          stock_quantity: p.stock,
+          available: p.stock == null ? existing.available !== false : p.stock > 0
+        }).eq("id", existing.id),
+        "Оновлення залишку",
+        15000
+      );
+      if (result.error) throw result.error;
+      updated++;
+    }
+    return {parsed: parsed.length, updated, unmatched};
+  }
+
+  async function checkDropsStock() {
+    const button = document.getElementById("refreshStockAlertsButton");
+    const status = document.getElementById("dropsImportStatus");
+    if (button) { button.disabled = true; button.textContent = "⏳ Перевіряю DROPS..."; }
+    if (status) status.textContent = "⏳ Завантажую XML та звіряю залишки...";
+    try {
+      const result = await syncDropsStockFromXml();
+      await loadProducts();
+      renderStockAlerts();
+      if (status) status.textContent = "✅ DROPS перевірено: оновлено " + result.updated + " із " + result.parsed + " товарів. Не знайдено: " + result.unmatched + ".";
+      alert("✅ Залишки DROPS оновлено.\n\nЗвірено: " + result.parsed + "\nОновлено: " + result.updated + "\nНе знайдено у магазині: " + result.unmatched);
+    } catch (error) {
+      const message = error?.message || String(error);
+      if (status) status.textContent = "❌ " + message;
+      alert("❌ Не вдалося перевірити залишки DROPS.\n\n" + message);
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "🔄 Перевірити залишки"; }
+    }
+  }
+
   async function importDropsProducts() {
     const button = document.getElementById("dropsImportButton");
     const status = document.getElementById("dropsImportStatus");
@@ -2404,9 +2477,7 @@
     loadProducts
   );
 
-  document.getElementById("refreshStockAlertsButton").addEventListener("click", function() {
-    renderStockAlerts();
-  });
+  document.getElementById("refreshStockAlertsButton").addEventListener("click", checkDropsStock);
   document.getElementById("productSearch").addEventListener("input", renderAdminProducts);
   document.getElementById("productCategoryFilter").addEventListener("change", renderAdminProducts);
   document.getElementById("productAvailabilityFilter").addEventListener("change", renderAdminProducts);
