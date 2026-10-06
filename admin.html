@@ -2552,6 +2552,14 @@
     return String(value || "").toLowerCase().replace(/ё/g,"е").replace(/[^a-zа-яіїє0-9]+/gi," ").trim();
   }
 
+  function dropsSkuKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/[^a-zа-яіїєє0-9]+/gi, "")
+      .trim();
+  }
+
   function dropsModelKeys(value) {
     const tokens = dropsMatchKey(value).split(/\s+/).filter(Boolean);
     return Array.from(new Set(tokens.filter(t => /\d/.test(t) && t.length >= 3)));
@@ -2602,10 +2610,26 @@
       for (const key of dropsModelKeys(p.name)) if (!byModel.has(key)) byModel.set(key, p);
     }
 
+    const costResult = await withTimeout(
+      db.from("drops_product_costs").select("product_id,sku"),
+      "Завантаження артикулів DROPS",
+      15000
+    );
+    if (costResult.error) throw costResult.error;
+    const bySku = new Map();
+    for (const row of (costResult.data || [])) {
+      const sku = dropsSkuKey(row.sku);
+      if (sku && !bySku.has(sku)) {
+        const product = products.find(p => String(p.id) === String(row.product_id));
+        if (product) bySku.set(sku, product);
+      }
+    }
+
     let updated = 0;
     let unmatched = 0;
     for (const p of parsed) {
-      let existing = byName.get(dropsMatchKey(p.name));
+      let existing = bySku.get(dropsSkuKey(p.sku));
+      if (!existing) existing = byName.get(dropsMatchKey(p.name));
       if (!existing) {
         for (const key of dropsModelKeys(p.name)) {
           if (byModel.has(key)) { existing = byModel.get(key); break; }
@@ -2681,11 +2705,27 @@
         }
       }
 
+      const existingCostsResult = await withTimeout(
+        db.from("drops_product_costs").select("product_id,sku"),
+        "Перевірка артикулів DROPS",
+        15000
+      );
+      if (existingCostsResult.error) throw existingCostsResult.error;
+
+      const existingBySku = new Map();
+      const productById = new Map(existingProducts.map(p => [String(p.id), p]));
+      for (const row of (existingCostsResult.data || [])) {
+        const sku = dropsSkuKey(row.sku);
+        const product = productById.get(String(row.product_id));
+        if (sku && product && !existingBySku.has(sku)) existingBySku.set(sku, product);
+      }
+
       const rows = [];
       const existingUpdates = [];
 
       for (const p of parsed) {
-        let existing = existingByName.get(dropsMatchKey(p.name));
+        let existing = existingBySku.get(dropsSkuKey(p.sku));
+        if (!existing) existing = existingByName.get(dropsMatchKey(p.name));
         if (!existing) {
           for (const key of dropsModelKeys(p.name)) {
             if (existingByModel.has(key)) {
@@ -2699,6 +2739,7 @@
           existingUpdates.push({
             id: existing.id,
             name: existing.name,
+            sourceName: p.name,
             stock_quantity: p.stock,
             available: p.stock == null ? existing.available !== false : p.stock > 0,
             images: p.images || [],
@@ -2777,7 +2818,7 @@
       const costRows = [];
       for (const p of parsed) {
         const insertedRow = insertedByName.get(String(p.name || "").trim().toLowerCase());
-        const existing = existingUpdates.find(item => item.id && dropsMatchKey(item.name || "") === dropsMatchKey(p.name || ""));
+        const existing = existingUpdates.find(item => item.id && dropsMatchKey(item.sourceName || "") === dropsMatchKey(p.name || ""));
         const productId = insertedRow?.id || existing?.id;
         if (!productId) continue;
         costRows.push({product_id: productId, purchase_price: p.cost, sku: p.sku || null, source: "DROPS"});
@@ -2794,7 +2835,7 @@
         }
       }
 
-      status.textContent = "✅ Готово! Оновлено залишки: " + existingUpdates.length + " • Додано нових: " + inserted.length + ". Закупівельна ціна DROPS збережена лише в адмінці.";
+      status.textContent = "✅ Готово! Без дублікатів: за артикулом/SKU, потім за назвою та моделлю. Оновлено: " + existingUpdates.length + " • Додано нових: " + inserted.length + ". Закупівельна ціна DROPS збережена лише в адмінці.";
       await loadProducts();
     } catch (error) {
       console.error("importDropsProducts:", error);
