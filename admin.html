@@ -2800,7 +2800,16 @@
         imagesByProduct.get(key).push(img);
       }
 
-      let removed = 0, edited = 0, imagesRemoved = 0, imagesPromoted = 0;
+      // У БД назви мають бути унікальними без урахування регістру.
+      // Тому перед редагуванням будуємо набір уже зайнятих назв і
+      // ніколи не намагаємося перейменувати товар у назву іншого товару.
+      const usedNames = new Map();
+      for (const p of products) {
+        const key = String(p.name || "").trim().toLowerCase();
+        if (key) usedNames.set(key, String(p.id));
+      }
+
+      let removed = 0, edited = 0, imagesRemoved = 0, imagesPromoted = 0, namesSkipped = 0;
       const adultIds = [];
 
       for (const p of products) {
@@ -2815,7 +2824,23 @@
         const currentMain = dropsCleanImageUrl(p.image);
         const fallbackMain = currentMain || dropsCleanImageUrl(good[0]?.image_url) || "";
 
-        const cleanName = dropsPerfectName(p.name);
+        const proposedName = dropsPerfectName(p.name);
+        const proposedKey = proposedName.trim().toLowerCase();
+        const currentKey = String(p.name || "").trim().toLowerCase();
+
+        // Якщо "ідеальна" назва вже належить іншому товару,
+        // залишаємо поточну унікальну назву, щоб не отримати
+        // products_name_lower_unique.
+        let cleanName = proposedName;
+        const ownerId = usedNames.get(proposedKey);
+        if (ownerId && ownerId !== String(p.id) && proposedKey !== currentKey) {
+          cleanName = String(p.name || "").trim() || proposedName;
+          namesSkipped++;
+        } else {
+          if (currentKey && currentKey !== proposedKey) usedNames.delete(currentKey);
+          usedNames.set(proposedKey, String(p.id));
+        }
+
         const cleanCategory = dropsPerfectCategory(cleanName, p.category);
         const cleanDescription = dropsPerfectDescription(cleanName, cleanCategory, p.description);
         const cleanPrice = Math.max(1, Math.round(Number(p.price) || 1));
@@ -2890,8 +2915,9 @@
 
       const summary = "✅ Готово! Видалено 18+: " + removed +
         " • відредаговано: " + edited +
-        " • видалено проблемних фото: " + imagesRemoved +
-        " • відновлено головних фото: " + imagesPromoted + ".";
+        " • фото проблемні: " + imagesRemoved +
+        " • відновлено головних фото: " + imagesPromoted +
+        " • назви безпечні від дублікатів: " + namesSkipped + ".";
       if (status) status.textContent = summary;
       alert(summary);
     } catch (error) {
@@ -2903,6 +2929,7 @@
       if (button) { button.disabled = false; button.textContent = "🧹 Очистити та ідеально відредагувати каталог"; }
     }
   }
+
   async function importDropsProducts() {
     const button = document.getElementById("dropsImportButton");
     const status = document.getElementById("dropsImportStatus");
