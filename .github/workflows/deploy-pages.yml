@@ -33,6 +33,14 @@ jobs:
           SUPABASE_URL: https://rzdqohedzsgcmhcdhlri.supabase.co
           SUPABASE_KEY: sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ
         run: node scripts/generate-seo-pages.mjs
+      - name: Validate sitemap
+        run: |
+          test -f sitemap.xml
+          grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' sitemap.xml
+          ! grep -q '?product=' sitemap.xml
+          count=$(grep -c '<loc>' sitemap.xml)
+          echo "Sitemap URL count: $count"
+          test "$count" -ge 1000
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
@@ -46,4 +54,4 @@ jobs:
         with:
           artifact_name: github-pages-${{ github.run_id }}
 
-# Fresh deployment trigger: keep SEO generation and Pages deployment in one clean run.
+# Sitemap is generated from Supabase on every deployment and validated before publishing.
