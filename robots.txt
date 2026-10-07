@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ilyaviktorovih.github.io/dim-sad-instrument/sitemap.xml
+Sitemap: https://ilyaviktorovih.github.io/dim-sad-instrument/sitemap-index.xml
