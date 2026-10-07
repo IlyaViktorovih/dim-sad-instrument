@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: github-pages-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pages: write
@@ -35,6 +39,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: '.'
+          name: github-pages-${{ github.run_id }}
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
