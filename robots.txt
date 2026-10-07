@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin.html
 Disallow: /admin-v2.html
 
-Sitemap: https://ilyaviktorovih.github.io/dim-sad-instrument/sitemap-index.xml
+Sitemap: https://ilyaviktorovih.github.io/dim-sad-instrument/sitemap.xml
