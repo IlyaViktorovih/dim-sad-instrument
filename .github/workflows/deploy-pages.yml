@@ -20,6 +20,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Generate SEO product pages and sitemap
+        env:
+          SUPABASE_URL: https://rzdqohedzsgcmhcdhlri.supabase.co
+          SUPABASE_KEY: sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ
+        run: node scripts/generate-seo-pages.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
