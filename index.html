@@ -172,30 +172,7 @@ header{background:rgba(255,255,255,.96)}
 .about{background:#f0e9f7}
 .delivery-section{background:#f0e9f7}
 .footer{background:#fff}
-</style><style id="darker-purple-background">body{background:#e7dcf2!important}.hero{background:radial-gradient(circle at 90% 15%,rgba(255,138,0,.10),transparent 27%),radial-gradient(circle at 8% 80%,rgba(17,122,67,.08),transparent 30%),linear-gradient(135deg,#d9c8e8 0%,#f3e8f2 100%)!important}.about,.delivery-section{background:#ded0ea!important}</style><script type="application/ld+json">
-{
-  "@context":"https://schema.org",
-  "@type":"WebSite",
-  "name":"Дім Сад Інструмент",
-  "url":"https://ilyaviktorovih.github.io/dim-sad-instrument/",
-  "inLanguage":"uk-UA",
-  "description":"Товари для дому, саду, авто та інструменти з доставкою по Україні.",
-  "potentialAction":{
-    "@type":"SearchAction",
-    "target":"https://ilyaviktorovih.github.io/dim-sad-instrument/?q={search_term_string}",
-    "query-input":"required name=search_term_string"
-  }
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context":"https://schema.org",
-  "@type":"Organization",
-  "name":"Дім Сад Інструмент",
-  "url":"https://ilyaviktorovih.github.io/dim-sad-instrument/",
-  "logo":"https://ilyaviktorovih.github.io/dim-sad-instrument/icon.svg"
-}
-</script>\n<script type="application/ld+json" id="site-schema">
+</style><style id="darker-purple-background">body{background:#e7dcf2!important}.hero{background:radial-gradient(circle at 90% 15%,rgba(255,138,0,.10),transparent 27%),radial-gradient(circle at 8% 80%,rgba(17,122,67,.08),transparent 30%),linear-gradient(135deg,#d9c8e8 0%,#f3e8f2 100%)!important}.about,.delivery-section{background:#ded0ea!important}</style>\n<script type="application/ld+json" id="site-schema">
 {
   "@context":"https://schema.org",
   "@graph":[
@@ -205,8 +182,12 @@ header{background:rgba(255,255,255,.96)}
       "url":"https://ilyaviktorovih.github.io/dim-sad-instrument/",
       "name":"Дім Сад Інструмент",
       "description":"Товари для дому, саду, авто та інструменти з доставкою по Україні.",
-      "inLanguage":"uk-UA"
-    },
+      "inLanguage":"uk-UA",
+      "potentialAction":{
+        "@type":"SearchAction",
+        "target":"https://ilyaviktorovih.github.io/dim-sad-instrument/?q={search_term_string}",
+        "query-input":"required name=search_term_string"
+      }},
     {
       "@type":"Organization",
       "@id":"https://ilyaviktorovih.github.io/dim-sad-instrument/#organization",
@@ -341,10 +322,10 @@ async function loadProducts(){
       if(meta) meta.setAttribute("content", cleanDescription.slice(0,155) || ((seoProduct.name||"Товар")+" — купити в Дім Сад Інструмент."));
       let canonical=document.querySelector('link[rel="canonical"]');
       if(!canonical){canonical=document.createElement("link");canonical.rel="canonical";document.head.appendChild(canonical);}
-      canonical.href=window.location.href.split("#")[0];
+      canonical.href=location.origin + location.pathname.replace(/\/?$/, "/") + "products/" + encodeURIComponent(seoProduct.id) + ".html";
       let ld=document.getElementById("product-schema");
       if(!ld){ld=document.createElement("script");ld.type="application/ld+json";ld.id="product-schema";document.head.appendChild(ld);}
-      ld.textContent=JSON.stringify({"@context":"https://schema.org","@type":"Product","name":seoProduct.name||"Товар","description":cleanDescription.slice(0,500),"image":(productImages[seoProduct.id]||[]).slice(0,5),"offers":{"@type":"Offer","priceCurrency":"UAH","price":Number(seoProduct.price)||0,"availability":seoProduct.available===false?"https://schema.org/OutOfStock":"https://schema.org/InStock","url":window.location.href.split("#")[0]}});
+      ld.textContent=JSON.stringify({"@context":"https://schema.org","@type":"Product","name":seoProduct.name||"Товар","description":cleanDescription.slice(0,500),"image":(productImages[seoProduct.id]||[]).slice(0,5),"offers":{"@type":"Offer","priceCurrency":"UAH","price":Number(seoProduct.price)||0,"availability":seoProduct.available===false?"https://schema.org/OutOfStock":"https://schema.org/InStock","url":location.origin + location.pathname.replace(/\/?$/, "/") + "products/" + encodeURIComponent(seoProduct.id) + ".html"}});
       setTimeout(()=>openProduct(seoProduct.id,0),0);
     }
   }
@@ -400,7 +381,7 @@ function productCardHTML(p){
   const stock=stockKnown?Math.max(0,Number(p.stock_quantity)||0):null;
   const stockInfo=p.available===false?'<div class="stock-info out">❌ Наразі немає в наявності</div>':stockKnown&&stock>0&&stock<=3?'<div class="stock-info low">⚠️ Залишилось лише '+stock+' шт.</div>':'<div class="stock-info">✓ Є в наявності</div>';
   const buyNotes=p.available===false?"":'<div class="buy-note"><span>🚚 Нова пошта</span><span>📦 Перевірка наявності</span></div>';
-  return `<article class="product">${galleryHTML}${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}${stockInfo}${buyNotes}<button class="details" onclick="openProduct(${p.id},0)">👁️ Детальніше</button><button class="buy" onclick="addToCart(${p.id})">🛒 Додати в кошик</button><button class="details" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
+  return `<article class="product">${galleryHTML}${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}${stockInfo}${buyNotes}<a class="details" href="./products/${p.id}.html" onclick="openProduct(${p.id},0);return false">👁️ Детальніше</a><button class="buy" onclick="addToCart(${p.id})">🛒 Додати в кошик</button><button class="details" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
 }
 function toggleDiscountFilter(){discountOnly=!discountOnly;const btn=document.getElementById("discountFilter");if(btn)btn.classList.toggle("active",discountOnly);render();document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});}
 function saveFavorites(){localStorage.setItem("dimSadFavorites",JSON.stringify(favorites));updateFavoritesCount();}
