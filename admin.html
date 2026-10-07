@@ -1279,12 +1279,13 @@
           if (update.error) console.warn("Не вдалося перекласти назву товару", item.id, update.error);
           else item.name = item.ukrainianName;
         }
-        const refreshed = await withTimeout(
-          db.from("products").select("*").order("id", {ascending:false}),
-          "Оновлення списку товарів",
-          15000
-        );
-        if (!refreshed.error) allProductsAdmin = refreshed.data || allProductsAdmin;
+        // Після перекладу не можна робити звичайний select("*"): Supabase REST
+        // повертає максимум 1000 рядків. Завантажуємо всі товари сторінками.
+        try {
+          allProductsAdmin = await loadAllProductsFromDatabase();
+        } catch (refreshError) {
+          console.warn("Не вдалося повністю оновити список товарів після перекладу", refreshError);
+        }
       }
       await ensureRichDescriptions();
 
