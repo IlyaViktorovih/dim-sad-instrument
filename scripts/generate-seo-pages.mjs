@@ -5,6 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "https://rzdqohedzsgcmhcdhlri.s
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
 const SITE = "https://ilyaviktorovih.github.io/dim-sad-instrument";
 const ROOT = process.cwd();
+const RETURNS_URL = `${SITE}/returns.html`;
 const PRODUCTS_DIR = join(ROOT, "products");
 
 const headers = {
@@ -54,13 +55,56 @@ function productPage(p, images) {
   const imageHtml = imageList.length
     ? imageList.map((src, i) => `<img src="${esc(src)}" alt="${esc(name)} — фото ${i + 1}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>`).join("")
     : '<div class="noimg" aria-label="Фото товару відсутнє">📦</div>';
+  const shippingDetails = {
+    "@type": "OfferShippingDetails",
+    "shippingDestination": {
+      "@type": "DefinedRegion",
+      "addressCountry": "UA"
+    },
+    "shippingRate": {
+      "@type": "MonetaryAmount",
+      "maxValue": 500,
+      "currency": "UAH"
+    },
+    "deliveryTime": {
+      "@type": "ShippingDeliveryTime",
+      "handlingTime": {
+        "@type": "QuantitativeValue",
+        "minValue": 0,
+        "maxValue": 2,
+        "unitCode": "DAY"
+      },
+      "transitTime": {
+        "@type": "QuantitativeValue",
+        "minValue": 1,
+        "maxValue": 5,
+        "unitCode": "DAY"
+      }
+    }
+  };
+  const returnPolicy = {
+    "@type": "MerchantReturnPolicy",
+    "applicableCountry": "UA",
+    "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+    "merchantReturnDays": 14,
+    "returnMethod": "https://schema.org/ReturnByMail",
+    "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility",
+    "merchantReturnLink": RETURNS_URL
+  };
   const offer = {
     "@type": "Offer",
     "url": url,
     "priceCurrency": "UAH",
     "price": price,
     "availability": available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-    "itemCondition": "https://schema.org/NewCondition"
+    "itemCondition": "https://schema.org/NewCondition",
+    "shippingDetails": shippingDetails,
+    "hasMerchantReturnPolicy": returnPolicy,
+    "seller": {
+      "@type": "Organization",
+      "name": "Дім Сад Інструмент",
+      "url": SITE + "/"
+    }
   };
   const productSchema = {
     "@context": "https://schema.org",
@@ -70,7 +114,7 @@ function productPage(p, images) {
     "description": text(p.description) || desc,
     "image": imageList,
     "sku": String(p.id),
-    "category": category,
+    "brand": { "@type": "Brand", "name": "Дім Сад Інструмент" },
     "offers": offer
   };
   const breadcrumb = {
@@ -167,6 +211,8 @@ for (let i = 0; i < products.length; i += 200) {
 for (const p of products) {
   await writeFile(join(PRODUCTS_DIR, `${p.id}.html`), productPage(p, imageMap.get(String(p.id)) || []), "utf8");
 }
+
+await writeFile(join(ROOT, "returns.html"), `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повернення та обмін — Дім Сад Інструмент</title><meta name="description" content="Умови повернення та обміну товарів у магазині Дім Сад Інструмент."></head><body><main style="max-width:800px;margin:40px auto;padding:0 18px;font-family:Arial,sans-serif;line-height:1.6"><h1>Повернення та обмін товарів</h1><p>Повернення та обмін товарів здійснюються відповідно до законодавства України та умов продавця.</p><p>Для товарів належної якості стандартний строк звернення щодо повернення або обміну — до 14 днів, якщо інше не передбачено законом або характером товару. Товар має зберегти належний стан та комплектність.</p><p>Для оформлення повернення зверніться до магазину до відправлення товару назад, щоб отримати актуальні реквізити та інструкції.</p><p><a href="${SITE}/">← Повернутися до магазину</a></p></main></body></html>`, "utf8");
 
 const urls = [SITE + "/"];
 for (const p of products) urls.push(`${SITE}/products/${p.id}.html`);
