@@ -1,0 +1,41 @@
+name: Generate product SEO pages
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/generate-seo-pages.mjs"
+      - ".github/workflows/generate-seo-pages.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate product pages and sitemap
+        env:
+          SUPABASE_URL: https://rzdqohedzsgcmhcdhlri.supabase.co
+          SUPABASE_KEY: sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ
+        run: node scripts/generate-seo-pages.mjs
+
+      - name: Commit generated pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add products sitemap.xml
+          if git diff --cached --quiet; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git commit -m "Generate SEO product pages"
+          git push
