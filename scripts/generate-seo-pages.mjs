@@ -5,7 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "https://rzdqohedzsgcmhcdhlri.s
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_mErWmopCWbRtyq764qh1_A_rZitmXJZ";
 const SITE = "https://ilyaviktorovih.github.io/dim-sad-instrument";
 const ROOT = process.cwd();
-const RETURNS_URL = `${SITE}/returns.html`;
+const RETURNS_URL = `${SITE}/returns.html`; // merchant policy URLs
 const PRODUCTS_DIR = join(ROOT, "products");
 
 const headers = {
