@@ -325,7 +325,16 @@ async function loadProducts(){
       canonical.href=location.origin + location.pathname.replace(/\/?$/, "/") + "products/" + encodeURIComponent(seoProduct.id) + ".html";
       let ld=document.getElementById("product-schema");
       if(!ld){ld=document.createElement("script");ld.type="application/ld+json";ld.id="product-schema";document.head.appendChild(ld);}
-      ld.textContent=JSON.stringify({"@context":"https://schema.org","@type":"Product","name":seoProduct.name||"Товар","description":cleanDescription.slice(0,500),"image":(productImages[seoProduct.id]||[]).slice(0,5),"offers":{"@type":"Offer","priceCurrency":"UAH","price":Number(seoProduct.price)||0,"availability":seoProduct.available===false?"https://schema.org/OutOfStock":"https://schema.org/InStock","url":location.origin + location.pathname.replace(/\/?$/, "/") + "products/" + encodeURIComponent(seoProduct.id) + ".html"}});
+      const {data:schemaReviews}=await supabaseClient.from("product_reviews").select("name,text,rating,created_at").eq("product_id",seoProduct.id).eq("approved",true).order("created_at",{ascending:true});
+      const productSchema={"@context":"https://schema.org","@type":"Product","name":seoProduct.name||"Товар","description":cleanDescription.slice(0,500),"image":(productImages[seoProduct.id]||[]).slice(0,5),"offers":{"@type":"Offer","priceCurrency":"UAH","price":Number(seoProduct.price)||0,"availability":seoProduct.available===false?"https://schema.org/OutOfStock":"https://schema.org/InStock","url":location.origin + location.pathname.replace(/\/?$/, "/") + "products/" + encodeURIComponent(seoProduct.id) + ".html"}};
+      if(Array.isArray(schemaReviews)&&schemaReviews.length){
+        const ratings=schemaReviews.map(r=>Number(r.rating)).filter(r=>r>=1&&r<=5);
+        if(ratings.length){
+          productSchema.aggregateRating={"@type":"AggregateRating","ratingValue":Number((ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1)),"reviewCount":ratings.length};
+        }
+        productSchema.review=schemaReviews.filter(r=>Number(r.rating)>=1&&Number(r.rating)<=5&&String(r.text||"").trim()).map(r=>({"@type":"Review","author":{"@type":"Person","name":String(r.name||"Покупець").trim()},"datePublished":new Date(r.created_at).toISOString().slice(0,10),"reviewBody":String(r.text).trim(),"reviewRating":{"@type":"Rating","ratingValue":Number(r.rating),"bestRating":5,"worstRating":1}}));
+      }
+      ld.textContent=JSON.stringify(productSchema);
       setTimeout(()=>openProduct(seoProduct.id,0),0);
     }
   }
