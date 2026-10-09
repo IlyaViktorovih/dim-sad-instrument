@@ -239,7 +239,7 @@
     header{background:linear-gradient(120deg,#0b4d2b,#14834a);padding:20px 28px;box-shadow:0 4px 16px rgba(10,52,29,.18)}
     header h1{font-size:26px;letter-spacing:.1px}
     .container{width:min(100% - 32px,1480px);max-width:1480px;padding:24px 0 40px}
-    #adminPanel{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+    #adminPanel:not(.hidden){display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
     #adminPanel>.new-order-alert,#adminPanel>.box-stats,#adminPanel>.box-sales,#adminPanel>.box-orders,#adminPanel>.box-catalog{grid-column:1/-1}
     #adminPanel>.box-account{grid-column:1/-1;padding:14px 20px;display:flex;align-items:center;gap:18px}
     .box-account h2{margin:0;font-size:18px;white-space:nowrap}
