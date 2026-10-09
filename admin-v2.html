@@ -1060,6 +1060,8 @@
       }
 
 
+      await loadStats();
+
       const selectedFiles = Array.from(document.getElementById("productImages").files || []);
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
@@ -1096,7 +1098,7 @@
       document.getElementById("productImages").value = "";
 
       document.getElementById("productCategory")
-        .value = "Для дому";
+        .value = "Сад і город";
 
       document.getElementById("productAvailable")
         .value = "true";
@@ -1106,7 +1108,7 @@
       document.getElementById("productStock").value = "0";
 
 
-      loadProducts();
+      await loadProducts();
 
 
     } catch (error) {
@@ -1513,8 +1515,7 @@
         "✅ Товар видалено."
       );
 
-
-      loadProducts();
+      await Promise.all([loadProducts(), loadStats()]);
 
 
     } catch (error) {
@@ -2392,7 +2393,7 @@
       if (result.error) throw result.error;
 
       status.textContent = "✅ Готово! Додано " + rows.length + " товарів. Ціни DROPS у магазин не записуються — клієнт їх не бачить.";
-      await loadProducts();
+      await Promise.all([loadProducts(), loadStats()]);
     } catch (error) {
       console.error("importDropsProducts:", error);
       const message = error?.message || String(error) || "Невідома помилка.";
