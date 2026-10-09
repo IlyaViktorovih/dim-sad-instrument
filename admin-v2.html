@@ -2003,7 +2003,7 @@
     const grid = document.getElementById("statsGrid");
     try {
       const [productsResult, ordersResult, reviewsResult] = await Promise.all([
-        db.from("products").select("id"),
+        db.from("products").select("id", { count: "exact", head: true }),
         db.from("orders").select("id,status,total,created_at"),
         db.from("product_reviews").select("id,approved")
       ]);
@@ -2012,7 +2012,7 @@
       if (ordersResult.error) throw ordersResult.error;
       if (reviewsResult.error) throw reviewsResult.error;
 
-      const productsCount = (productsResult.data || []).length;
+      const productsCount = Number(productsResult.count || 0);
       const orders = ordersResult.data || [];
       const reviews = reviewsResult.data || [];
       const newOrders = orders.filter(o => o.status === "new").length;
