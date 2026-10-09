@@ -521,8 +521,10 @@ function showcaseImageFor(key){
     clothes:/(одяг|куртк|светр|футбол|взут|сумк|аксесуар)/i
   };
   const re=patterns[key]||/(.)/;
-  const candidates=products.filter(p=>re.test((p.name||"")+" "+(p.category||"")));
-  const p=candidates.find(x=>(productImages[String(x.id)]||[])[0]||x.image)||products.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
+  const candidates=products.filter(p=>re.test(p.name||""));
+  const p=candidates.find(x=>(productImages[String(x.id)]||[])[0]||x.image)||
+    products.filter(x=>re.test(x.category||"")).find(x=>(productImages[String(x.id)]||[])[0]||x.image)||
+    products.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
   return p?((productImages[String(p.id)]||[])[0]||p.image||""):"";
 }
 function decorateShowcaseImages(){
@@ -559,9 +561,16 @@ let list=products.filter(p=>{
   return matchesSearch && matchesCategory && matchesPrice && matchesDiscount;
 }).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
 const hits=products.filter(p=>p.is_hit===true).slice(0,6);
-const featuredCategories=[/для саду/i,/інструменти/i,/для дому/i,/товари для авто/i,/електроніка/i,/корисні товари/i];
-for(const categoryPattern of featuredCategories){
-  const candidate=products.find(p=>categoryPattern.test(p.category||"")&&!hits.some(x=>String(x.id)===String(p.id)));
+const featuredPatterns=[
+  /(газон|садов|город|полив|рослин|насін|гряд|квіт|лійк|лейк|лопат|грабл|секатор|тример)/i,
+  /(шуруп|дрил|перфорат|ключ|викрут|молот|пилк|торцев|насадк|інструмент)/i,
+  /(гойдал|мебл|люстр|ламп|сидін|стіл|стільц|диван|софа|відпоч)/i,
+  /(авто|автомоб|шина|машин|ключів|автостоп)/i,
+  /(led|світл|ламп|usb|телефон|заряд|батар|навуш|ліхтар|електрон)/i,
+  /(рівень|рулетк|коронк|контейнер|господар)/i
+];
+for(const itemPattern of featuredPatterns){
+  const candidate=products.find(p=>itemPattern.test(p.name||"")&&!hits.some(x=>String(x.id)===String(p.id)));
   if(candidate)hits.push(candidate);
 }
 for(const candidate of products){
