@@ -506,8 +506,8 @@ function setCategory(category,element){
 }
 function showcaseImageFor(key){
   const patterns={
-    garden:/(сад|город|газон|гряд|лопат|грабл|рослин|насін|насен|полив|лійк|лейк|квіт|горщик)/i,
-    plants:/(рослин|квіт|насін|горщик|вазон|садж)/i,
+    garden:/(садов|город|газон|гряд|лопат|грабл|розсад|насін|насен|полив|лійк|лейк|секатор|тример|мотокос)/i,
+    plants:/(рослин|насін|горщик|вазон|садж|розсад)/i,
     power:/(електроінструмент|шуруп|дрил|перфорат|болгар|пилк|інструмент|акумулятор)/i,
     hand:/(ручн|лопат|грабл|секатор|молот|викрут|плоскогуб)/i,
     home:/(дім|будинок|мебл|гойдал|кухн|домаш|відпоч|садовий стіл)/i,
@@ -522,10 +522,12 @@ function showcaseImageFor(key){
   };
   const re=patterns[key]||/(.)/;
   const candidates=products.filter(p=>re.test(p.name||""));
-  const p=candidates.find(x=>(productImages[String(x.id)]||[])[0]||x.image)||
-    products.filter(x=>re.test(x.category||"")).find(x=>(productImages[String(x.id)]||[])[0]||x.image)||
-    products.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
-  return p?((productImages[String(p.id)]||[])[0]||p.image||""):"";
+  const p=candidates.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
+  if(p)return (productImages[String(p.id)]||[])[0]||p.image||"";
+  if(key==="garden"||key==="plants")return "./assets/hero-garden.jpg";
+  const categoryProduct=products.filter(x=>re.test(x.category||"")).find(x=>(productImages[String(x.id)]||[])[0]||x.image);
+  const fallbackProduct=products.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
+  return categoryProduct?((productImages[String(categoryProduct.id)]||[])[0]||categoryProduct.image||""):fallbackProduct?((productImages[String(fallbackProduct.id)]||[])[0]||fallbackProduct.image||""):"";
 }
 function decorateShowcaseImages(){
   document.querySelectorAll(".cat[data-showcase]").forEach(tile=>{
@@ -562,7 +564,7 @@ let list=products.filter(p=>{
 }).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
 const hits=products.filter(p=>p.is_hit===true).slice(0,6);
 const featuredPatterns=[
-  /(газон|садов|город|полив|рослин|насін|гряд|квіт|лійк|лейк|лопат|грабл|секатор|тример)/i,
+  /(газон|садов|город|полив|рослин|насін|гряд|лійк|лейк|лопат|грабл|секатор|тример|мотокос)/i,
   /(шуруп|дрил|перфорат|ключ|викрут|молот|пилк|торцев|насадк|інструмент)/i,
   /(гойдал|мебл|люстр|ламп|сидін|стіл|стільц|диван|софа|відпоч)/i,
   /(авто|автомоб|шина|машин|ключів|автостоп)/i,
