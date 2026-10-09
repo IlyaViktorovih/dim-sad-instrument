@@ -232,6 +232,72 @@
       border-radius: 8px;
       border: 2px solid #ddd;
     }
+  
+    /* Responsive desktop admin dashboard */
+    :root{color-scheme:light;--admin-green:#126b3b;--admin-ink:#17352a;--admin-muted:#68766f;--admin-line:#dce8df}
+    body{font-family:Arial,"Segoe UI",sans-serif;background:#eef4ef;color:var(--admin-ink)}
+    header{background:linear-gradient(120deg,#0b4d2b,#14834a);padding:20px 28px;box-shadow:0 4px 16px rgba(10,52,29,.18)}
+    header h1{font-size:26px;letter-spacing:.1px}
+    .container{width:min(100% - 32px,1480px);max-width:1480px;padding:24px 0 40px}
+    #adminPanel{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+    #adminPanel>.new-order-alert,#adminPanel>.box-stats,#adminPanel>.box-sales,#adminPanel>.box-orders,#adminPanel>.box-catalog{grid-column:1/-1}
+    #adminPanel>.box-account{grid-column:1/-1;padding:14px 20px;display:flex;align-items:center;gap:18px}
+    .box-account h2{margin:0;font-size:18px;white-space:nowrap}
+    .box-account .small{margin-right:auto}
+    .box-account button{width:auto;min-width:130px;margin:0}
+    #adminPanel>.box-customers,#adminPanel>.box-popular,#adminPanel>.box-add-product,#adminPanel>.box-drops,#adminPanel>.box-reviews,#adminPanel>.box-stock{grid-column:span 6}
+    .box{margin:0 0 0;background:#fff;border:1px solid rgba(18,107,59,.08);border-radius:18px;padding:22px;box-shadow:0 8px 24px rgba(18,47,31,.07)}
+    h2{font-size:22px;line-height:1.25;margin:0 0 14px;color:#174a30}
+    input,textarea,select{border:1px solid #ccd9cf;border-radius:10px;background:#fff;color:#26352d;min-height:46px;padding:11px 13px}
+    input:focus,textarea:focus,select:focus{outline:3px solid rgba(22,138,74,.14);border-color:#168a4a}
+    button{min-height:46px;border-radius:10px;background:linear-gradient(135deg,#138348,#0e6538);box-shadow:0 3px 9px rgba(15,91,50,.12);transition:transform .16s,box-shadow .16s,background .16s}
+    button:hover{background:#0d6036;box-shadow:0 5px 14px rgba(15,91,50,.18);transform:translateY(-1px)}
+    .logout,.secondary{background:#eaf0eb;color:#284434;border:1px solid #d5e0d7;box-shadow:none}
+    .logout:hover,.secondary:hover{background:#dde9df;color:#17352a}
+    .danger{background:#c83e3e;color:#fff}
+    .danger:hover{background:#ad2f2f}
+    .stat-card{background:linear-gradient(145deg,#f7fbf8,#eef7f0);border:1px solid #dbe9de;border-radius:15px;padding:16px}
+    .stat-card b{font-size:22px;color:#125e35}
+    .sales-chart{height:245px}
+    .products-tools{grid-template-columns:minmax(260px,2fr) repeat(3,minmax(170px,1fr));gap:12px}
+    #productsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+    #productsList .product{margin:0;padding:16px;border:1px solid #dfe8e1;border-radius:15px;background:#fbfdfb;box-shadow:0 3px 10px rgba(23,53,42,.04);display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;min-width:0}
+    #productsList .product h3,#productsList .product .quick-product-row,#productsList .product p{grid-column:1/-1}
+    #productsList .product h3{font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+    #productsList .product p{margin:0;color:#5c6d62;font-size:13px}
+    #productsList .product button{width:auto;margin:0;padding:10px;font-size:14px}
+    .quick-product-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .quick-product-row label{min-width:0;font-size:11px}
+    .quick-product-row input,.quick-product-row select{width:100%;min-width:0}
+    .order-status-actions button,.order-contact-actions a,.order-contact-actions button{min-height:38px}
+    .editModalContent{box-shadow:0 20px 70px rgba(0,0,0,.24)}
+    @media(max-width:1050px){
+      .container{width:min(100% - 28px,900px)}
+      #adminPanel>.box-customers,#adminPanel>.box-popular,#adminPanel>.box-add-product,#adminPanel>.box-drops,#adminPanel>.box-reviews,#adminPanel>.box-stock{grid-column:1/-1}
+      #productsList{grid-template-columns:1fr}
+      .quick-product-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .products-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .products-tools input{grid-column:1/-1}
+    }
+    @media(max-width:600px){
+      .container{width:calc(100% - 20px);padding:14px 0 28px}
+      header{padding:17px 12px}
+      header h1{font-size:21px}
+      #adminPanel{gap:12px}
+      .box{padding:16px;border-radius:15px}
+      #adminPanel>.box-account{align-items:flex-start;flex-wrap:wrap;gap:8px 12px}
+      .box-account .small{width:100%}
+      .box-account button{width:100%}
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .stat-card{padding:11px;gap:7px}
+      .stat-card b{font-size:18px}
+      .stat-icon{font-size:22px}
+      .products-tools{grid-template-columns:1fr}
+      .products-tools input{grid-column:auto}
+      .quick-product-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+      #productsList .product{padding:13px}
+    }
+
   </style>
 </head>
 
@@ -245,8 +311,8 @@
 <div class="container">
 
   <!-- ВХІД -->
-  <div class="box" id="loginBox">
-    <h2>🔐 Вхід адміністратора</h2>
+  <div class="box box-login" id="loginBox">
+    <h2>Вхід адміністратора</h2>
 
     <input
       type="email"
@@ -301,8 +367,8 @@
       <button id="newOrderAlertButton">Переглянути</button>
     </div>
 
-    <div class="box">
-      <h2>👤 Адміністратор</h2>
+    <div class="box box-account">
+      <h2>Адміністратор</h2>
 
       <div id="userEmail" class="small"></div>
 
@@ -313,8 +379,8 @@
 
 
     <!-- СТАТИСТИКА -->
-    <div class="box">
-      <h2>📊 Статистика магазину</h2>
+    <div class="box box-stats">
+      <h2>Статистика магазину</h2>
       <div class="stats-grid" id="statsGrid">
         <div class="stat-card"><div class="stat-icon">📦</div><div><span>Товарів</span><b>—</b></div></div>
         <div class="stat-card"><div class="stat-icon">🛒</div><div><span>Замовлень</span><b>—</b></div></div>
@@ -325,29 +391,29 @@
         <div class="stat-card"><div class="stat-icon">🗓️</div><div><span>За 30 днів</span><b>—</b></div></div>
         <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
       </div>
-      <button id="refreshStatsButton">🔄 Оновити статистику</button>
+      <button id="refreshStatsButton">Оновити статистику</button>
     </div>
 
     <!-- КЛІЄНТИ -->
-    <div class="box">
-      <h2>👥 Клієнти</h2>
+    <div class="box box-customers">
+      <h2>Клієнти</h2>
       <div class="customer-stats" id="customerStats">⏳ Завантаження...</div>
       <div id="customersList">Завантаження клієнтів...</div>
-      <button id="refreshCustomersButton">🔄 Оновити клієнтів</button>
+      <button id="refreshCustomersButton">Оновити клієнтів</button>
     </div>
 
     <!-- ПОПУЛЯРНІ ТОВАРИ -->
-    <div class="box">
-      <h2>🔥 Популярні товари</h2>
+    <div class="box box-popular">
+      <h2>Популярні товари</h2>
       <div id="topProductsList">Завантаження...</div>
-      <button id="refreshTopProductsButton">🔄 Оновити товари</button>
+      <button id="refreshTopProductsButton">Оновити товари</button>
     </div>
 
     <!-- ПРОДАЖІ -->
-    <div class="box">
+    <div class="box box-sales">
       <div class="sales-head">
         <div>
-          <h2>📈 Продажі</h2>
+          <h2>Продажі</h2>
           <div class="small">Сума замовлень за вибраний період</div>
         </div>
         <select id="salesPeriod" class="sales-period">
@@ -365,9 +431,9 @@
     </div>
 
     <!-- ДОДАВАННЯ ТОВАРУ -->
-    <div class="box">
+    <div class="box box-add-product">
 
-      <h2>➕ Додати товар</h2>
+      <h2>Додати товар</h2>
 
       <input
         type="text"
@@ -433,8 +499,8 @@
 
 
     <!-- ІМПОРТ DROPS -->
-    <div class="box">
-      <h2>🚚 Імпорт товарів з DROPS</h2>
+    <div class="box box-drops">
+      <h2>Імпорт товарів з DROPS</h2>
       <div class="small">Встав посилання XML DROPS. Імпорт візьме лише товари з наявністю, автоматично визначить категорію, додасть +200–300 грн та створить короткий продаючий опис українською.</div>
       <input id="dropsXmlUrl" type="url" placeholder="https://drops.in.ua/xml/....xml" value="">
       <input id="dropsXmlFile" type="file" accept=".xml,text/xml,application/xml">
@@ -445,7 +511,7 @@
     </div>
 
     <!-- ЗАМОВЛЕННЯ -->
-    <div class="box"><h2>🛒 Замовлення</h2>
+    <div class="box box-orders"><h2>Замовлення</h2>
       <div class="orders-tools">
         <input id="orderSearch" type="search" placeholder="🔎 Пошук за ім'ям, телефоном або містом">
         <select id="orderStatusFilter">
@@ -457,32 +523,32 @@
           <option value="cancelled">❌ Скасовано</option>
         </select>
       </div>
-      <button id="refreshOrdersButton">🔄 Оновити замовлення</button>
+      <button id="refreshOrdersButton">Оновити замовлення</button>
       <div id="ordersList">Завантаження замовлень...</div>
     </div>
 
     <!-- ВІДГУКИ -->
-    <div class="box">
-      <h2>⭐ Відгуки</h2>
-      <button id="refreshReviewsButton">🔄 Оновити відгуки</button>
+    <div class="box box-reviews">
+      <h2>Відгуки</h2>
+      <button id="refreshReviewsButton">Оновити відгуки</button>
       <div id="reviewsAdminList">Завантаження відгуків...</div>
     </div>
 
     <!-- КОНТРОЛЬ ЗАЛИШКІВ -->
-    <div class="box" id="stockAlertBox">
-      <h2>🚨 Контроль залишків</h2>
+    <div class="box box-stock" id="stockAlertBox">
+      <h2>Контроль залишків</h2>
       <div id="stockAlertSummary">Перевірка залишків...</div>
       <div id="stockAlerts"></div>
-      <button id="refreshStockAlertsButton">🔄 Перевірити залишки</button>
+      <button id="refreshStockAlertsButton">Перевірити залишки</button>
     </div>
 
     <!-- ТОВАРИ -->
-    <div class="box">
+    <div class="box box-catalog">
 
-      <h2>📦 Товари магазину</h2>
+      <h2>Товари магазину</h2>
 
       <div class="products-tools">
-        <input id="productSearch" type="search" placeholder="🔎 Пошук товару за назвою">
+        <input id="productSearch" type="search" placeholder="Пошук товару за назвою">
         <select id="productCategoryFilter">
           <option value="all">Усі категорії</option>
           <option value="Для дому">🏠 Для дому</option>
@@ -505,7 +571,7 @@
       <div class="products-filter-summary" id="productsFilterSummary"></div>
 
       <button id="refreshButton">
-        🔄 Оновити список
+        Оновити список
       </button>
 
       <div id="productsList">
@@ -521,7 +587,7 @@
 <!-- РЕДАГУВАННЯ ТОВАРУ -->
 <div id="editModal" class="editModal hidden">
   <div class="editModalContent">
-    <h2>✏️ Редагувати товар</h2>
+    <h2>Редагувати товар</h2>
     <input type="hidden" id="editProductId">
 
     <input type="text" id="editProductName" placeholder="Назва товару">
