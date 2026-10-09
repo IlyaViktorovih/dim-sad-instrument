@@ -5,14 +5,14 @@
   "start_url": "/dim-sad-instrument/",
   "scope": "/dim-sad-instrument/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#168a4a",
+  "background_color": "#0b3c1c",
+  "theme_color": "#0b3c1c",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "assets/brand-mark.png",
+      "sizes": "320x320",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
