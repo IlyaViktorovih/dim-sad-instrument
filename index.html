@@ -403,7 +403,10 @@ let priceRange=document.getElementById("priceFilter")?.value||"";
 let list=products.filter(p=>{
   const text=((p.name||"")+" "+(p.category||"")).toLowerCase();
   const matchesSearch=text.includes(q);
-  const matchesCategory=!selectedCategory || (p.category||"").toLowerCase()===selectedCategory.toLowerCase();
+  const categoryName=(p.category||"").toLowerCase();
+  const categoryKey=selectedCategory.toLowerCase();
+  const electronicsPattern=/(led|світлодіод|светодиод|люстр|ламп|світильник|светильник|зарядн|кабел|usb|power\s*bank|павербанк|телефон|смартфон|навушник|колонк|батаре|акумулятор|ліхтар|фонар|роутер|wi-?fi|камера|проектор|телевізор|телевизор|монітор|монитор|планшет|електрон|электрон)/i;
+  const matchesCategory=!selectedCategory || (categoryKey==="електроніка" ? categoryName==="електроніка" || electronicsPattern.test(text) : categoryName===categoryKey);
   const price=Number(p.price)||0;
   let matchesPrice=true;
   if(priceRange){const [min,max]=priceRange.split("-").map(Number);matchesPrice=price>=min&&price<=max;}
