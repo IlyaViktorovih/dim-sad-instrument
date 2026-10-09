@@ -245,24 +245,131 @@ main{background:transparent}
  .cat{min-height:100px}
  .toolbar{grid-template-columns:1fr}
 }
-</style></head>
+</style><style id="reference-storefront">
+:root{--g:#0b5d2a;--g2:#114d27;--bg:#dcebdc;--surface:#fff;--ink:#17261d;--muted:#657269;--orange:#f26a00;--line:#d7e3d7}
+html{scroll-behavior:smooth;scroll-padding-top:132px}
+body{background:var(--bg)!important;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{position:sticky;top:0;z-index:50;background:#eef6ed;border-bottom:1px solid #c9d9c7;box-shadow:0 3px 12px #17352a0d}
+.nav{max-width:1360px;width:100%;padding:11px 24px;gap:20px;display:grid;grid-template-columns:minmax(230px,1fr) minmax(340px,1.55fr) auto}
+.logo{display:flex;align-items:center;gap:10px;font-size:24px;line-height:1.05;color:#102b19;white-space:nowrap}
+.logo::before{content:"🌿";display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:linear-gradient(145deg,#0c5629,#72ad43);font-size:25px}
+.logo span{color:#102b19}
+.header-search{height:46px;border:1px solid #cad8cd;border-radius:13px;background:#fff;box-shadow:0 2px 9px #17352a12;padding:0 16px;font-size:14px}
+.header-actions{display:flex;align-items:center;gap:9px}
+.install{padding:10px 12px;border-color:#b7cbb7}
+.cart{background:var(--g);border-radius:12px;padding:12px 17px;box-shadow:0 4px 12px #0b5d2a20}
+.main-nav{max-width:1360px;margin:auto;padding:0 24px 11px;display:flex;align-items:center;gap:22px;min-height:43px;overflow-x:auto;white-space:nowrap}
+.main-nav a,.main-nav button{border:0;background:transparent;color:#26372d;text-decoration:none;font:700 14px Arial,sans-serif;cursor:pointer}
+.main-nav a:hover,.main-nav button:hover{color:var(--g)}
+.main-nav .catalog-button{background:var(--g);color:#fff;border-radius:11px;padding:11px 16px;margin-right:8px}
+.hero{padding:14px 24px 10px;background:transparent}
+.hero-inner{max-width:1360px;grid-template-columns:minmax(0,3fr) minmax(210px,.7fr);gap:14px;align-items:stretch}
+.hero-copy{position:relative;min-height:300px;padding:38px 38px 30px;border-radius:13px;overflow:hidden;display:flex;align-items:flex-start;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(247,249,237,.97) 0%,rgba(244,248,232,.9) 38%,rgba(235,244,218,.12) 73%),url("./assets/hero-garden.jpg") center 52%/cover}
+.hero-kicker{font-size:13px;font-weight:800;color:#486943;margin:0 0 10px}
+.hero h1{max-width:560px;font-size:clamp(32px,4vw,48px);line-height:1.03;letter-spacing:-1.5px;margin:0 0 13px;color:#102b19}
+.hero p{max-width:520px;margin:0;color:#303e32;font-size:18px;line-height:1.4}
+.hero .cta{background:var(--orange);border-radius:9px;padding:13px 22px;margin-top:18px;box-shadow:none}
+.hero-pips{display:flex;gap:9px;margin-top:17px}
+.hero-pips span{width:10px;height:10px;border-radius:50%;background:#cad7c5}.hero-pips span:first-child{background:var(--g)}
+.hero-side{position:relative;min-height:300px;padding:18px 17px;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,rgba(255,247,231,.98),rgba(255,248,234,.54) 50%,rgba(23,65,34,.05)),url("./assets/hero-garden.jpg") 77% center/auto 100%;color:#15261a}
+.hero-side h2{font-size:23px;line-height:1.08;margin:0 0 9px;max-width:205px}
+.hero-side p{font-size:14px;line-height:1.35;margin:0;max-width:190px;color:#354239}
+.hero-side-tag{display:inline-block;margin-top:20px;padding:8px 11px;border-radius:20px;background:#f26a00;color:#fff;font-size:12px;font-weight:800}
+main{max-width:1360px;padding:8px 24px 35px}
+.section-title{font-size:29px;letter-spacing:-.7px;margin:0}
+.category-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px}
+.category-head h2{font-size:20px;margin:0}
+.all-cat button{border:0;background:transparent;color:var(--g);font-weight:800;cursor:pointer}
+.categories{display:flex;gap:8px;overflow-x:auto;padding:0 0 10px;margin:0 0 14px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.cat{position:relative;flex:0 0 104px;height:145px;padding:0;border-radius:10px;overflow:hidden;background:#fff;border:1px solid #dce4da;box-shadow:0 2px 7px #183e2210;scroll-snap-align:start;color:#27352b}
+.cat:hover{transform:translateY(-2px);box-shadow:0 7px 16px #183e2220}
+.cat.active{background:#fff;color:var(--g);border-color:var(--g);box-shadow:0 0 0 2px #0b5d2a25}
+.cat-photo{height:101px;display:block;overflow:hidden;background:linear-gradient(145deg,#f5f6eb,#d8e9d3)}
+.cat-photo-image{width:100%;height:100%;display:block;object-fit:cover}
+.cat-emoji{display:grid;place-items:center;width:100%;height:100%;font-size:40px}
+.cat-label{display:flex;min-height:42px;align-items:center;justify-content:center;padding:4px 5px;text-align:center;font-size:12px;font-weight:700;line-height:1.15}
+.cat b{display:none}
+.info-strip{margin:10px 0 23px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:#edf5eb;border:1px solid #d1dfd0;border-radius:12px;padding:10px 5px}
+.info-card{border:0;border-right:1px solid #c7d6c6;border-radius:0;background:transparent;box-shadow:none;padding:8px 18px}
+.info-card:last-child{border-right:0}
+.info-icon{color:var(--g);font-size:27px}
+.info-card b{font-size:14px;color:#21362a}.info-card span{font-size:12px;color:#78847a}
+.hits-section{margin:0 0 13px;padding:8px 0;background:transparent;border-radius:0}
+.hits-head{margin:0 0 12px;align-items:center;flex-direction:row}
+.hits-head>div{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hits-kicker{display:none}
+.hits-head .section-title{font-size:28px;margin:0}
+.hits-head p{display:none}
+.hits-all{border:0;background:transparent;color:var(--g);font-weight:800;padding:8px}
+.products{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.product{border:1px solid #dce5dc;border-radius:12px;background:#fff;box-shadow:0 3px 11px #17352a11}
+.product-media{position:relative}
+.gallery,.pic{height:185px;background:#f3f6f0}
+.gallery img,.pic img{object-fit:contain;padding:7px}
+.favorite-btn{position:absolute;top:8px;right:8px;width:31px;height:31px;border:0;border-radius:50%;background:#fff;color:#58635a;box-shadow:0 2px 6px #0002;font-size:20px;cursor:pointer;z-index:4}
+.favorite-btn.active{color:#e53935}
+.badge{top:8px;left:8px;padding:5px 8px;background:var(--orange)}
+.stock-badge{top:auto;right:8px;bottom:8px;background:#eef8e9;color:#327629}
+.info{padding:11px 12px}
+.info h3{font-size:14px;line-height:1.25;min-height:36px;margin:0 0 5px;color:#28352c}
+.info>small{font-size:11px;color:#778278}
+.price{font-size:19px;margin:7px 0;color:#161f18}
+.stock-info{font-size:11px;margin:5px 0}
+.buy-note{display:none}
+.details{padding:8px;border-radius:8px;margin:4px 0 5px;font-size:12px}
+.buy{padding:9px;border-radius:8px;font-size:13px}
+.card-actions{display:flex;align-items:center;gap:6px}
+.card-actions .details{flex:1;margin:0}
+.card-actions .buy{width:38px;height:36px;padding:0;font-size:17px;flex:0 0 38px}
+.promo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:13px 0 25px}
+.promo-card{position:relative;min-height:130px;border-radius:11px;overflow:hidden;display:flex;align-items:center;padding:17px;background:#f0f2df;border:1px solid #d8e1d3}
+.promo-card::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(245,248,232,.97),rgba(239,246,226,.79) 46%,rgba(242,246,232,.05));pointer-events:none}
+.promo-photo{position:absolute;inset:0 0 0 35%}
+.promo-photo img{width:100%;height:100%;object-fit:cover}
+.promo-copy{position:relative;z-index:1;max-width:58%}
+.promo-copy h3{font-size:19px;line-height:1.08;margin:0 0 5px;color:#1b3624}
+.promo-copy p{font-size:12px;line-height:1.3;color:#4f5d50;margin:0 0 8px}
+.promo-copy button{border:0;border-radius:7px;background:#fff;padding:7px 10px;font-weight:800;font-size:12px;color:var(--g);cursor:pointer}
+.catalog-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 12px}
+.catalog-tabs{display:flex;gap:7px;overflow:auto;white-space:nowrap}
+.catalog-tabs button{border:0;border-radius:20px;background:transparent;padding:9px 13px;font-size:12px;color:#475449;cursor:pointer}
+.catalog-tabs button.active,.catalog-tabs button:hover{background:var(--g);color:white}
+.favorites-bar{padding:9px 12px;margin:0 0 13px;background:#f4f7ef;border-color:#d8e2d7;border-radius:10px;font-size:13px}
+.favorites-bar button{background:#fff4f3}
+.toolbar{grid-template-columns:1fr 180px 180px;gap:8px;margin:0 0 12px}
+.search,.price-filter{border-radius:9px;border-color:#d5e0d4;padding:11px 13px;font-size:14px}
+.filter-btn{border-radius:9px}
+.product-modal{z-index:100}.modal{z-index:110}
+.footer{color:#6d7b70;border-top:1px solid #c8d8c7}
+@media(max-width:1050px){.products{grid-template-columns:repeat(4,minmax(0,1fr))}.main-nav{gap:15px}.nav{grid-template-columns:1fr 1.2fr auto}.logo{font-size:20px}}
+@media(max-width:760px){.nav{grid-template-columns:1fr auto;gap:9px;padding:9px 14px}.logo{font-size:18px}.logo::before{width:34px;height:34px;flex-basis:34px}.header-search{grid-column:1/-1;grid-row:2;height:42px}.header-actions{grid-column:2;grid-row:1}.main-nav{padding:0 14px 9px;gap:16px}.main-nav a{font-size:13px}.main-nav .catalog-button{padding:9px 12px}.hero{padding:10px 14px}.hero-inner{grid-template-columns:1fr}.hero-copy{min-height:250px;padding:26px 23px;background-position:center;background-image:linear-gradient(90deg,rgba(247,249,237,.97) 0%,rgba(244,248,232,.87) 48%,rgba(235,244,218,.15) 100%),url("./assets/hero-garden.jpg")}.hero-side{display:none}main{padding:7px 14px 28px}.categories{gap:8px}.cat{flex-basis:96px;height:134px}.cat-photo{height:92px}.info-strip{grid-template-columns:repeat(2,1fr);row-gap:4px}.info-card:nth-child(2){border-right:0}.info-card{padding:8px 10px}.products{grid-template-columns:repeat(3,minmax(0,1fr))}.gallery,.pic{height:160px}.promo-card{min-height:116px;padding:12px}.promo-copy h3{font-size:16px}.promo-copy p{font-size:11px}.hits-head .section-title{font-size:25px}}
+@media(max-width:520px){.header-actions .install{display:none!important}.cart{padding:10px 12px;font-size:13px}.hero-copy{min-height:245px}.hero h1{font-size:32px;letter-spacing:-.7px}.hero p{font-size:15px;max-width:350px}.hero .cta{padding:11px 15px;font-size:14px}.info-strip{grid-template-columns:repeat(2,1fr)}.info-card{gap:7px}.info-icon{font-size:22px}.info-card b{font-size:12px}.info-card span{font-size:10px}.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.gallery,.pic{height:145px}.info{padding:9px}.info h3{font-size:12px;min-height:31px}.price{font-size:17px}.promo-grid{grid-template-columns:1fr;gap:8px}.promo-card{min-height:108px}.catalog-title{align-items:flex-start;flex-direction:column}.catalog-tabs{max-width:100%;width:100%}.toolbar{grid-template-columns:1fr 1fr}.toolbar .price-filter{grid-column:1/-1}.filter-btn{min-height:40px}.hits-head{align-items:flex-start}.hits-head .section-title{font-size:23px}.hits-all{font-size:12px}.category-head h2{font-size:18px}.stock-badge{font-size:9px;padding:4px 6px}}
+</style>
+</head>
 <body>
-<header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><input class="search header-search" id="search" type="search" aria-label="Пошук товарів" placeholder="🔎 Пошук: газонокосарка, лійка, шуруповерт..." oninput="render()"><div class="header-actions"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div></header>
-<section class="hero"><div class="hero-inner"><div><div style="display:inline-block;background:#fff3e8;color:#c65a00;padding:7px 11px;border-radius:10px;font-size:13px;font-weight:900;margin-bottom:12px">🔥 ТОВАРИ ДЛЯ ДОМУ • САДУ • РОБОТИ</div><h1>Все потрібне для дому та господарства — в одному місці</h1><p>Корисні товари, садовий інвентар та інструменти за доступними цінами. Обирайте товар і оформлюйте замовлення онлайн.</p><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><a class="cta" href="#products">🛒 Дивитися товари</a><span style="font-size:13px;color:#68766f;font-weight:700">🚚 Нова пошта • 📦 Укрпошта</span></div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:#596861"><span>✓ Актуальна наявність</span><span>✓ Зручне оформлення</span><span>✓ Перевірка замовлення</span></div></div><div class="hero-card">🛠️<br><small style="font-size:18px">Дім • Сад • Інструмент</small><div style="font-size:14px;color:#68766f;margin-top:12px">Обирайте — замовляйте — отримуйте</div></div></div></section>
+<header><div class="nav"><div class="logo"><span>Дім Сад Інструмент</span></div><input class="search header-search" id="search" type="search" aria-label="Пошук товарів" placeholder="⌕  Пошук товарів, наприклад: газонокосарка, лійка, шуруповерт..." oninput="render()"><div class="header-actions"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="install" onclick="showFavorites()" aria-label="Обране">♡ Обране</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div><nav class="main-nav" aria-label="Головна навігація"><button class="catalog-button" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})">☰　Каталог товарів　⌄</button><button onclick="toggleDiscountFilter()">％　Акції</button><a href="#products">✦　Новинки</a><a href="#hitsSection">★　Хіти продажів</a><a href="#about">◎　Про магазин</a><a href="#delivery-info">▣　Доставка й оплата</a><a href="#contact">Контакти</a></nav></header>
+<section class="hero"><div class="hero-inner"><div class="hero-copy"><div class="hero-kicker">ДЛЯ ДОМУ • САДУ • СПРАВЖНІХ СПРАВ</div><h1>Все для догляду за вашим простором</h1><p>Садова техніка, інструменти, товари для дому та відпочинку — в одному магазині.</p><a class="cta" href="#products">Перейти до каталогу　→</a><div class="hero-pips"><span></span><span></span><span></span></div></div><aside class="hero-side"><h2>Готуємось до сезону разом!</h2><p>Садова техніка, інструменти та аксесуари для щоденних справ.</p><span class="hero-side-tag">Дім • Сад • Інструмент</span></aside></div></section>
 <main>
-<h2 class="section-title" id="categories">Категорії</h2>
-<div class="categories"><div class="cat" onclick="setCategory('Для дому',this)"><b>🏠</b>Для дому</div><div class="cat" onclick="setCategory('Для саду',this)"><b>🌱</b>Для саду</div><div class="cat" onclick="setCategory('Інструменти',this)"><b>🛠️</b>Інструменти</div><div class="cat" onclick="setCategory('Товари для авто',this)"><b>🚗</b>Автотовари</div><div class="cat" onclick="setCategory('Електроніка',this)"><b>📱</b>Електроніка</div><div class="cat" onclick="setCategory('Корисні товари',this)"><b>✨</b>Корисні товари</div><div class="cat" onclick="setCategory('Одяг',this)"><b>👕</b>Одяг</div><div class="cat" onclick="setCategory('Чоловічий одяг',this)"><b>👔</b>Чоловічий одяг</div><div class="cat" onclick="setCategory('Жіночий одяг',this)"><b>👗</b>Жіночий одяг</div><div class="cat" onclick="setCategory('Футболки',this)"><b>👕</b>Футболки</div><div class="cat" onclick="setCategory('Штани',this)"><b>👖</b>Штани</div><div class="cat" onclick="setCategory('Куртки',this)"><b>🧥</b>Куртки</div><div class="cat" onclick="setCategory('Взуття',this)"><b>👟</b>Взуття</div><div class="cat" onclick="setCategory('Светри',this)"><b>🧶</b>Светри</div><div class="cat" onclick="setCategory('Аксесуари',this)"><b>🧢</b>Аксесуари</div><div class="cat" onclick="setCategory('Нижня білизна',this)"><b>🩲</b>Нижня білизна</div><div class="cat" onclick="setCategory('Клатчі',this)"><b>👝</b>Клатчі</div><div class="cat" onclick="setCategory('Портфелі',this)"><b>💼</b>Портфелі</div><div class="cat" onclick="setCategory('Сумки',this)"><b>👜</b>Сумки</div></div><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Показати всі товари</button></div><div class="info-strip">
-<div class="info-card"><div class="info-icon">🚚</div><div><b>Зручна доставка</b><span>Нова пошта та Укрпошта</span></div></div>
-<div class="info-card"><div class="info-icon">🛒</div><div><b>Просте замовлення</b><span>Оформлення за кілька кроків</span></div></div>
-<div class="info-card"><div class="info-icon">📦</div><div><b>Актуальна наявність</b><span>Залишок товару перевіряється</span></div></div>
-<div class="info-card"><div class="info-icon">💬</div><div><b>Є питання?</b><span>Уточнюйте характеристики перед покупкою</span></div></div>
+<div class="category-head"><h2 id="categories">Категорії товарів</h2><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Усі товари →</button></div></div>
+<div class="categories"><div class="cat" data-showcase="garden" onclick="setCategory('Для саду',this)"><span class="cat-photo"><span class="cat-emoji">🪴</span></span><span class="cat-label">Сад і город</span></div><div class="cat" data-showcase="plants" onclick="setCategory('Для саду',this)"><span class="cat-photo"><span class="cat-emoji">🌱</span></span><span class="cat-label">Рослини та догляд</span></div><div class="cat" data-showcase="power" onclick="setCategory('Інструменти',this)"><span class="cat-photo"><span class="cat-emoji">🛠️</span></span><span class="cat-label">Електроінструмент</span></div><div class="cat" data-showcase="hand" onclick="setCategory('Інструменти',this)"><span class="cat-photo"><span class="cat-emoji">🪛</span></span><span class="cat-label">Ручний інструмент</span></div><div class="cat" data-showcase="home" onclick="setCategory('Для дому',this)"><span class="cat-photo"><span class="cat-emoji">🪑</span></span><span class="cat-label">Дім і відпочинок</span></div><div class="cat" data-showcase="bbq" onclick="setCategory('Для дому',this)"><span class="cat-photo"><span class="cat-emoji">🍖</span></span><span class="cat-label">Барбекю та відпочинок</span></div><div class="cat" data-showcase="water" onclick="setCategory('Для саду',this)"><span class="cat-photo"><span class="cat-emoji">🚿</span></span><span class="cat-label">Полив і зрошення</span></div><div class="cat" data-showcase="household" onclick="setCategory('Корисні товари',this)"><span class="cat-photo"><span class="cat-emoji">🧺</span></span><span class="cat-label">Господарські товари</span></div><div class="cat" data-showcase="electronics" onclick="setCategory('Електроніка',this)"><span class="cat-photo"><span class="cat-emoji">📱</span></span><span class="cat-label">Електроніка</span></div><div class="cat" data-showcase="auto" onclick="setCategory('Товари для авто',this)"><span class="cat-photo"><span class="cat-emoji">🚗</span></span><span class="cat-label">Автотовари</span></div><div class="cat" data-showcase="lighting" onclick="setCategory('Електроніка',this)"><span class="cat-photo"><span class="cat-emoji">💡</span></span><span class="cat-label">Електрика та освітлення</span></div><div class="cat" data-showcase="building" onclick="setCategory('Інструменти',this)"><span class="cat-photo"><span class="cat-emoji">🧰</span></span><span class="cat-label">Будівництво та ремонт</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Одяг',this)"><span class="cat-photo"><span class="cat-emoji">👕</span></span><span class="cat-label">Одяг</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Чоловічий одяг',this)"><span class="cat-photo"><span class="cat-emoji">👔</span></span><span class="cat-label">Чоловічий одяг</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Жіночий одяг',this)"><span class="cat-photo"><span class="cat-emoji">👗</span></span><span class="cat-label">Жіночий одяг</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Футболки',this)"><span class="cat-photo"><span class="cat-emoji">👕</span></span><span class="cat-label">Футболки</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Штани',this)"><span class="cat-photo"><span class="cat-emoji">👖</span></span><span class="cat-label">Штани</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Куртки',this)"><span class="cat-photo"><span class="cat-emoji">🧥</span></span><span class="cat-label">Куртки</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Взуття',this)"><span class="cat-photo"><span class="cat-emoji">👟</span></span><span class="cat-label">Взуття</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Светри',this)"><span class="cat-photo"><span class="cat-emoji">🧶</span></span><span class="cat-label">Светри</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Аксесуари',this)"><span class="cat-photo"><span class="cat-emoji">🧢</span></span><span class="cat-label">Аксесуари</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Нижня білизна',this)"><span class="cat-photo"><span class="cat-emoji">🩲</span></span><span class="cat-label">Нижня білизна</span></div><div class="cat" data-showcase="clothes" onclick="setCategory('Сумки',this)"><span class="cat-photo"><span class="cat-emoji">👜</span></span><span class="cat-label">Сумки та портфелі</span></div></div>
+<div class="info-strip" id="delivery-info">
+<div class="info-card"><div class="info-icon">🚚</div><div><b>Швидка доставка</b><span>По всій Україні</span></div></div>
+<div class="info-card"><div class="info-icon">🛡️</div><div><b>Зручна оплата</b><span>Під час оформлення</span></div></div>
+<div class="info-card"><div class="info-icon">🎧</div><div><b>Підтримка клієнтів</b><span>Допоможемо з вибором</span></div></div>
+<div class="info-card"><div class="info-icon">📦</div><div><b>Актуальні товари</b><span>Наявність із каталогу</span></div></div>
 </div>
-<section class="hits-section" id="hitsSection"><div class="hits-head"><div><span class="hits-kicker">⭐ Рекомендуємо</span><h2 class="section-title">Хіти продажу</h2><p>Найпопулярніші товари, які варто переглянути першими.</p></div><button class="hits-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Усі товари →</button></div><div class="products" id="hitsGrid"></div></section>
-<h2 class="section-title" id="products">Наші товари</h2><div class="favorites-bar"><span>❤️ Обране: <span id="favoritesCount" class="favorites-count">0</span></span><button onclick="showFavorites()">Переглянути обране</button></div>
-<div class="toolbar"><select class="price-filter" id="priceFilter" onchange="render()"><option value="">💰 Будь-яка ціна</option><option value="0-500">До 500 грн</option><option value="500-1000">500–1000 грн</option><option value="1000-3000">1000–3000 грн</option><option value="3000-999999">Від 3000 грн</option></select><button class="filter-btn" id="discountFilter" onclick="toggleDiscountFilter()">🔥 Тільки акції</button></div>
+<section class="hits-section" id="hitsSection"><div class="hits-head"><div><h2 class="section-title">Популярні товари</h2><div class="catalog-tabs"><button class="active" onclick="setCategory('',this)">Всі товари</button><button onclick="setCategory('Для саду',this)">Для саду</button><button onclick="setCategory('Інструменти',this)">Інструменти</button><button onclick="setCategory('Для дому',this)">Для дому</button><button onclick="toggleDiscountFilter()">Акції</button></div></div><button class="hits-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Дивитися всі товари　→</button></div><div class="products" id="hitsGrid"></div></section>
+<div class="promo-grid">
+<article class="promo-card" data-promo="garden"><div class="promo-photo"><img alt=""></div><div class="promo-copy"><h3>Все для саду та городу</h3><p>Інвентар і корисні речі для вашої ділянки</p><button onclick="setCategory('Для саду',document.querySelector('.cat[data-showcase=garden]'))">До розділу　→</button></div></article>
+<article class="promo-card" data-promo="power"><div class="promo-photo"><img alt=""></div><div class="promo-copy"><h3>Інструменти для ваших задач</h3><p>Знайдіть потрібне для роботи та ремонту</p><button onclick="setCategory('Інструменти',document.querySelector('.cat[data-showcase=power]'))">До каталогу　→</button></div></article>
+<article class="promo-card" data-promo="home"><div class="promo-photo"><img alt=""></div><div class="promo-copy"><h3>Дім і відпочинок</h3><p>Речі для затишку у вашому просторі</p><button onclick="setCategory('Для дому',document.querySelector('.cat[data-showcase=home]'))">Обрати товари　→</button></div></article>
+</div>
+<div class="catalog-title"><h2 class="section-title" id="products">Каталог товарів</h2><div class="catalog-tabs"><button class="active" onclick="setCategory('',this)">Усі товари</button><button onclick="setCategory('Для саду',this)">Для саду</button><button onclick="setCategory('Інструменти',this)">Інструменти</button><button onclick="setCategory('Для дому',this)">Для дому</button><button onclick="toggleDiscountFilter()">Акції</button></div></div>
+<div class="favorites-bar"><span>♡ Обране: <span id="favoritesCount" class="favorites-count">0</span></span><button onclick="showFavorites()">Переглянути обране</button></div>
+<div class="toolbar"><select class="price-filter" id="priceFilter" onchange="render()"><option value="">Будь-яка ціна</option><option value="0-500">До 500 грн</option><option value="500-1000">500–1000 грн</option><option value="1000-3000">1000–3000 грн</option><option value="3000-999999">Від 3000 грн</option></select><button class="filter-btn" id="discountFilter" onclick="toggleDiscountFilter()">Акційні товари</button></div>
 <div class="products" id="grid"><div class="loading">Завантаження товарів...</div></div>
-<div class="about"><h2>Чому обирають нас?</h2><p>Ми підбираємо корисні товари для дому, саду та роботи, щоб зробити покупки простими та зручними.</p></div>
-<div class="contact"><h2>Є питання?</h2><p>Напишіть нам, щоб уточнити наявність, характеристики та умови доставки.</p><a href="https://t.me/rekaviry" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;background:#168a4a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">💬 Написати в Telegram</a><a href="https://www.tiktok.com/@saddim605" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;margin-left:8px;background:#111;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">🎵 Наш TikTok</a></div>
+<div class="about" id="about"><h2>Дім Сад Інструмент</h2><p>Корисні товари для дому, саду та роботи — зручне замовлення онлайн і доставка по Україні.</p></div>
+<div class="contact" id="contact"><h2>Є питання?</h2><p>Напишіть нам, щоб уточнити наявність, характеристики та умови доставки.</p><a href="https://t.me/rekaviry" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;background:#168a4a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">💬 Написати в Telegram</a><a href="https://www.tiktok.com/@saddim605" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;margin-left:8px;background:#111;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">🎵 Наш TikTok</a></div>
 </main>
 <div class="product-modal" id="productModal"><div class="product-box"><button class="product-close" onclick="closeProduct()">×</button><div id="productDetails"></div></div></div>
 <div class="footer">© 2026 Дім Сад Інструмент · Товари для дому, саду та інструменти</div>
@@ -397,7 +504,45 @@ function setCategory(category,element){
   render();
   document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});
 }
+function showcaseImageFor(key){
+  const patterns={
+    garden:/(сад|город|газон|гряд|лопат|грабл|рослин|насін|насен|полив|лійк|лейк|квіт|горщик)/i,
+    plants:/(рослин|квіт|насін|горщик|вазон|садж)/i,
+    power:/(електроінструмент|шуруп|дрил|перфорат|болгар|пилк|інструмент|акумулятор)/i,
+    hand:/(ручн|лопат|грабл|секатор|молот|викрут|плоскогуб)/i,
+    home:/(дім|будинок|мебл|гойдал|кухн|домаш|відпоч|садовий стіл)/i,
+    bbq:/(барбек|грил|мангал|відпоч|гойдал)/i,
+    water:/(полив|зрош|шланг|лійк|лейк|насос)/i,
+    household:/(господар|контейнер|органайзер|зберіган|побут)/i,
+    electronics:/(електрон|телефон|смартфон|usb|кабел|зарядн|ламп|ліхтар|світильник|навушник|колонк|роутер)/i,
+    auto:/(авто|автомоб|машин|шина|акумулятор|компресор|автоаксес)/i,
+    lighting:/(світл|ламп|ліхтар|led|електрик|кабел)/i,
+    building:/(будів|ремонт|інструмент|фарб|кріплен|шуруп|дрил)/i,
+    clothes:/(одяг|куртк|светр|футбол|взут|сумк|аксесуар)/i
+  };
+  const re=patterns[key]||/(.)/;
+  const candidates=products.filter(p=>re.test((p.name||"")+" "+(p.category||"")));
+  const p=candidates.find(x=>(productImages[String(x.id)]||[])[0]||x.image)||products.find(x=>(productImages[String(x.id)]||[])[0]||x.image);
+  return p?((productImages[String(p.id)]||[])[0]||p.image||""):"";
+}
+function decorateShowcaseImages(){
+  document.querySelectorAll(".cat[data-showcase]").forEach(tile=>{
+    const src=showcaseImageFor(tile.dataset.showcase);
+    const wrap=tile.querySelector(".cat-photo");
+    if(src&&wrap){
+      let img=wrap.querySelector("img");
+      if(!img){img=document.createElement("img");img.className="cat-photo-image";img.alt="";wrap.replaceChildren(img);}
+      img.src=src;
+    }
+  });
+  document.querySelectorAll(".promo-card[data-promo]").forEach(card=>{
+    const src=showcaseImageFor(card.dataset.promo);
+    const img=card.querySelector(".promo-photo img");
+    if(img&&src)img.src=src;
+  });
+}
 function render(){
+decorateShowcaseImages();
 let q=document.getElementById("search").value.toLowerCase();
 let priceRange=document.getElementById("priceFilter")?.value||"";
 let list=products.filter(p=>{
@@ -413,7 +558,7 @@ let list=products.filter(p=>{
   const matchesDiscount=!discountOnly || (Number(p.discount)>0&&Number(p.old_price)>price);
   return matchesSearch && matchesCategory && matchesPrice && matchesDiscount;
 }).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
-const hits=products.filter(p=>p.is_hit===true).slice(0,4);
+const hits=products.filter(p=>p.is_hit===true).slice(0,6);
 const hitsGrid=document.getElementById("hitsGrid"),hitsSection=document.getElementById("hitsSection");
 if(hitsGrid&&hitsSection){
   hitsSection.style.display=hits.length?"block":"none";
@@ -440,7 +585,7 @@ function productCardHTML(p){
   const stock=stockKnown?Math.max(0,Number(p.stock_quantity)||0):null;
   const stockInfo=p.available===false?'<div class="stock-info out">❌ Наразі немає в наявності</div>':stockKnown&&stock>0&&stock<=3?'<div class="stock-info low">⚠️ Залишилось лише '+stock+' шт.</div>':'<div class="stock-info">✓ Є в наявності</div>';
   const buyNotes=p.available===false?"":'<div class="buy-note"><span>🚚 Нова пошта</span><span>📦 Перевірка наявності</span></div>';
-  return `<article class="product">${galleryHTML}${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}${stockInfo}${buyNotes}<a class="details" href="./products/${p.id}.html" onclick="openProduct(${p.id},0);return false">👁️ Детальніше</a><button class="buy" onclick="addToCart(${p.id})">🛒 Додати в кошик</button><button class="details" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
+  return `<article class="product">${galleryHTML}<button class="favorite-btn ${favorites.includes(Number(p.id))?"active":""}" onclick="toggleFavorite(${p.id});event.stopPropagation()" aria-label="Додати в обране">♡</button>${thumbs}<div class="info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category||"Товар")}</small><div class="price">${discount?'<span class="old-price">'+Number(p.old_price).toLocaleString("uk-UA")+' грн</span>':""}<span class="${discount?"discount-price":""}">${Number(p.price).toLocaleString("uk-UA")} грн</span>${discount?'<span class="discount-badge">−'+Number(p.discount)+'%</span>':""}</div>${timer}${stockInfo}${buyNotes}<div class="card-actions"><a class="details" href="./products/${p.id}.html" onclick="openProduct(${p.id},0);return false">Детальніше</a><button class="buy" aria-label="Додати в кошик" title="Додати в кошик" onclick="addToCart(${p.id})">🛒</button></div><button class="details" style="margin-top:6px" onclick="buyNow(${p.id})">⚡ Купити зараз</button></div></article>`;
 }
 function toggleDiscountFilter(){discountOnly=!discountOnly;const btn=document.getElementById("discountFilter");if(btn)btn.classList.toggle("active",discountOnly);render();document.getElementById("products")?.scrollIntoView({behavior:"smooth",block:"start"});}
 function saveFavorites(){localStorage.setItem("dimSadFavorites",JSON.stringify(favorites));updateFavoritesCount();}
