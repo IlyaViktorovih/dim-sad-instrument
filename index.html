@@ -198,13 +198,60 @@ header{background:rgba(255,255,255,.96)}
   ]
 }
 </script>
-</head>
+<style id="green-catalog-refresh">
+:root{--green:#117a43;--green-dark:#0b5f35;--page-green:#dcebdc;--line:#cfe0d0}
+html{scroll-behavior:smooth}
+body{background:var(--page-green)!important;color:#17352a}
+header{background:linear-gradient(115deg,#0b5f35,#117a43)!important;border-bottom:1px solid #0a5731;box-shadow:0 5px 20px rgba(8,55,31,.18)}
+.nav{display:grid;grid-template-columns:minmax(185px,auto) minmax(220px,1fr) auto;gap:18px;align-items:center}
+.logo{color:#fff;white-space:nowrap}
+.logo span{color:#fff!important}
+.header-actions{display:flex;gap:8px;align-items:center}
+.header-search{min-width:0;border:1px solid #d3e3d4;border-radius:12px;background:#fff;color:#17352a}
+.header-search:focus{outline:3px solid rgba(255,255,255,.3);border-color:#fff}
+header .cart{background:#fff;color:#0b5f35;box-shadow:none}
+header .install{border-color:#fff;background:transparent;color:#fff}
+.hero{background:linear-gradient(125deg,#b7d7ba 0%,#e5f0e2 58%,#f4f7eb 100%)!important;border-bottom:1px solid #c9ddc8}
+.hero p{color:#496052}
+.hero-card{color:#0b5f35;border:1px solid rgba(255,255,255,.85)}
+main{background:transparent}
+.categories{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.cat{min-height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px 12px;background:#f8fcf7;border:1px solid var(--line);color:#17352a}
+.cat:hover{border-color:#a8cfaf;box-shadow:0 10px 24px rgba(23,53,42,.1)}
+.cat.active{background:linear-gradient(135deg,#117a43,#0b5f35);color:#fff}
+.cat b{font-size:30px;margin:0}
+.info-card{background:#f8fcf7;border-color:var(--line)}
+.hits-section{background:linear-gradient(135deg,#eaf5e9,#f4f7eb);border:1px solid #cfe0d0}
+.product{border-color:#cfe0d0}
+.toolbar{grid-template-columns:minmax(170px,1fr) auto;max-width:560px;margin:0 0 20px auto}
+.toolbar .price-filter{min-width:0}
+.about{background:#eff7ee!important;border:1px solid #cfe0d0}
+.contact{background:linear-gradient(135deg,#0b5f35,#117a43)}
+.footer{border-top-color:#bdd5bf;color:#50675a}
+@media(max-width:800px){
+ .nav{grid-template-columns:1fr auto;gap:10px;padding:10px 14px}
+ .logo{grid-column:1;grid-row:1;font-size:17px}
+ .header-actions{grid-column:2;grid-row:1}
+ .header-search{grid-column:1/-1;grid-row:2;width:100%}
+ header .install{display:none!important}
+ .categories{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .toolbar{grid-template-columns:1fr 1fr;max-width:none}
+}
+@media(max-width:480px){
+ .nav{padding:9px 12px}
+ .logo{font-size:15px}
+ .cart{padding:10px 12px}
+ .categories{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .cat{min-height:100px}
+ .toolbar{grid-template-columns:1fr}
+}
+</style></head>
 <body>
-<header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><div style="display:flex;gap:8px;align-items:center"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div></header>
+<header><div class="nav"><div class="logo">🏠 <span>Дім Сад Інструмент</span></div><input class="search header-search" id="search" type="search" aria-label="Пошук товарів" placeholder="🔎 Пошук: газонокосарка, лійка, шуруповерт..." oninput="render()"><div class="header-actions"><button class="install" id="installBtn" onclick="installApp()" style="display:none">📲 Встановити</button><button class="cart" onclick="openCart()">🛒 Кошик (<span id="count">0</span>)</button></div></div></header>
 <section class="hero"><div class="hero-inner"><div><div style="display:inline-block;background:#fff3e8;color:#c65a00;padding:7px 11px;border-radius:10px;font-size:13px;font-weight:900;margin-bottom:12px">🔥 ТОВАРИ ДЛЯ ДОМУ • САДУ • РОБОТИ</div><h1>Все потрібне для дому та господарства — в одному місці</h1><p>Корисні товари, садовий інвентар та інструменти за доступними цінами. Обирайте товар і оформлюйте замовлення онлайн.</p><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><a class="cta" href="#products">🛒 Дивитися товари</a><span style="font-size:13px;color:#68766f;font-weight:700">🚚 Нова пошта • 📦 Укрпошта</span></div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:#596861"><span>✓ Актуальна наявність</span><span>✓ Зручне оформлення</span><span>✓ Перевірка замовлення</span></div></div><div class="hero-card">🛠️<br><small style="font-size:18px">Дім • Сад • Інструмент</small><div style="font-size:14px;color:#68766f;margin-top:12px">Обирайте — замовляйте — отримуйте</div></div></div></section>
 <main>
-<h2 class="section-title">Категорії</h2>
-<div class="categories"><div class="cat" onclick="setCategory('Для дому',this)"><b>🏠</b>Для дому</div><div class="cat" onclick="setCategory('Для саду',this)"><b>🌱</b>Для саду</div><div class="cat" onclick="setCategory('Товари для авто',this)"><b>🚗</b>Товари для авто</div><div class="cat" onclick="setCategory('Інструменти',this)"><b>🛠️</b>Інструменти</div><div class="cat" onclick="setCategory('Корисні товари',this)"><b>✨</b>Корисні товари</div><div class="cat" onclick="setCategory('Одяг',this)"><b>👕</b>Одяг</div><div class="cat" onclick="setCategory('Чоловічий одяг',this)"><b>👔</b>Чоловічий</div><div class="cat" onclick="setCategory('Жіночий одяг',this)"><b>👗</b>Жіночий</div><div class="cat" onclick="setCategory('Футболки',this)"><b>👕</b>Футболки</div><div class="cat" onclick="setCategory('Штани',this)"><b>👖</b>Штани</div><div class="cat" onclick="setCategory('Куртки',this)"><b>🧥</b>Куртки</div><div class="cat" onclick="setCategory('Взуття',this)"><b>👟</b>Взуття</div><div class="cat" onclick="setCategory('Светри',this)"><b>🧶</b>Светри</div><div class="cat" onclick="setCategory('Аксесуари',this)"><b>🧢</b>Аксесуари</div><div class="cat" onclick="setCategory('Нижня білизна',this)"><b>🩲</b>Нижня білизна</div><div class="cat" onclick="setCategory('Клатчі',this)"><b>👝</b>Клатчі</div><div class="cat" onclick="setCategory('Портфелі',this)"><b>💼</b>Портфелі</div><div class="cat" onclick="setCategory('Сумки',this)"><b>👜</b>Сумки</div></div><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Показати всі товари</button></div><div class="info-strip">
+<h2 class="section-title" id="categories">Категорії</h2>
+<div class="categories"><div class="cat" onclick="setCategory('Для дому',this)"><b>🏠</b>Для дому</div><div class="cat" onclick="setCategory('Для саду',this)"><b>🌱</b>Для саду</div><div class="cat" onclick="setCategory('Інструменти',this)"><b>🛠️</b>Інструменти</div><div class="cat" onclick="setCategory('Товари для авто',this)"><b>🚗</b>Автотовари</div><div class="cat" onclick="setCategory('Електроніка',this)"><b>📱</b>Електроніка</div><div class="cat" onclick="setCategory('Корисні товари',this)"><b>✨</b>Корисні товари</div><div class="cat" onclick="setCategory('Одяг',this)"><b>👕</b>Одяг</div><div class="cat" onclick="setCategory('Чоловічий одяг',this)"><b>👔</b>Чоловічий одяг</div><div class="cat" onclick="setCategory('Жіночий одяг',this)"><b>👗</b>Жіночий одяг</div><div class="cat" onclick="setCategory('Футболки',this)"><b>👕</b>Футболки</div><div class="cat" onclick="setCategory('Штани',this)"><b>👖</b>Штани</div><div class="cat" onclick="setCategory('Куртки',this)"><b>🧥</b>Куртки</div><div class="cat" onclick="setCategory('Взуття',this)"><b>👟</b>Взуття</div><div class="cat" onclick="setCategory('Светри',this)"><b>🧶</b>Светри</div><div class="cat" onclick="setCategory('Аксесуари',this)"><b>🧢</b>Аксесуари</div><div class="cat" onclick="setCategory('Нижня білизна',this)"><b>🩲</b>Нижня білизна</div><div class="cat" onclick="setCategory('Клатчі',this)"><b>👝</b>Клатчі</div><div class="cat" onclick="setCategory('Портфелі',this)"><b>💼</b>Портфелі</div><div class="cat" onclick="setCategory('Сумки',this)"><b>👜</b>Сумки</div></div><div class="all-cat"><button id="allCategory" class="active" onclick="setCategory('',this)">Показати всі товари</button></div><div class="info-strip">
 <div class="info-card"><div class="info-icon">🚚</div><div><b>Зручна доставка</b><span>Нова пошта та Укрпошта</span></div></div>
 <div class="info-card"><div class="info-icon">🛒</div><div><b>Просте замовлення</b><span>Оформлення за кілька кроків</span></div></div>
 <div class="info-card"><div class="info-icon">📦</div><div><b>Актуальна наявність</b><span>Залишок товару перевіряється</span></div></div>
@@ -212,7 +259,7 @@ header{background:rgba(255,255,255,.96)}
 </div>
 <section class="hits-section" id="hitsSection"><div class="hits-head"><div><span class="hits-kicker">⭐ Рекомендуємо</span><h2 class="section-title">Хіти продажу</h2><p>Найпопулярніші товари, які варто переглянути першими.</p></div><button class="hits-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Усі товари →</button></div><div class="products" id="hitsGrid"></div></section>
 <h2 class="section-title" id="products">Наші товари</h2><div class="favorites-bar"><span>❤️ Обране: <span id="favoritesCount" class="favorites-count">0</span></span><button onclick="showFavorites()">Переглянути обране</button></div>
-<div class="toolbar"><input class="search" id="search" placeholder="🔎 Пошук товару..." oninput="render()"><select class="price-filter" id="priceFilter" onchange="render()"><option value="">💰 Будь-яка ціна</option><option value="0-500">До 500 грн</option><option value="500-1000">500–1000 грн</option><option value="1000-3000">1000–3000 грн</option><option value="3000-999999">Від 3000 грн</option></select><button class="filter-btn" id="discountFilter" onclick="toggleDiscountFilter()">🔥 Тільки акції</button></div>
+<div class="toolbar"><select class="price-filter" id="priceFilter" onchange="render()"><option value="">💰 Будь-яка ціна</option><option value="0-500">До 500 грн</option><option value="500-1000">500–1000 грн</option><option value="1000-3000">1000–3000 грн</option><option value="3000-999999">Від 3000 грн</option></select><button class="filter-btn" id="discountFilter" onclick="toggleDiscountFilter()">🔥 Тільки акції</button></div>
 <div class="products" id="grid"><div class="loading">Завантаження товарів...</div></div>
 <div class="about"><h2>Чому обирають нас?</h2><p>Ми підбираємо корисні товари для дому, саду та роботи, щоб зробити покупки простими та зручними.</p></div>
 <div class="contact"><h2>Є питання?</h2><p>Напишіть нам, щоб уточнити наявність, характеристики та умови доставки.</p><a href="https://t.me/rekaviry" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;background:#168a4a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">💬 Написати в Telegram</a><a href="https://www.tiktok.com/@saddim605" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;margin-left:8px;background:#111;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800">🎵 Наш TikTok</a></div>
