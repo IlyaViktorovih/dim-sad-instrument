@@ -559,10 +559,19 @@ let list=products.filter(p=>{
   return matchesSearch && matchesCategory && matchesPrice && matchesDiscount;
 }).sort((a,b)=>Number(b.is_hit===true)-Number(a.is_hit===true));
 const hits=products.filter(p=>p.is_hit===true).slice(0,6);
+const featuredCategories=[/для саду/i,/інструменти/i,/для дому/i,/товари для авто/i,/електроніка/i,/корисні товари/i];
+for(const categoryPattern of featuredCategories){
+  const candidate=products.find(p=>categoryPattern.test(p.category||"")&&!hits.some(x=>String(x.id)===String(p.id)));
+  if(candidate)hits.push(candidate);
+}
+for(const candidate of products){
+  if(hits.length>=6)break;
+  if(!hits.some(x=>String(x.id)===String(candidate.id)))hits.push(candidate);
+}
 const hitsGrid=document.getElementById("hitsGrid"),hitsSection=document.getElementById("hitsSection");
 if(hitsGrid&&hitsSection){
-  hitsSection.style.display=hits.length?"block":"none";
-  hitsGrid.innerHTML=hits.map(p=>productCardHTML(p)).join("");
+  hitsSection.style.display="block";
+  hitsGrid.innerHTML=hits.slice(0,6).map(p=>productCardHTML(p)).join("");
 }
 if(!list.length){document.getElementById("grid").innerHTML="<p>Товарів не знайдено.</p>";return;}
 document.getElementById("grid").innerHTML=list.map(p=>productCardHTML(p)).join("");
