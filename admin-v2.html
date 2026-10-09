@@ -257,7 +257,7 @@
     .danger{background:#c83e3e;color:#fff}
     .danger:hover{background:#ad2f2f}
     .stat-card{background:linear-gradient(145deg,#f7fbf8,#eef7f0);border:1px solid #dbe9de;border-radius:15px;padding:16px}
-    .stat-card b{font-size:22px;color:#125e35}
+    .stat-card b{font-size:22px;color:#125e35}.stat-icon{width:40px;height:40px;flex:0 0 40px;border-radius:13px;display:grid;place-items:center;background:#dff1e4;color:#11683a;font-size:16px;font-weight:800}
     .sales-chart{height:245px}
     .products-tools{grid-template-columns:minmax(260px,2fr) repeat(3,minmax(170px,1fr));gap:12px}
     #productsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
@@ -304,7 +304,7 @@
 <body>
 
 <header>
-  <h1>🏠 Дім Сад Інструмент</h1>
+  <h1>Дім Сад Інструмент</h1>
   <div>Адмін-панель магазину</div>
 </header>
 
@@ -382,14 +382,14 @@
     <div class="box box-stats">
       <h2>Статистика магазину</h2>
       <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-icon">📦</div><div><span>Товарів</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">🛒</div><div><span>Замовлень</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">🆕</div><div><span>Нових</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">💰</div><div><span>Сума всіх замовлень</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">📅</div><div><span>Сьогодні</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">📈</div><div><span>За 7 днів</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">🗓️</div><div><span>За 30 днів</span><b>—</b></div></div>
-        <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Відгуків</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">Т</div><div><span>Товарів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">З</div><div><span>Замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">Н</div><div><span>Нових</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">₴</div><div><span>Сума всіх замовлень</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">Д</div><div><span>Сьогодні</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">7</div><div><span>За 7 днів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">30</div><div><span>За 30 днів</span><b>—</b></div></div>
+        <div class="stat-card"><div class="stat-icon">★</div><div><span>Відгуків</span><b>—</b></div></div>
       </div>
       <button id="refreshStatsButton">Оновити статистику</button>
     </div>
@@ -516,11 +516,11 @@
         <input id="orderSearch" type="search" placeholder="🔎 Пошук за ім'ям, телефоном або містом">
         <select id="orderStatusFilter">
           <option value="all">Усі статуси</option>
-          <option value="new">🆕 Нові</option>
-          <option value="processing">⚙️ В обробці</option>
-          <option value="shipped">🚚 Відправлено</option>
-          <option value="completed">✅ Виконано</option>
-          <option value="cancelled">❌ Скасовано</option>
+          <option value="new">Нові</option>
+          <option value="processing">В обробці</option>
+          <option value="shipped">Відправлено</option>
+          <option value="completed">Виконано</option>
+          <option value="cancelled">Скасовано</option>
         </select>
       </div>
       <button id="refreshOrdersButton">Оновити замовлення</button>
@@ -552,15 +552,15 @@
         <select id="productCategoryFilter">
           <option value="all">Усі категорії</option>
           <option value="Для дому">🏠 Для дому</option>
-          <option value="Для саду">🌱 Для саду</option>
-          <option value="Інструменти">🛠️ Інструменти</option>
-          <option value="Корисні товари">✨ Корисні товари</option>
+          <option value="Для саду">Для саду</option>
+          <option value="Інструменти">Інструменти</option>
+          <option value="Корисні товари">Корисні товари</option>
         </select>
         <select id="productAvailabilityFilter">
           <option value="all">Усі товари</option>
-          <option value="available">🟢 Є в наявності</option>
-          <option value="unavailable">🔴 Немає в наявності</option>
-          <option value="lowstock">⚠️ Закінчується — ≤3 шт.</option>
+          <option value="available">Є в наявності</option>
+          <option value="unavailable">Немає в наявності</option>
+          <option value="lowstock">Закінчується — ≤3 шт.</option>
         </select>
         <select id="productHitFilter">
           <option value="all">Усі</option>
@@ -1170,22 +1170,22 @@
       card.className = "product";
       const price = Number(p.price || 0).toLocaleString("uk-UA");
       const oldPrice = p.old_price ? Number(p.old_price).toLocaleString("uk-UA") : "";
-      const availabilityText = p.available !== false ? "🟢 Є в наявності" : "🔴 Немає в наявності";
+      const availabilityText = p.available !== false ? "Є в наявності" : "Немає в наявності";
       card.innerHTML =
         "<h3>" + escapeHTML(p.name) + "</h3>" +
         "<div class='quick-product-row'>" +
-          "<label>💰 Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \"price\", this.value)'></label>" +
-          "<label>📦 Залишок <input class='quick-price' type='number' min='0' step='1' value='" + (p.stock_quantity == null ? 0 : Number(p.stock_quantity)) + "' onchange='quickUpdateProduct(" + p.id + ", \"stock_quantity\", this.value)'></label>" +
-          "<label>📦 <select onchange='quickUpdateProduct(" + p.id + ", \"available\", this.value === \"true\")'>" +
+          "<label>Ціна <input class='quick-price' type='number' min='0' value='" + Number(p.price || 0) + "' onchange='quickUpdateProduct(" + p.id + ", \"price\", this.value)'></label>" +
+          "<label>Залишок <input class='quick-price' type='number' min='0' step='1' value='" + (p.stock_quantity == null ? 0 : Number(p.stock_quantity)) + "' onchange='quickUpdateProduct(" + p.id + ", \"stock_quantity\", this.value)'></label>" +
+          "<label>Наявність <select onchange='quickUpdateProduct(" + p.id + ", \"available\", this.value === \"true\")'>" +
             "<option value='true' " + (p.available !== false ? "selected" : "") + ">Є в наявності</option>" +
             "<option value='false' " + (p.available === false ? "selected" : "") + ">Немає</option>" +
           "</select></label>" +
-          "<label>🔥 <select onchange='quickUpdateProduct(" + p.id + ", \"is_hit\", this.value === \"true\")'>" +
+          "<label>Тип <select onchange='quickUpdateProduct(" + p.id + ", \"is_hit\", this.value === \"true\")'>" +
             "<option value='false' " + (!p.is_hit ? "selected" : "") + ">Звичайний</option>" +
             "<option value='true' " + (p.is_hit ? "selected" : "") + ">Хіт</option>" +
           "</select></label>" +
         "</div>" +
-        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • 📦 Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • 🔥 Хіт" : "") + "</p>" +
+        "<p>" + escapeHTML(p.category || "") + " • " + availabilityText + (p.stock_quantity != null ? " • Залишок: " + Number(p.stock_quantity) + " шт." : "") + (p.is_hit ? " • Хіт" : "") + "</p>" +
         "<button onclick='openEditProduct(" + p.id + ")'>✏️ Редагувати</button>" +
         "<button class='danger' onclick='deleteProduct(" + p.id + ")'>🗑 Видалити</button>";
       productsList.appendChild(card);
@@ -1768,7 +1768,7 @@
     if (!w) { alert("⚠️ Дозволь спливаючі вікна для друку."); return; }
     const created = order.created_at ? new Date(order.created_at).toLocaleString("uk-UA") : "";
     w.document.write("<html lang=\"uk\"><head><meta charset=\"UTF-8\"><title>Замовлення №" + order.id + "</title><style>body{font-family:Arial;padding:25px;max-width:850px;margin:auto}h1{color:#176b38}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:9px;text-align:left}th{background:#f3f5f4}.total{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.meta{margin:5px 0}</style></head><body>");
-    w.document.write("<h1>🏠 Дім Сад Інструмент</h1><h2>Замовлення №" + order.id + "</h2>");
+    w.document.write("<h1>Дім Сад Інструмент</h1><h2>Замовлення №" + order.id + "</h2>");
     w.document.write("<div class=\"meta\"><b>Дата:</b> " + escapeHTML(created) + "</div><div class=\"meta\"><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</div><div class=\"meta\"><b>Телефон:</b> " + escapeHTML(order.phone) + "</div>");
     w.document.write("<div class=\"meta\"><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</div><div class=\"meta\"><b>Місто:</b> " + escapeHTML(order.city || "") + "</div><div class=\"meta\"><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</div><div class=\"meta\"><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</div>");
     w.document.write("<table><thead><tr><th>Товар</th><th>Кількість</th><th>Ціна</th><th>Сума</th></tr></thead><tbody>" + rows + "</tbody></table>");
