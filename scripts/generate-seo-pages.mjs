@@ -214,7 +214,11 @@ for (const p of products) {
 
 await writeFile(join(ROOT, "returns.html"), `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повернення та обмін — Дім Сад Інструмент</title><meta name="description" content="Умови повернення та обміну товарів у магазині Дім Сад Інструмент."></head><body><main style="max-width:800px;margin:40px auto;padding:0 18px;font-family:Arial,sans-serif;line-height:1.6"><h1>Повернення та обмін товарів</h1><p>Повернення та обмін товарів здійснюються відповідно до законодавства України та умов продавця.</p><p>Для товарів належної якості стандартний строк звернення щодо повернення або обміну — до 14 днів, якщо інше не передбачено законом або характером товару. Товар має зберегти належний стан та комплектність.</p><p>Для оформлення повернення зверніться до магазину до відправлення товару назад, щоб отримати актуальні реквізити та інструкції.</p><p><a href="${SITE}/">← Повернутися до магазину</a></p></main></body></html>`, "utf8");
 
-const urls = [SITE + "/"];
+const catalogItems = products.map(p => `<li><a href="${SITE}/products/${encodeURIComponent(p.id)}.html">${esc(text(p.name) || "Товар")}</a></li>`).join("\n");
+await writeFile(join(ROOT, "catalog.html"), `<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Каталог усіх товарів — Дім Сад Інструмент</title><meta name="description" content="Повний каталог товарів магазину Дім Сад Інструмент."><meta name="robots" content="index,follow"><link rel="canonical" href="${SITE}/catalog.html"><style>body{font:16px/1.6 system-ui,Arial,sans-serif;max-width:1000px;margin:30px auto;padding:0 18px;color:#17352a}a{color:#116c3b}li{margin:7px 0}h1{line-height:1.2}</style></head><body><nav><a href="${SITE}/">← На головну</a></nav><h1>Усі товари магазину</h1><p>Перегляньте ${products.length} товарів у нашому каталозі.</p><ul>${catalogItems}</ul></body></html>`, "utf8");
+
+const urls = [SITE + "/", SITE + "/catalog.html"];
 for (const p of products) urls.push(`${SITE}/products/${p.id}.html`);
 const now = new Date().toISOString().slice(0,10);
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
