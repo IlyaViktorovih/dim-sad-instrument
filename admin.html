@@ -288,6 +288,14 @@
   <div id="resetStatus" class="status"></div>
 </div>
 
+
+<div id="passwordRecoveryBox" style="display:none; margin-top:15px;">
+  <h3>🔐 Встановити новий пароль</h3>
+  <input type="password" id="newPassword" placeholder="Новий пароль (не менше 12 символів)" autocomplete="new-password">
+  <input type="password" id="confirmPassword" placeholder="Повтори новий пароль" autocomplete="new-password">
+  <button type="button" onclick="saveNewPassword()">💾 Зберегти новий пароль</button>
+  <div id="passwordRecoveryStatus" class="status"></div>
+</div>
     <div id="loginStatus" class="status">
       Введи дані адміністратора.
     </div>
@@ -1895,7 +1903,8 @@
     w.document.write("<div class=\"meta\"><b>Дата:</b> " + escapeHTML(created) + "</div><div class=\"meta\"><b>Клієнт:</b> " + escapeHTML(order.customer_name) + "</div><div class=\"meta\"><b>Телефон:</b> " + escapeHTML(order.phone) + "</div>");
     w.document.write("<div class=\"meta\"><b>Доставка:</b> " + escapeHTML(order.delivery_method) + "</div><div class=\"meta\"><b>Місто:</b> " + escapeHTML(order.city || "") + "</div><div class=\"meta\"><b>Відділення / індекс:</b> " + escapeHTML((order.branch || "") + (order.postal_code ? " / " + order.postal_code : "")) + "</div><div class=\"meta\"><b>Коментар:</b> " + escapeHTML(order.comment || "—") + "</div>");
     w.document.write("<table><thead><tr><th>Товар</th><th>Кількість</th><th>Ціна</th><th>Сума</th></tr></thead><tbody>" + rows + "</tbody></table>");
-    w.document.write("<div class=\"total\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</div></body></html>");
+    w.document.write("<div class=\"total\">Разом: " + Number(order.total).toLocaleString("uk-UA") + " грн</div><script src="./password-reset.js"></script>
+</body></html>");
     w.document.close();
     w.focus();
     setTimeout(function(){ w.print(); }, 300);
