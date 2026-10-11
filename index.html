@@ -484,22 +484,28 @@ async function loadProducts(){
     return;
   }
 
-  const productIds=products.map(p=>p.id);
-  const {data:images,error:imageError}=await supabaseClient
-    .from("product_images")
-    .select("product_id,image_url,sort_order")
-    .in("product_id",productIds)
-    .order("sort_order",{ascending:true});
+  // Fetch gallery images in pages: a single .in() with thousands of IDs
+  // exceeds practical URL limits, and Supabase limits rows per response.
+  const imagePageSize=1000;
+  for(let offset=0;;offset+=imagePageSize){
+    const {data:images,error:imageError}=await supabaseClient
+      .from("product_images")
+      .select("product_id,image_url,sort_order")
+      .order("product_id",{ascending:true})
+      .order("sort_order",{ascending:true})
+      .range(offset,offset+imagePageSize-1);
 
-  if(imageError){
-    console.error("Помилка завантаження фото каталогу:",imageError);
-  }else{
+    if(imageError){
+      console.error("Помилка завантаження фото каталогу:",imageError);
+      break;
+    }
     for(const x of (images||[])){
       if(!x.image_url)continue;
       const key=String(x.product_id);
       if(!productImages[key])productImages[key]=[];
       productImages[key].push(x.image_url);
     }
+    if(!images||images.length<imagePageSize)break;
   }
 
   render();
