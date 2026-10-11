@@ -38,7 +38,7 @@ async function sendPasswordReset() {
   if (status) status.textContent = "📧 Надсилаємо посилання...";
 
   try {
-    const { error } = await db.auth.resetPasswordForEmail(email, {
+    const { error } = await window.adminDb.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + window.location.pathname
     });
 
@@ -72,8 +72,8 @@ async function saveNewPassword() {
   const password = passwordInput ? passwordInput.value : "";
   const confirm = confirmInput ? confirmInput.value : "";
 
-  if (password.length < 6) {
-    if (status) status.textContent = "❌ Пароль має містити щонайменше 6 символів.";
+  if (password.length < 12) {
+    if (status) status.textContent = "❌ Пароль має містити щонайменше 12 символів.";
     return;
   }
 
@@ -85,7 +85,7 @@ async function saveNewPassword() {
   if (status) status.textContent = "⏳ Зберігаємо новий пароль...";
 
   try {
-    const { error } = await db.auth.updateUser({ password });
+    const { error } = await window.adminDb.auth.updateUser({ password });
 
     if (error) {
       console.error(error);
@@ -93,7 +93,7 @@ async function saveNewPassword() {
       return;
     }
 
-    await db.auth.signOut();
+    await window.adminDb.auth.signOut();
     hidePasswordReset();
 
     const recoveryBox = document.getElementById("passwordRecoveryBox");
