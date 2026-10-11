@@ -314,6 +314,14 @@
 
       <div id="userEmail" class="small"></div>
 
+      <button type="button" id="changePasswordButton" onclick="toggleAdminPasswordChange()">🔐 Змінити пароль</button>
+      <div id="adminPasswordChangeBox" style="display:none; margin-top:12px;">
+        <input type="password" id="adminCurrentPassword" placeholder="Поточний пароль" autocomplete="current-password">
+        <input type="password" id="adminNewPassword" placeholder="Новий пароль (мінімум 12 символів)" autocomplete="new-password">
+        <input type="password" id="adminConfirmPassword" placeholder="Повтори новий пароль" autocomplete="new-password">
+        <button type="button" id="adminSavePasswordButton" onclick="changeAdminPassword()">💾 Зберегти новий пароль</button>
+        <div id="adminChangePasswordStatus" class="status" aria-live="polite"></div>
+      </div>
       <button class="logout" id="logoutButton">
         Вийти
       </button>
