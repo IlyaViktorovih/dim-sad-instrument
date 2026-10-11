@@ -152,3 +152,42 @@ if (document.readyState === "loading") {
 } else {
   initPasswordRecoveryListener();
 }
+
+function toggleAdminPasswordChange() {
+  const box = document.getElementById("adminPasswordChangeBox");
+  if (!box) return;
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function changeAdminPassword() {
+  const current = document.getElementById("adminCurrentPassword");
+  const next = document.getElementById("adminNewPassword");
+  const confirm = document.getElementById("adminConfirmPassword");
+  const status = document.getElementById("adminChangePasswordStatus");
+  const button = document.getElementById("adminSavePasswordButton");
+  const oldPassword = current.value;
+  const newPassword = next.value;
+  if (!oldPassword || newPassword.length < 12 || newPassword !== confirm.value || newPassword === oldPassword) {
+    status.textContent = "❌ Перевір поточний пароль, новий пароль (мінімум 12 символів), підтвердження та переконайся, що паролі різні.";
+    return;
+  }
+  button.disabled = true;
+  status.textContent = "⏳ Перевіряємо поточний пароль...";
+  try {
+    const client = window.adminDb;
+    const { data: { user }, error: userError } = await client.auth.getUser();
+    if (userError || !user?.email) throw new Error("Сесія закінчилась. Увійди знову.");
+    const { error: verifyError } = await client.auth.signInWithPassword({ email: user.email, password: oldPassword });
+    if (verifyError) throw new Error("Неправильний поточний пароль.");
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    current.value = "";
+    next.value = "";
+    confirm.value = "";
+    status.textContent = "✅ Пароль змінено. Надалі використовуй новий пароль.";
+  } catch (error) {
+    status.textContent = "❌ " + (error.message || "Не вдалося змінити пароль.");
+  } finally {
+    button.disabled = false;
+  }
+}
