@@ -39,7 +39,7 @@ async function sendPasswordReset() {
 
   try {
     const { error } = await window.adminDb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: window.location.origin + window.location.pathname + "?recovery=1"
     });
 
     if (error) {
@@ -58,6 +58,11 @@ async function sendPasswordReset() {
 }
 
 function showPasswordRecovery() {
+  const loginBox = document.getElementById("loginBox");
+  const adminPanel = document.getElementById("adminPanel");
+  if (loginBox) loginBox.classList.remove("hidden");
+  if (adminPanel) adminPanel.classList.add("hidden");
+  hidePasswordReset();
   const box = document.getElementById("passwordRecoveryBox");
   if (box) {
     box.style.display = "block";
@@ -94,6 +99,7 @@ async function saveNewPassword() {
     }
 
     await window.adminDb.auth.signOut();
+    window.history.replaceState({}, "", window.location.pathname);
     hidePasswordReset();
 
     const recoveryBox = document.getElementById("passwordRecoveryBox");
@@ -111,14 +117,38 @@ async function saveNewPassword() {
 
 function initPasswordRecoveryListener() {
   if (!window.adminDb || window.adminPasswordRecoveryListener) return;
-
   window.adminPasswordRecoveryListener = true;
 
-  window.adminDb.auth.onAuthStateChange((event) => {
+  const params = new URLSearchParams(window.location.search);
+  const recoveryLink = params.get("recovery") === "1";
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const recoveryToken = hash.get("type") === "recovery";
+  let recoveryConfirmed = false;
+
+  window.adminDb.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
+      recoveryConfirmed = true;
+      setTimeout(showPasswordRecovery, 0);
+    } else if (event === "INITIAL_SESSION" && session && recoveryLink && recoveryToken) {
+      recoveryConfirmed = true;
       setTimeout(showPasswordRecovery, 0);
     }
   });
+
+  // Supabase may complete processing the recovery URL before this script loads.
+  // Only reveal the form for a link explicitly marked as a recovery link.
+  if (recoveryLink && recoveryToken) {
+    window.adminDb.auth.getSession().then(({ data, error }) => {
+      if (!error && data?.session) {
+        recoveryConfirmed = true;
+        showPasswordRecovery();
+      }
+    });
+  }
 }
 
-document.addEventListener("DOMContentLoaded", initPasswordRecoveryListener);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPasswordRecoveryListener);
+} else {
+  initPasswordRecoveryListener();
+}
