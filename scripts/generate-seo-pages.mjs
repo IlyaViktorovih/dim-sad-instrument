@@ -228,4 +228,6 @@ ${urls.map(u => `  <url><loc>${u}</loc></url>`).join("\n")}
 </urlset>
 `;
 await writeFile(join(ROOT, "sitemap.xml"), sitemap, "utf8");
+// Plain-text alternate sitemap, one absolute URL per line.
+await writeFile(join(ROOT, "sitemap.txt"), urls.join("\n") + "\n", "utf8");
 console.log(`Generated ${products.length} product pages and ${urls.length} sitemap URLs.`);
