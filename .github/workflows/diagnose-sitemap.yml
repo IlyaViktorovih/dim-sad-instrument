@@ -1,0 +1,62 @@
+name: Diagnose published sitemap HTTP responses
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/diagnose-sitemap.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check sitemap status, MIME, XML and Googlebot response
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request
+          import urllib.error
+          import xml.etree.ElementTree as ET
+
+          origin = "https://ilyaviktorovih.github.io"
+          site = origin + "/dim-sad-instrument"
+          paths = [
+              "/sitemap.xml",
+              "/sitemap-test.xml",
+              "/robots.txt",
+              "/catalog.html",
+              "/products/5064.html",
+          ]
+          agents = {
+              "browser": "Mozilla/5.0 (compatible; SitemapDiagnostic/1.0)",
+              "googlebot-user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+          }
+          for label, agent in agents.items():
+              print("\n===== " + label + " =====", flush=True)
+              for path in paths:
+                  url = site + path
+                  req = urllib.request.Request(url, headers={"User-Agent": agent, "Accept": "*/*"})
+                  try:
+                      with urllib.request.urlopen(req, timeout=25) as res:
+                          body = res.read()
+                          print(f"{path}: HTTP={res.status} final={res.url} type={res.headers.get('Content-Type')} bytes={len(body)}", flush=True)
+                          if path.endswith(".xml"):
+                              try:
+                                  node = ET.fromstring(body)
+                                  urls = len(node.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url"))
+                                  print(f"  XML_OK root={node.tag} urls={urls}", flush=True)
+                              except ET.ParseError as ex:
+                                  print(f"  XML_INVALID {ex} beginning={body[:160]!r}", flush=True)
+                  except Exception as ex:
+                      print(f"{path}: FETCH_ERROR {type(ex).__name__}: {ex}", flush=True)
+          req = urllib.request.Request(origin + "/robots.txt", headers={"User-Agent": agents["googlebot-user-agent"]})
+          try:
+              with urllib.request.urlopen(req, timeout=25) as res:
+                  print(f"host-root robots.txt: HTTP={res.status} type={res.headers.get('Content-Type')} body={res.read(500)!r}", flush=True)
+          except Exception as ex:
+              print(f"host-root robots.txt: FETCH_ERROR {type(ex).__name__}: {ex}", flush=True)
+          PY
