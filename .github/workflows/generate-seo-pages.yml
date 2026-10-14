@@ -34,7 +34,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add products sitemap.xml catalog.html
+          git add products sitemap.xml sitemap.txt catalog.html
           if git diff --cached --quiet; then
             echo "No generated changes."
             exit 0
