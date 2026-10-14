@@ -5,6 +5,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # A commit made with GITHUB_TOKEN does not trigger other push workflows.
+  # workflow_run allows published pages to follow scheduled SEO generation.
+  workflow_run:
+    workflows:
+      - Generate product SEO pages
+    types:
+      - completed
+    branches:
+      - main
 
 concurrency:
   group: github-pages-${{ github.ref }}
@@ -17,6 +26,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -24,6 +34,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: main
       - name: Setup Node
         uses: actions/setup-node@v6
         with:

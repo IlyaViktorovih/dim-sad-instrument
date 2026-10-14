@@ -220,10 +220,11 @@ await writeFile(join(ROOT, "catalog.html"), `<!doctype html>
 
 const urls = [SITE + "/", SITE + "/catalog.html"];
 for (const p of products) urls.push(`${SITE}/products/${p.id}.html`);
-const now = new Date().toISOString().slice(0,10);
+// Do not fabricate a new <lastmod> date for every page on each daily build.
+// Until we track real content changes, omit this optional sitemap field.
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u => `  <url><loc>${u}</loc><lastmod>${now}</lastmod></url>`).join("\n")}
+${urls.map(u => `  <url><loc>${u}</loc></url>`).join("\n")}
 </urlset>
 `;
 await writeFile(join(ROOT, "sitemap.xml"), sitemap, "utf8");
