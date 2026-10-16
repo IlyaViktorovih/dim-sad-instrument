@@ -43,7 +43,7 @@ function formatPrice(value) {
   return Number(value || 0).toLocaleString("uk-UA", { maximumFractionDigits: 2 });
 }
 
-function productPage(p, images) {
+function productPage(p, images, nearbyProducts = []) {
   const url = `${SITE}/products/${p.id}.html`;
   const name = text(p.name) || "Товар";
   const desc = description(p.description, `${name} — купити в магазині «Дім Сад Інструмент» з доставкою по Україні.`);
@@ -52,6 +52,9 @@ function productPage(p, images) {
   const price = Number(p.price || 0);
   const oldPrice = Number(p.old_price || 0);
   const category = text(p.category) || "Товари";
+  const relatedHtml = nearbyProducts.length
+    ? `<aside class="related" aria-label="Інші товари магазину"><h2>Перегляньте також</h2><ul>${nearbyProducts.map(other => `<li><a href="${SITE}/products/${encodeURIComponent(other.id)}.html">${esc(text(other.name) || "Товар")}</a></li>`).join("")}</ul></aside>`
+    : "";
   const imageHtml = imageList.length
     ? imageList.map((src, i) => `<img src="${esc(src)}" alt="${esc(name)} — фото ${i + 1}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>`).join("")
     : '<div class="noimg" aria-label="Фото товару відсутнє">📦</div>';
@@ -151,7 +154,7 @@ nav{max-width:1100px;margin:auto;display:flex;justify-content:space-between;alig
 main{max-width:1100px;margin:auto;padding:28px 18px 55px}.crumbs{font-size:13px;color:#69766f;margin:0 0 18px}.crumbs a{color:#117a43;text-decoration:none}
 .card{background:#fff;border:1px solid #e2ebe6;border-radius:24px;padding:22px;display:grid;grid-template-columns:1.05fr .95fr;gap:30px;box-shadow:0 12px 35px rgba(23,53,42,.06)}
 .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.gallery img{width:100%;height:300px;object-fit:contain;background:#f5f8f6;border-radius:16px;padding:10px}.noimg{height:300px;display:grid;place-items:center;background:#f5f8f6;border-radius:16px;font-size:70px}
-h1{font-size:clamp(28px,4vw,44px);line-height:1.08;margin:0 0 14px}.category{color:#68766f;font-size:14px}.price{font-size:30px;font-weight:900;margin:20px 0 8px}.old{text-decoration:line-through;color:#888;font-size:16px;margin-right:8px}.stock{font-weight:800;color:#117a43;margin:8px 0 18px}.out{color:#c62828}.description{line-height:1.7;color:#4f5e57;white-space:pre-line;margin:20px 0}.buy{display:inline-block;background:#117a43;color:#fff;text-decoration:none;font-weight:900;padding:15px 22px;border-radius:13px}.back{display:inline-block;margin-left:8px;color:#117a43;text-decoration:none;font-weight:800}.info{margin-top:18px;padding:14px 16px;background:#f6faf7;border-radius:13px;color:#596760;font-size:13px;line-height:1.55}
+h1{font-size:clamp(28px,4vw,44px);line-height:1.08;margin:0 0 14px}.category{color:#68766f;font-size:14px}.price{font-size:30px;font-weight:900;margin:20px 0 8px}.old{text-decoration:line-through;color:#888;font-size:16px;margin-right:8px}.stock{font-weight:800;color:#117a43;margin:8px 0 18px}.out{color:#c62828}.description{line-height:1.7;color:#4f5e57;white-space:pre-line;margin:20px 0}.buy{display:inline-block;background:#117a43;color:#fff;text-decoration:none;font-weight:900;padding:15px 22px;border-radius:13px}.back{display:inline-block;margin-left:8px;color:#117a43;text-decoration:none;font-weight:800}.info{margin-top:18px;padding:14px 16px;background:#f6faf7;border-radius:13px;color:#596760;font-size:13px;line-height:1.55}.related{margin-top:24px;padding:20px;background:#fff;border:1px solid #e2ebe6;border-radius:18px}.related h2{font-size:21px;margin:0 0 12px}.related ul{margin:0;padding-left:22px;line-height:1.9}.related a,.catalog-link a{color:#117a43}.catalog-link{margin:20px 0}
 @media(max-width:760px){.card{grid-template-columns:1fr;padding:15px}.gallery{grid-template-columns:1fr 1fr}.gallery img,.noimg{height:210px}main{padding:20px 12px 40px}}
 </style>
 </head>
@@ -172,6 +175,8 @@ h1{font-size:clamp(28px,4vw,44px);line-height:1.08;margin:0 0 14px}.category{col
 <div class="info">🚚 Доставка по Україні. Актуальна ціна та наявність показуються на сайті. Перед відправленням замовлення перевіряється.</div>
 </section>
 </article>
+${relatedHtml}
+<p class="catalog-link"><a href="${SITE}/catalog.html">Переглянути повний каталог товарів</a></p>
 </main>
 </body>
 </html>`;
@@ -208,8 +213,13 @@ for (let i = 0; i < products.length; i += 200) {
   }
 }
 
-for (const p of products) {
-  await writeFile(join(PRODUCTS_DIR, `${p.id}.html`), productPage(p, imageMap.get(String(p.id)) || []), "utf8");
+for (let i = 0; i < products.length; i++) {
+  const p = products[i];
+  const nearbyProducts = [
+    ...products.slice(Math.max(0, i - 2), i),
+    ...products.slice(i + 1, i + 3)
+  ];
+  await writeFile(join(PRODUCTS_DIR, `${p.id}.html`), productPage(p, imageMap.get(String(p.id)) || [], nearbyProducts), "utf8");
 }
 
 await writeFile(join(ROOT, "returns.html"), `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повернення та обмін — Дім Сад Інструмент</title><meta name="description" content="Умови повернення та обміну товарів у магазині Дім Сад Інструмент."></head><body><main style="max-width:800px;margin:40px auto;padding:0 18px;font-family:Arial,sans-serif;line-height:1.6"><h1>Повернення та обмін товарів</h1><p>Повернення та обмін товарів здійснюються відповідно до законодавства України та умов продавця.</p><p>Для товарів належної якості стандартний строк звернення щодо повернення або обміну — до 14 днів, якщо інше не передбачено законом або характером товару. Товар має зберегти належний стан та комплектність.</p><p>Для оформлення повернення зверніться до магазину до відправлення товару назад, щоб отримати актуальні реквізити та інструкції.</p><p><a href="${SITE}/">← Повернутися до магазину</a></p></main></body></html>`, "utf8");
